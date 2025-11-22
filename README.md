@@ -118,7 +118,11 @@ Available models:
 - `openai/gpt-oss-20b` (middle ground)
 - `openai/gpt-oss-120b` (highest quality)
 
-Note: The script includes a 2-second delay between requests to avoid rate limits.
+Options:
+- `--delay`: Delay in seconds between API calls (default: 2.0). Adjust if you hit rate limits:
+  ```bash
+  python scripts/run_groq_batch.py test.jsonl --delay 5.0
+  ```
 
 ### Using Custom Models
 

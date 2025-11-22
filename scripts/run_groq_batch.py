@@ -74,6 +74,7 @@ def run_batch(
     model: str = "llama-3.3-70b-versatile",
     language: str = "ro",
     max_instances: int = None,
+    delay: float = 2.0,
 ):
     """
     Run batch evaluation using Groq
@@ -85,6 +86,7 @@ def run_batch(
         model: Groq model name
         language: 'ro' for Romanian, 'en' for English
         max_instances: Max instances to process (None = all)
+        delay: Delay in seconds between API calls (default: 2.0)
     """
     # Load instances
     instances = []
@@ -127,7 +129,7 @@ def run_batch(
             print(f"✗ Failed")
 
         # Delay to avoid rate limits
-        time.sleep(2)
+        time.sleep(delay)
 
     # Save outputs
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -149,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", default="llama-3.3-70b-versatile", help="Groq model")
     parser.add_argument("--language", choices=["ro", "en"], default="ro", help="Prompt language")
     parser.add_argument("--max", type=int, help="Max instances to process")
+    parser.add_argument("--delay", type=float, default=2.0, help="Delay in seconds between API calls (default: 2.0)")
 
     args = parser.parse_args()
 
@@ -172,4 +175,5 @@ if __name__ == "__main__":
         args.model,
         args.language,
         args.max,
+        args.delay,
     )
