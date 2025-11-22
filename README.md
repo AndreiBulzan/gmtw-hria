@@ -74,7 +74,7 @@ Evaluate the dummy outputs:
 python scripts/evaluate_outputs.py test.jsonl dummy_outputs.jsonl
 ```
 
-Expected results: High scores (U~0.83, R~0.97, G~1.0, F~1.0) showing the evaluator works correctly.
+Expected results: High scores (U≈0.83, R≈0.97, G≈1.0, F≈1.0) showing the evaluator works correctly.
 
 ## Running Models
 
