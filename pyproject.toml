@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rombench"
+version = "0.1.0"
+description = "GMTW-Ro: Grounded Multilingual Task Worlds for Romanian LLM Evaluation"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "GMTW-Ro Team"}
+]
+keywords = ["llm", "evaluation", "romanian", "benchmark", "nlp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "ortools>=9.8",
+    "stanza>=1.7",
+    "rapidfuzz>=3.5",
+    "json-repair>=0.25",
+    "pydantic>=2.5",
+    "lingua-language-detector>=2.0",
+    "numpy>=1.24",
+    "tqdm>=4.65",
+    "pyyaml>=6.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.1",
+    "mypy>=1.7",
+]
+
+[project.scripts]
+gmtw-eval = "rombench.runners.run_gmtw:main"
+rowrite-eval = "rombench.runners.run_rowrite:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rombench*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
