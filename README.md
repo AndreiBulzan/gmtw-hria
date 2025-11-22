@@ -98,12 +98,12 @@ Or pass it directly with `--api-key` flag.
 
 ```bash
 # Full evaluation with 70B model
-python scripts/run_groq_batch.py test.jsonl --output groq_70b_outputs.jsonl
+python scripts/run_groq_batch.py test.jsonl --output groq_70b.jsonl
 
 # Faster 8B model
 python scripts/run_groq_batch.py test.jsonl \
   --model llama-3.1-8b-instant \
-  --output groq_8b_outputs.jsonl
+  --output groq_8b.jsonl
 
 # Test on just 5 instances first
 python scripts/run_groq_batch.py test.jsonl \
@@ -154,7 +154,7 @@ Pentru călătoria de 3 zile în Cluj-Napoca, propun următorul plan:
 ### Basic Evaluation
 
 ```bash
-python scripts/evaluate_outputs.py test.jsonl groq_70b_outputs.jsonl
+python scripts/evaluate_outputs.py test.jsonl groq_70b.jsonl
 ```
 
 Output:
@@ -178,7 +178,7 @@ AVERAGE SCORES (25 instances)
 ### Save Detailed Metrics
 
 ```bash
-python scripts/evaluate_outputs.py test.jsonl groq_70b_outputs.jsonl \
+python scripts/evaluate_outputs.py test.jsonl groq_70b.jsonl \
   --save-metrics detailed_metrics.jsonl
 ```
 
@@ -189,7 +189,7 @@ This creates a JSONL file with complete breakdowns for each instance.
 ### View All Results
 
 ```bash
-python scripts/debug_results.py test.jsonl groq_70b_outputs.jsonl
+python scripts/debug_results.py test.jsonl groq_70b.jsonl
 ```
 
 Shows for each instance:
@@ -201,23 +201,23 @@ Shows for each instance:
 ### View Only Failures
 
 ```bash
-python scripts/debug_results.py test.jsonl groq_70b_outputs.jsonl --filter failed
+python scripts/debug_results.py test.jsonl groq_70b.jsonl --filter failed
 ```
 
 ### View Only Passes
 
 ```bash
-python scripts/debug_results.py test.jsonl groq_70b_outputs.jsonl --filter passed
+python scripts/debug_results.py test.jsonl groq_70b.jsonl --filter passed
 ```
 
 ### Inspect Specific Outputs
 
 ```bash
 # View first output
-python scripts/peek_output.py groq_70b_outputs.jsonl 1
+python scripts/peek_output.py groq_70b.jsonl 1
 
 # View 10th output
-python scripts/peek_output.py groq_70b_outputs.jsonl 10
+python scripts/peek_output.py groq_70b.jsonl 10
 ```
 
 ## Comparing Multiple Models
