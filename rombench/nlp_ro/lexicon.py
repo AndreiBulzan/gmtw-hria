@@ -219,12 +219,21 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
 
 # Words that MUST have diacritics (unambiguous cases)
 # These are words where the ASCII form is NEVER valid Romanian.
+# IMPORTANT: Do NOT include words with multiple valid diacritified forms.
+# Examples excluded:
+#   - "mana" - could be "mână" (hand) or "mană" (manna)
+#   - "scoala" - could be "școală" (school) or "scoală" (wake up!)
+#   - "invata" - could be "învață" (learns) or "învăța" (to learn)
+#   - "sa" - could be "să" (subjunctive) or "a sa" (hers)
+#   - "pana" - could be "până" (until) or "pană" (feather)
+#
 # stripped_form -> canonical_diacritified_form
 MUST_HAVE_DIACRITICS: dict[str, str] = {
-    # === Essential function words ===
-    "si": "și",           # and
-    "in": "în",           # in
-    # "sa" excluded - can be possessive "a sa" (hers)
+    # =========================================================================
+    # ESSENTIAL FUNCTION WORDS
+    # =========================================================================
+    "si": "și",           # and - NEVER valid as "si"
+    "in": "în",           # in - NEVER valid as "in"
     "asa": "așa",         # so/thus
     "daca": "dacă",       # if
     "fara": "fără",       # without
@@ -233,8 +242,16 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "inca": "încă",       # still/yet
     "dupa": "după",       # after
     "catre": "către",     # towards
+    "decat": "decât",     # than/only
+    "incat": "încât",     # so that
+    "totusi": "totuși",   # nevertheless
+    "macar": "măcar",     # at least
+    "asadar": "așadar",   # therefore
+    "fiindca": "fiindcă", # because
 
-    # === Quantity words ===
+    # =========================================================================
+    # QUANTITY / DEGREE WORDS
+    # =========================================================================
     "cat": "cât",         # how much
     "cati": "câți",       # how many (masc)
     "cate": "câte",       # how many (fem)
@@ -244,8 +261,30 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "atata": "atâta",     # so much
     "atatia": "atâția",   # so many
     "atatea": "atâtea",   # so many
+    "oricat": "oricât",   # however much
+    "oricand": "oricând", # anytime
+    "oricati": "oricâți", # however many (masc)
+    "oricate": "oricâte", # however many (fem)
 
-    # === Common verbs (î- prefix) ===
+    # =========================================================================
+    # TIME WORDS
+    # =========================================================================
+    "intai": "întâi",     # first
+    "maine": "mâine",     # tomorrow
+    "cateodata": "câteodată",   # sometimes
+    "niciodata": "niciodată",   # never
+    "vreodata": "vreodată",     # ever
+    "intotdeauna": "întotdeauna", # always
+    "inainte": "înainte", # before/forward
+    "inapoi": "înapoi",   # back
+
+    # Days of week (only unambiguous ones)
+    "marti": "marți",     # Tuesday
+    "sambata": "sâmbătă", # Saturday
+
+    # =========================================================================
+    # COMMON VERBS (î- prefix) - all unambiguous
+    # =========================================================================
     "incepe": "începe",   # begins
     "incep": "încep",     # I begin
     "inceput": "început", # beginning/begun
@@ -253,8 +292,7 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "incerc": "încerc",   # I try
     "inchide": "închide", # closes
     "inchis": "închis",   # closed
-    "invata": "învață",   # learns
-    "inveti": "înveți",   # you learn
+    "inveti": "înveți",   # you learn (singular)
     "intelege": "înțelege", # understands
     "inteles": "înțeles", # understood
     "intreb": "întreb",   # I ask
@@ -264,21 +302,64 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "intalnire": "întâlnire", # meeting
     "intorc": "întorc",   # I return
     "intoarce": "întoarce", # returns
-    "inainte": "înainte", # before/forward
-    "inapoi": "înapoi",   # back
     "impotriva": "împotriva", # against
     "impreuna": "împreună", # together
-    "intotdeauna": "întotdeauna", # always
+    "incotro": "încotro", # where to
 
-    # === Common verbs (ști-) ===
-    "stie": "știe",       # knows
-    "stii": "știi",       # you know
+    # =========================================================================
+    # COMMON VERBS (ști- stem)
+    # =========================================================================
+    "stie": "știe",       # knows (3rd person)
+    "stii": "știi",       # you know (singular)
     "stiu": "știu",       # I know
     "stim": "știm",       # we know
+    "stiti": "știți",     # you know (plural)
     "stiut": "știut",     # known
     "stiinta": "știință", # science
 
-    # === Common nouns ===
+    # =========================================================================
+    # COMMON VERBS (-ește/-ează endings)
+    # =========================================================================
+    "gaseste": "găsește",     # finds
+    "gandeste": "gândește",   # thinks
+    "reuseste": "reușește",   # succeeds
+    "traieste": "trăiește",   # lives
+    "urmareste": "urmărește", # follows/watches
+    "lucreaza": "lucrează",   # works
+    "asteapta": "așteaptă",   # waits
+    "astept": "aștept",       # I wait
+    "asteptam": "așteptăm",   # we wait
+    "ramane": "rămâne",       # remains
+    "raman": "rămân",         # I remain
+
+    # =========================================================================
+    # VERB FORMS - 2nd person plural (-ți ending)
+    # =========================================================================
+    "faceti": "faceți",   # you do/make (plural)
+    "vreti": "vreți",     # you want (plural)
+    "puteti": "puteți",   # you can (plural)
+    "aveti": "aveți",     # you have (plural)
+    "sunteti": "sunteți", # you are (plural)
+    "spuneti": "spuneți", # you say (plural)
+    "vedeti": "vedeți",   # you see (plural)
+    "luati": "luați",     # you take (plural)
+    "dati": "dați",       # you give (plural)
+    "stati": "stați",     # you stay (plural)
+    "auziti": "auziți",   # you hear (plural)
+    "mergeti": "mergeți", # you go (plural)
+    "veniti": "veniți",   # you come (plural)
+    "cititi": "citiți",   # you read (plural)
+    "scrieti": "scrieți", # you write (plural)
+
+    # =========================================================================
+    # VERB FORMS - "a fi" (to be)
+    # =========================================================================
+    "esti": "ești",       # you are (singular)
+    "fiti": "fiți",       # be! (plural imperative)
+
+    # =========================================================================
+    # COMMON NOUNS - strictly unambiguous
+    # =========================================================================
     "tara": "țară",       # country
     "tarii": "țării",     # of the country
     "tarile": "țările",   # the countries
@@ -286,15 +367,11 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "orasul": "orașul",   # the city
     "orase": "orașe",     # cities
     "viata": "viață",     # life
-    "maine": "mâine",     # tomorrow
     "paine": "pâine",     # bread
     "gand": "gând",       # thought
     "ganduri": "gânduri", # thoughts
-    "mana": "mână",       # hand
     "maini": "mâini",     # hands
     "pamant": "pământ",   # earth/ground
-    "scoala": "școală",   # school
-    "scoli": "școli",     # schools
     "saptamana": "săptămână", # week
     "saptamani": "săptămâni", # weeks
     "raspuns": "răspuns", # answer
@@ -309,18 +386,21 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "batran": "bătrân",   # old (man)
     "batrani": "bătrâni", # old (men)
 
-    # === Adjectives/adverbs ===
+    # =========================================================================
+    # ADJECTIVES / ADVERBS
+    # =========================================================================
     "usor": "ușor",       # easy/easily
     "usoara": "ușoară",   # easy (fem)
-    "asadar": "așadar",   # therefore
+    "urmatorul": "următorul",   # the next (masc)
+    "urmatoarea": "următoarea", # the next (fem)
+    "urmator": "următor", # next
 
-    # === Verb forms (a fi - to be) ===
-    "esti": "ești",       # you are
-    "fiti": "fiți",       # be! (plural imperative)
-
-    # === Numbers ===
+    # =========================================================================
+    # NUMBERS
+    # =========================================================================
     "sase": "șase",       # six
     "sapte": "șapte",     # seven
+    "doua": "două",       # two (fem)
 }
 
 # Common English words that indicate code-switching (should not appear in Romanian)
