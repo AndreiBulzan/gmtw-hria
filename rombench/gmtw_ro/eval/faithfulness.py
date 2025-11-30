@@ -146,16 +146,22 @@ def compute_faithfulness_deterministic(
         if not is_entity_mentioned(entity, explanation):
             missing_entities.append(entity_id)
 
-    # Compute F score
+    # Compute F score with severity exponent
+    # Import here to avoid circular imports
+    from .metrics import SEVERITY_EXPONENT
+
     if not planned_entities:
         F = 1.0
+        F_linear = 1.0
     else:
-        # F = (entities mentioned) / (total entities planned)
+        # F = (entities mentioned / total entities planned) ^ severity_exponent
         mentioned_count = len(planned_entities) - len(missing_entities)
-        F = mentioned_count / len(planned_entities)
+        F_linear = mentioned_count / len(planned_entities)
+        F = F_linear ** SEVERITY_EXPONENT
 
     return {
         "F": F,
+        "F_linear": F_linear,  # For reference
         "missing": missing_entities,
         "planned_entities": planned_entity_ids,
         "all_mentioned": len(missing_entities) == 0,

@@ -2,6 +2,13 @@
 GMTW-Ro Metrics: U, R, G, F
 
 Implements the four core metrics for evaluating model performance.
+
+Scoring uses a severity exponent to penalize violations more harshly:
+- Linear (exponent=1): 2/3 satisfied = 0.67
+- Strict (exponent=2): 2/3 satisfied = 0.44
+- Harsh (exponent=3): 2/3 satisfied = 0.30
+
+Default is exponent=2 (strict mode).
 """
 
 from dataclasses import dataclass
@@ -9,6 +16,11 @@ from typing import Any
 from ..worlds.base import World, ConstraintType, GoalType
 from .constraints import check_constraint
 from .faithfulness import compute_faithfulness_deterministic
+
+# Severity exponent for U and R scores
+# Higher = more punishing for violations
+# 1.0 = linear (lenient), 2.0 = squared (strict), 3.0 = cubed (harsh)
+SEVERITY_EXPONENT = 2.0
 
 
 @dataclass
@@ -82,10 +94,14 @@ def compute_U(world: World, plan: dict) -> dict[str, Any]:
                 "error": str(e),
             })
 
-    U = satisfied_count / len(instruction_constraints)
+    # Apply severity exponent: (satisfied/total)^exponent
+    # This penalizes violations more harshly than linear scoring
+    raw_ratio = satisfied_count / len(instruction_constraints)
+    U = raw_ratio ** SEVERITY_EXPONENT
 
     return {
         "U": U,
+        "U_linear": raw_ratio,  # For reference
         "satisfied": satisfied_count,
         "total": len(instruction_constraints),
         "constraints": constraint_results,
@@ -147,10 +163,14 @@ def compute_R(world: World, plan: dict) -> dict[str, Any]:
                 "error": str(e),
             })
 
-    R = satisfied_count / len(structural_goals)
+    # Apply severity exponent: (satisfied/total)^exponent
+    # This penalizes violations more harshly than linear scoring
+    raw_ratio = satisfied_count / len(structural_goals)
+    R = raw_ratio ** SEVERITY_EXPONENT
 
     return {
         "R": R,
+        "R_linear": raw_ratio,  # For reference
         "satisfied": satisfied_count,
         "total": len(structural_goals),
         "goals": goal_results,
@@ -259,9 +279,11 @@ def compute_all_metrics(
             "description": "JSON trebuie să fie la finalul răspunsului, nu la început.",
             "satisfied": False,
         })
-        # Recalculate U with the format constraint
+        # Recalculate U with the format constraint (using severity exponent)
         U_details["total"] += 1
-        U_details["U"] = U_details["satisfied"] / U_details["total"]
+        raw_ratio = U_details["satisfied"] / U_details["total"]
+        U_details["U_linear"] = raw_ratio
+        U_details["U"] = raw_ratio ** SEVERITY_EXPONENT
     else:
         U_details["format_violation"] = False
 
