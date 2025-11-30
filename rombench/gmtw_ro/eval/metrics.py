@@ -4,7 +4,6 @@ GMTW-Ro Metrics: U, R, G, F
 Implements the four core metrics for evaluating model performance.
 """
 
-import math
 from dataclasses import dataclass
 from typing import Any
 from ..worlds.base import World, ConstraintType, GoalType
@@ -166,63 +165,32 @@ def compute_G(text: str, nlp_tools: Any = None) -> dict[str, Any]:
     """
     Compute Generation Quality score
 
-    G measures linguistic hygiene: grammar, diacritics, code-switching.
+    G measures linguistic hygiene: diacritics, code-switching, text length.
 
-    NOTE: This is a simplified implementation. For full implementation,
-    integrate with nlp_ro toolkit.
+    Uses the Romanian NLP toolkit for deterministic, lexicon-based analysis.
+
+    Components:
+    - G_dia: Diacritic correctness (are Romanian diacritics used properly?)
+    - G_cs: Code-switch score (absence of English contamination)
+    - G_len: Length score (is the text adequately long?)
 
     Args:
         text: The natural language explanation
-        nlp_tools: Optional NLP toolkit (Stanza, etc.)
+        nlp_tools: Optional RomanianNLPToolkit instance (created if not provided)
 
     Returns:
-        Dictionary with G score and details
+        Dictionary with G score and component details
     """
-    # Simplified implementation (to be replaced with full NLP toolkit)
-
-    # Component 1: Grammar/spelling (placeholder)
-    # In full implementation: use LanguageTool or grammar checker
-    # For now, simple heuristic: check for very short or degenerate text
-    words = text.split()
-    n_tokens = len(words)
-
-    if n_tokens < 10:
-        G_gram = 0.5  # Too short
+    # Use provided toolkit or create one
+    if nlp_tools is not None:
+        toolkit = nlp_tools
     else:
-        G_gram = 1.0  # Placeholder
+        # Import here to avoid circular imports
+        from ...nlp_ro import RomanianNLPToolkit
+        toolkit = RomanianNLPToolkit()
 
-    # Component 2: Diacritic coverage
-    # Check presence of Romanian diacritics
-    diacritic_chars = set('ăâîșț')
-    has_diacritics = any(c in text for c in diacritic_chars)
-
-    # Simple heuristic: if text is reasonably long and has no diacritics, penalize
-    if n_tokens > 20 and not has_diacritics:
-        G_dia = 0.6  # Likely stripped diacritics
-    else:
-        G_dia = 1.0
-
-    # Component 3: Code-switching
-    # Simple heuristic: check for common English words
-    common_english = ['the', 'and', 'is', 'are', 'was', 'were', 'have', 'has', 'will', 'would']
-    text_lower = text.lower()
-    english_word_count = sum(1 for word in common_english if f' {word} ' in f' {text_lower} ')
-
-    cs_rate = english_word_count / max(1, n_tokens)
-    G_cs = math.exp(-10 * cs_rate)  # Exponential penalty
-
-    # Combined G score
-    G = G_gram * G_dia * G_cs
-
-    return {
-        "G": G,
-        "G_gram": G_gram,
-        "G_dia": G_dia,
-        "G_cs": G_cs,
-        "n_tokens": n_tokens,
-        "cs_rate": cs_rate,
-        "note": "Simplified implementation - integrate nlp_ro for full scoring",
-    }
+    # Get full analysis from toolkit
+    return toolkit.compute_g_score(text)
 
 
 # ============================================================================

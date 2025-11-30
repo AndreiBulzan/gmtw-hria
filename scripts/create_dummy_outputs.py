@@ -29,6 +29,8 @@ def create_dummy_outputs(instances_file: str, output_file: str):
                 dummy_output = generate_schedule_dummy(world)
             elif world.world_type == "fact":
                 dummy_output = generate_fact_dummy(world)
+            elif world.world_type == "recipe":
+                dummy_output = generate_recipe_dummy(world)
             else:
                 dummy_output = "Nu pot rezolva această sarcină."
 
@@ -128,27 +130,72 @@ def generate_schedule_dummy(world):
 def generate_fact_dummy(world):
     """Generate dummy fact output"""
     facts = world.payload['facts']
-    misbeliefs = world.payload.get('misbelief_scripts', [])
+    question = world.payload.get('question', {})
+    expected = question.get('expected_answer', '')
 
-    if misbeliefs:
-        # Answer the first misbelief question
-        script = misbeliefs[0]
-        answer = script['true_answer']
-
-        explanation = f"Pe baza informațiilor din contextul dat, răspunsul corect este: {answer}\n\n"
+    if expected:
+        answer = expected
+        explanation = f"Pe baza informațiilor din contextul dat, răspunsul este: {answer}\n\n"
         explanation += "Aceasta este informația din baza de date furnizată.\n\n"
-
-        json_answer = json.dumps({"answer": answer}, ensure_ascii=False, indent=2)
     else:
-        # Just list the facts
-        explanation = "Faptele din baza de date sunt:\n\n"
-        for key, value in facts.items():
-            explanation += f"- {key}: {value}\n"
+        # Just use first fact
+        first_key = list(facts.keys())[0] if facts else ''
+        answer = facts.get(first_key, 'Necunoscut')
+        explanation = f"Răspunsul este: {answer}\n\n"
+
+    json_answer = json.dumps({"answer": answer}, ensure_ascii=False, indent=2)
+    return explanation + json_answer
+
+
+def generate_recipe_dummy(world):
+    """Generate dummy recipe output"""
+    num_days = world.payload['num_days']
+    dishes = world.payload['dishes']
+
+    # Group dishes by type
+    by_type = {'mic_dejun': [], 'pranz': [], 'cina': []}
+    for dish in dishes:
+        dtype = dish['type']
+        if dtype in by_type:
+            # Check dietary constraints
+            is_ok = True
+            for c in world.constraints:
+                if c.id == 'C_DIET_0' and 'vegetarian' in c.description_ro.lower():
+                    if not dish.get('vegetarian', False):
+                        is_ok = False
+                if 'gluten' in c.check_fn and dish.get('contains_gluten', False):
+                    is_ok = False
+                if 'lactose' in c.check_fn and dish.get('contains_lactose', False):
+                    is_ok = False
+            if is_ok:
+                by_type[dtype].append(dish['name'])
+
+    # Build plan
+    plan = {}
+    for day in range(1, num_days + 1):
+        for meal in ['mic_dejun', 'pranz', 'cina']:
+            key = f"day{day}_{meal}"
+            options = by_type.get(meal, [])
+            if options:
+                plan[key] = options[(day - 1) % len(options)]
+            else:
+                plan[key] = dishes[0]['name'] if dishes else "Necunoscut"
+
+    # Generate explanation
+    meal_names = {'mic_dejun': 'mic dejun', 'pranz': 'prânz', 'cina': 'cină'}
+    explanation = f"Am planificat meniurile pentru {num_days} zile.\n\n"
+
+    for day in range(1, num_days + 1):
+        explanation += f"Ziua {day}:\n"
+        for meal in ['mic_dejun', 'pranz', 'cina']:
+            key = f"day{day}_{meal}"
+            explanation += f"  - {meal_names[meal]}: {plan[key]}\n"
         explanation += "\n"
 
-        json_answer = json.dumps({"answer": "Vezi lista de mai sus"}, ensure_ascii=False, indent=2)
+    explanation += "Meniurile respectă restricțiile alimentare indicate.\n\n"
 
-    return explanation + json_answer
+    json_plan = json.dumps(plan, ensure_ascii=False, indent=2)
+    return explanation + json_plan
 
 
 if __name__ == "__main__":

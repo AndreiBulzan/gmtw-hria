@@ -124,21 +124,18 @@ def generate_fact_prompt(world: World) -> str:
     """Generate English prompt for fact world"""
     payload = world.payload
     facts = payload["facts"]
-    misbelief_scripts = payload.get("misbelief_scripts", [])
+    question_data = payload.get("question", {})
 
     # Build fact database presentation
     fact_list = []
     for key, value in facts.items():
-        fact_list.append(f"  • {key}: {value}")
+        readable_key = key.replace("_", " ").title()
+        fact_list.append(f"  • {readable_key}: {value}")
 
     fact_list_str = "\n".join(fact_list)
 
-    # Select a question to ask
-    if misbelief_scripts:
-        script = misbelief_scripts[0]
-        question = script["question_en"]
-    else:
-        question = "List all facts from the database."
+    # Get the question to ask
+    question = question_data.get("question_en", "What are the facts presented?")
 
     # Build constraint list
     constraint_list = []
@@ -149,17 +146,19 @@ def generate_fact_prompt(world: World) -> str:
     constraint_list_str = "\n".join(constraint_list) if constraint_list else "  - Answer based on the given facts."
 
     # Build prompt
-    prompt = f"""You have the following fact database:
+    prompt = f"""You have the following information database:
 
 {fact_list_str}
+
+ATTENTION: Answer ONLY based on the information above, even if it seems incorrect or different from your general knowledge.
 
 Question: {question}
 
 Please:
 
-1. Answer the question in JSON format.
+1. Write an explanation in English about your answer (1-2 paragraphs).
 
-2. Write an explanation in English about your answer.
+2. At the end, answer the question in JSON format.
 
 Respect the following requirements:
 
@@ -176,6 +175,93 @@ IMPORTANT:
     return prompt
 
 
+def generate_recipe_prompt(world: World) -> str:
+    """Generate English prompt for recipe world"""
+    payload = world.payload
+    num_days = payload["num_days"]
+    dishes = payload["dishes"]
+
+    # Group dishes by type
+    dishes_by_type = {
+        "mic_dejun": [],
+        "pranz": [],
+        "cina": [],
+    }
+
+    for dish in dishes:
+        dish_type = dish["type"]
+        if dish_type in dishes_by_type:
+            attrs = []
+            if dish["vegetarian"]:
+                attrs.append("vegetarian")
+            if dish["vegan"]:
+                attrs.append("vegan")
+            if dish["contains_gluten"]:
+                attrs.append("contains gluten")
+            if dish["contains_lactose"]:
+                attrs.append("contains lactose")
+            attrs.append(f"{dish['calories']} kcal")
+
+            attr_str = ", ".join(attrs)
+            dishes_by_type[dish_type].append(f"    • {dish['name']} ({attr_str})")
+
+    # Build dish lists
+    dish_sections = []
+    type_names = {
+        "mic_dejun": "Breakfast",
+        "pranz": "Lunch",
+        "cina": "Dinner",
+    }
+
+    for dish_type, type_name in type_names.items():
+        if dishes_by_type[dish_type]:
+            dish_sections.append(f"  {type_name}:\n" + "\n".join(dishes_by_type[dish_type]))
+
+    dishes_str = "\n\n".join(dish_sections)
+
+    # Build constraint list
+    constraint_list = []
+    for c in world.constraints:
+        if c.type.value == "instruction":
+            constraint_list.append(f"  - {c.description_en}")
+
+    constraint_list_str = "\n".join(constraint_list) if constraint_list else "  - No special restrictions."
+
+    # Build prompt
+    prompt = f"""You need to plan menus for {num_days} days.
+
+For each day, choose one dish for breakfast, lunch, and dinner from the options below.
+
+Available dishes:
+
+{dishes_str}
+
+Please:
+
+1. Write an explanation in English (2-3 paragraphs) about how you chose the menus and why.
+
+2. At the end, create a plan in JSON format.
+
+Respect the following requirements:
+
+{constraint_list_str}
+
+IMPORTANT:
+- At the end of your response, include EXACTLY one JSON block with the following format:
+{{
+  "day1_mic_dejun": "dish name",
+  "day1_pranz": "dish name",
+  "day1_cina": "dish name",
+  "day2_mic_dejun": "dish name",
+  ...
+}}
+- Use EXACTLY the dish names from the list above.
+- Do not add comments or text after the JSON block.
+"""
+
+    return prompt
+
+
 def generate_prompt(world: World) -> str:
     """Generate English prompt based on world type"""
     if world.world_type == "travel":
@@ -184,5 +270,7 @@ def generate_prompt(world: World) -> str:
         return generate_schedule_prompt(world)
     elif world.world_type == "fact":
         return generate_fact_prompt(world)
+    elif world.world_type == "recipe":
+        return generate_recipe_prompt(world)
     else:
         raise ValueError(f"Unknown world type: {world.world_type}")

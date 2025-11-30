@@ -19,31 +19,30 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
 
 # Virtual environments
 venv/
 ENV/
 env/
 
-# IDEs
+# IDEs and tools
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.claude/
 
 # Environment variables
 .env
 .env.local
 
-# Data and outputs
+# Data and outputs (generated files)
 data/
 results/
 metrics/
 *.jsonl
-!data/.gitkeep
 
-# Test outputs
-test_output.jsonl
-dummy_outputs.jsonl
-groq_outputs.jsonl
+# Keep .gitkeep files
+!data/.gitkeep

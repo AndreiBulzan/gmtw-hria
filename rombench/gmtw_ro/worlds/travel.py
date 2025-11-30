@@ -19,6 +19,7 @@ CITIES = {
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.5,
+                "cost_lei": 25,
             },
             {
                 "name": "Parcul Central",
@@ -26,6 +27,7 @@ CITIES = {
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 2.0,
+                "cost_lei": 0,
             },
             {
                 "name": "Pârtia Poiana Brașov",
@@ -33,6 +35,7 @@ CITIES = {
                 "indoor": False,
                 "family_friendly": False,
                 "duration_hours": 4.0,
+                "cost_lei": 150,
             },
             {
                 "name": "Muzeul de Istorie",
@@ -40,13 +43,31 @@ CITIES = {
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.0,
+                "cost_lei": 20,
             },
             {
-                "name": "Tampa Cable Car",
+                "name": "Telecabina Tâmpa",
                 "type": "transport",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.0,
+                "cost_lei": 22,
+            },
+            {
+                "name": "Turnul Alb",
+                "type": "monument",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 1.0,
+                "cost_lei": 10,
+            },
+            {
+                "name": "Casa Sfatului",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 1.5,
+                "cost_lei": 15,
             },
         ]
     },
@@ -58,6 +79,7 @@ CITIES = {
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 2.0,
+                "cost_lei": 15,
             },
             {
                 "name": "Muzeul Național de Artă",
@@ -65,6 +87,7 @@ CITIES = {
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.0,
+                "cost_lei": 20,
             },
             {
                 "name": "Cetățuia",
@@ -72,6 +95,239 @@ CITIES = {
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.5,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Parcul Central Simion Bărnuțiu",
+                "type": "parc",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 1.5,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Muzeul Etnografic al Transilvaniei",
+                "type": "muzeu",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 2.5,
+                "cost_lei": 25,
+            },
+            {
+                "name": "Biserica Sfântul Mihail",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 1.0,
+                "cost_lei": 0,
+            },
+        ]
+    },
+    "Sibiu": {
+        "attractions": [
+            {
+                "name": "Piața Mare",
+                "type": "piață",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 1.5,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Muzeul Brukenthal",
+                "type": "muzeu",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 2.5,
+                "cost_lei": 30,
+            },
+            {
+                "name": "Podul Minciunilor",
+                "type": "monument",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 0.5,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Turnul Sfatului",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 1.0,
+                "cost_lei": 10,
+            },
+            {
+                "name": "Grădina Zoologică",
+                "type": "parc",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 3.0,
+                "cost_lei": 25,
+            },
+            {
+                "name": "Muzeul ASTRA",
+                "type": "muzeu",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 4.0,
+                "cost_lei": 35,
+            },
+        ]
+    },
+    "Timișoara": {
+        "attractions": [
+            {
+                "name": "Piața Victoriei",
+                "type": "piață",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 1.5,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Catedrala Mitropolitană",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 1.0,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Parcul Rozelor",
+                "type": "parc",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 2.0,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Muzeul de Artă",
+                "type": "muzeu",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 2.0,
+                "cost_lei": 20,
+            },
+            {
+                "name": "Bastionul Theresia",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": False,
+                "duration_hours": 1.5,
+                "cost_lei": 15,
+            },
+            {
+                "name": "Grădina Zoologică Timișoara",
+                "type": "parc",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 3.0,
+                "cost_lei": 20,
+            },
+        ]
+    },
+    "Iași": {
+        "attractions": [
+            {
+                "name": "Palatul Culturii",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 3.0,
+                "cost_lei": 30,
+            },
+            {
+                "name": "Grădina Botanică Iași",
+                "type": "parc",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 2.5,
+                "cost_lei": 15,
+            },
+            {
+                "name": "Mănăstirea Trei Ierarhi",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 1.0,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Teatrul Național Iași",
+                "type": "monument",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 0.5,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Parcul Copou",
+                "type": "parc",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 2.0,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Casa Memorială Mihai Eminescu",
+                "type": "muzeu",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 1.5,
+                "cost_lei": 10,
+            },
+        ]
+    },
+    "Constanța": {
+        "attractions": [
+            {
+                "name": "Cazinoul din Constanța",
+                "type": "monument",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 1.0,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Muzeul de Istorie și Arheologie",
+                "type": "muzeu",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 2.0,
+                "cost_lei": 20,
+            },
+            {
+                "name": "Delfinariul",
+                "type": "parc",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 2.0,
+                "cost_lei": 45,
+            },
+            {
+                "name": "Plaja Modern",
+                "type": "plajă",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 4.0,
+                "cost_lei": 0,
+            },
+            {
+                "name": "Acvariul Constanța",
+                "type": "muzeu",
+                "indoor": True,
+                "family_friendly": True,
+                "duration_hours": 1.5,
+                "cost_lei": 30,
+            },
+            {
+                "name": "Farul Genovez",
+                "type": "monument",
+                "indoor": False,
+                "family_friendly": True,
+                "duration_hours": 0.5,
+                "cost_lei": 0,
             },
         ]
     },
@@ -137,7 +393,11 @@ class TravelWorldGenerator:
                 "indoor": attr["indoor"],
                 "family_friendly": attr["family_friendly"],
                 "duration_hours": attr["duration_hours"],
+                "cost_lei": attr.get("cost_lei", 0),
             })
+
+        # Calculate total possible cost for budget constraint
+        total_possible_cost = sum(a.get("cost_lei", 0) for a in selected_attractions)
 
         # Generate constraints
         constraints = []
@@ -149,10 +409,24 @@ class TravelWorldGenerator:
                 Constraint(
                     id="C_MUST_MONUMENT",
                     type=ConstraintType.INSTRUCTION,
-                    description_ro=f"Trebuie să incluzi cel puțin un monument istoric în întregul plan.",
-                    description_en=f"You must include at least one historic monument in the entire plan.",
+                    description_ro="Trebuie să incluzi cel puțin un monument istoric în întregul plan.",
+                    description_en="You must include at least one historic monument in the entire plan.",
                     check_fn="check_must_include_type",
                     params={"type_required": "monument"},
+                )
+            )
+
+        # Must include at least one museum (medium/hard difficulty)
+        has_museum = any(a["type"] == "muzeu" for a in selected_attractions)
+        if has_museum and difficulty in ("medium", "hard"):
+            constraints.append(
+                Constraint(
+                    id="C_MUST_MUSEUM",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro="Trebuie să incluzi cel puțin un muzeu în întregul plan.",
+                    description_en="You must include at least one museum in the entire plan.",
+                    check_fn="check_must_include_type",
+                    params={"type_required": "muzeu"},
                 )
             )
 
@@ -180,6 +454,34 @@ class TravelWorldGenerator:
                     description_ro="Nu include activități care nu sunt potrivite pentru copii mici.",
                     description_en="Do not include activities that are not suitable for small children.",
                     check_fn="check_all_family_friendly",
+                    params={},
+                )
+            )
+
+        # Budget constraint (medium/hard difficulty)
+        if difficulty in ("medium", "hard") and total_possible_cost > 50:
+            # Set budget to 60-80% of total possible cost
+            budget = int(total_possible_cost * rng.uniform(0.5, 0.75))
+            constraints.append(
+                Constraint(
+                    id="C_BUDGET",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro=f"Bugetul total pentru activități nu trebuie să depășească {budget} lei.",
+                    description_en=f"The total budget for activities must not exceed {budget} lei.",
+                    check_fn="check_budget_limit",
+                    params={"max_budget": budget},
+                )
+            )
+
+        # No duplicates constraint (optional, ~30% chance on medium/hard)
+        if difficulty in ("medium", "hard") and rng.random() < 0.3:
+            constraints.append(
+                Constraint(
+                    id="C_NO_DUPLICATES",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro="Nu vizita același loc de două ori.",
+                    description_en="Do not visit the same place twice.",
+                    check_fn="check_no_duplicates",
                     params={},
                 )
             )

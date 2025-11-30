@@ -86,6 +86,70 @@ def check_all_family_friendly(world: World, plan: dict, params: dict) -> bool:
     return True
 
 
+def check_budget_limit(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if total cost of planned activities is within budget
+
+    Params:
+        max_budget: int - maximum budget in lei
+    """
+    max_budget = params.get("max_budget", 0)
+    if max_budget <= 0:
+        return True
+
+    # Calculate total cost
+    total_cost = 0
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+
+    for entity_id in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_id)
+
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            cost = entity.attributes.get("cost_lei", 0)
+            total_cost += cost
+
+    return total_cost <= max_budget
+
+
+def check_min_activities_per_day(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if each day has at least min_per_day activities
+
+    Params:
+        min_per_day: int - minimum activities per day
+    """
+    min_per_day = params.get("min_per_day", 1)
+
+    for day_key, entity_ids in plan.items():
+        if not day_key.startswith("day"):
+            continue
+
+        if len(entity_ids) < min_per_day:
+            return False
+
+    return True
+
+
+def check_max_activities_per_day(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if each day has at most max_per_day activities
+
+    Params:
+        max_per_day: int - maximum activities per day
+    """
+    max_per_day = params.get("max_per_day", 3)
+
+    for day_key, entity_ids in plan.items():
+        if not day_key.startswith("day"):
+            continue
+
+        if len(entity_ids) > max_per_day:
+            return False
+
+    return True
+
+
 # ============================================================================
 # Schedule World Constraints
 # ============================================================================
@@ -151,10 +215,146 @@ def check_answer_matches_context(world: World, plan: dict, params: dict) -> bool
     """
     Check if answer matches the fact database
 
-    For fact worlds, this is a simple check that the answer is in the fact DB
+    The answer should be based ONLY on facts in the provided context,
+    not on the model's parametric knowledge.
     """
-    # This is complex and depends on the specific question format
-    # For now, just return True (will be handled by goals)
+    # Get the answer from the plan
+    answer = plan.get("answer", "")
+    if not answer:
+        return False
+
+    # Get the fact database from the world payload
+    facts = world.payload.get("facts", {})
+    if not facts:
+        return True  # No facts to check against
+
+    # Normalize answer for comparison
+    answer_lower = answer.lower().strip()
+
+    # Check if the answer matches any value in the fact database
+    for key, value in facts.items():
+        value_lower = str(value).lower().strip()
+        # Check for exact match or containment
+        if value_lower in answer_lower or answer_lower in value_lower:
+            return True
+
+    return False
+
+
+# ============================================================================
+# Recipe World Constraints
+# ============================================================================
+
+def check_all_vegetarian(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if all dishes in the plan are vegetarian
+    """
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+
+    for entity_id in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_id)
+
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            if not entity.attributes.get("vegetarian", False):
+                return False
+
+    return True
+
+
+def check_no_gluten(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if no dishes contain gluten
+    """
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+
+    for entity_id in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_id)
+
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            if entity.attributes.get("contains_gluten", False):
+                return False
+
+    return True
+
+
+def check_no_lactose(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if no dishes contain lactose
+    """
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+
+    for entity_id in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_id)
+
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            if entity.attributes.get("contains_lactose", False):
+                return False
+
+    return True
+
+
+def check_max_daily_calories(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if daily calorie total is within limit
+
+    Params:
+        max_calories: int - maximum calories per day
+    """
+    max_calories = params.get("max_calories", 2000)
+
+    # Group dishes by day
+    daily_calories = {}
+
+    for key, value in plan.items():
+        # Parse key format: "day1_mic_dejun" or similar
+        parts = key.split("_", 1)
+        if len(parts) < 2 or not parts[0].startswith("day"):
+            continue
+
+        day = parts[0]
+        dish_ref = value
+
+        if not dish_ref:
+            continue
+
+        actual_id = _resolve_entity_id(world, dish_ref)
+
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            calories = entity.attributes.get("calories", 0)
+
+            if day not in daily_calories:
+                daily_calories[day] = 0
+            daily_calories[day] += calories
+
+    # Check each day
+    for day, total in daily_calories.items():
+        if total > max_calories:
+            return False
+
+    return True
+
+
+def check_all_meals_filled(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that all meal slots have a dish
+
+    Params:
+        num_days: int - number of days
+        meals: list[str] - meal types per day
+    """
+    num_days = params.get("num_days", 2)
+    meals = params.get("meals", ["mic_dejun", "pranz", "cina"])
+
+    for day_num in range(1, num_days + 1):
+        for meal in meals:
+            key = f"day{day_num}_{meal}"
+            if key not in plan or not plan[key]:
+                return False
+
     return True
 
 
@@ -307,6 +507,9 @@ CONSTRAINT_FUNCTIONS: dict[str, Callable[[World, dict, dict], bool]] = {
     "check_must_include_type": check_must_include_type,
     "check_max_outdoor_per_day": check_max_outdoor_per_day,
     "check_all_family_friendly": check_all_family_friendly,
+    "check_budget_limit": check_budget_limit,
+    "check_min_activities_per_day": check_min_activities_per_day,
+    "check_max_activities_per_day": check_max_activities_per_day,
 
     # Schedule
     "check_max_appointments_per_day": check_max_appointments_per_day,
@@ -314,6 +517,13 @@ CONSTRAINT_FUNCTIONS: dict[str, Callable[[World, dict, dict], bool]] = {
 
     # Fact
     "check_answer_matches_context": check_answer_matches_context,
+
+    # Recipe
+    "check_all_vegetarian": check_all_vegetarian,
+    "check_no_gluten": check_no_gluten,
+    "check_no_lactose": check_no_lactose,
+    "check_max_daily_calories": check_max_daily_calories,
+    "check_all_meals_filled": check_all_meals_filled,
 
     # General goals
     "check_days_non_empty": check_days_non_empty,

@@ -6,6 +6,7 @@ from .base import World, Instance, Entity, Constraint, Goal
 from .travel import TravelWorldGenerator
 from .schedule import ScheduleWorldGenerator
 from .fact import FactWorldGenerator
+from .recipe import RecipeWorldGenerator
 
 __all__ = [
     "World",
@@ -16,4 +17,5 @@ __all__ = [
     "TravelWorldGenerator",
     "ScheduleWorldGenerator",
     "FactWorldGenerator",
+    "RecipeWorldGenerator",
 ]

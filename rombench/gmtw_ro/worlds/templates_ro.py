@@ -13,13 +13,18 @@ def generate_travel_prompt(world: World) -> str:
     num_days = payload["num_days"]
     attractions = payload["attractions"]
 
+    # Check if we have budget constraint
+    has_budget = any(c.id == "C_BUDGET" for c in world.constraints)
+
     # Build attraction list
     attr_list = []
     for attr in attractions:
         indoor_str = "interior" if attr["indoor"] else "exterior"
         family_str = "potrivit pentru copii" if attr["family_friendly"] else "nu este potrivit pentru copii mici"
+        cost = attr.get("cost_lei", 0)
+        cost_str = f", {cost} lei" if has_budget else ""
         attr_list.append(
-            f"  • {attr['name']} ({attr['type']}, {indoor_str}, {family_str})"
+            f"  • {attr['name']} ({attr['type']}, {indoor_str}, {family_str}{cost_str})"
         )
 
     attr_list_str = "\n".join(attr_list)
@@ -124,24 +129,19 @@ def generate_fact_prompt(world: World) -> str:
     """Generate Romanian prompt for fact world"""
     payload = world.payload
     facts = payload["facts"]
-    misbelief_scripts = payload.get("misbelief_scripts", [])
+    question_data = payload.get("question", {})
 
-    # Build fact database presentation
+    # Build fact database presentation - more readable format
     fact_list = []
     for key, value in facts.items():
-        fact_list.append(f"  • {key}: {value}")
+        # Convert key to readable format
+        readable_key = key.replace("_", " ").title()
+        fact_list.append(f"  • {readable_key}: {value}")
 
     fact_list_str = "\n".join(fact_list)
 
-    # Select a question to ask
-    if misbelief_scripts:
-        script = misbelief_scripts[0]  # For now, just use the first one
-        question = script["question_ro"]
-        fact_key = [k for k, v in facts.items() if v == script["true_answer"]][0]
-    else:
-        # Just ask for all facts
-        question = "Listează toate faptele din baza de date."
-        fact_key = ""
+    # Get the question to ask
+    question = question_data.get("question_ro", "Care sunt faptele prezentate?")
 
     # Build constraint list
     constraint_list = []
@@ -152,17 +152,19 @@ def generate_fact_prompt(world: World) -> str:
     constraint_list_str = "\n".join(constraint_list) if constraint_list else "  - Răspunde pe baza faptelor date."
 
     # Build prompt
-    prompt = f"""Ai la dispoziție următoarea bază de date cu fapte:
+    prompt = f"""Ai la dispoziție următoarea bază de date cu informații:
 
 {fact_list_str}
+
+ATENȚIE: Răspunde DOAR pe baza informațiilor de mai sus, chiar dacă acestea par incorecte sau diferite de cunoștințele tale generale.
 
 Întrebare: {question}
 
 Te rog să:
 
-1. Răspunzi la întrebare în format JSON.
+1. Scrii o explicație în limba română despre răspunsul tău (1-2 paragrafe).
 
-2. Scrii o explicație în limba română despre răspunsul tău.
+2. La final, răspunzi la întrebare în format JSON.
 
 Respectă următoarele cerințe:
 
@@ -179,6 +181,94 @@ IMPORTANT:
     return prompt
 
 
+def generate_recipe_prompt(world: World) -> str:
+    """Generate Romanian prompt for recipe world"""
+    payload = world.payload
+    num_days = payload["num_days"]
+    dishes = payload["dishes"]
+
+    # Group dishes by type
+    dishes_by_type = {
+        "mic_dejun": [],
+        "pranz": [],
+        "cina": [],
+    }
+
+    for dish in dishes:
+        dish_type = dish["type"]
+        if dish_type in dishes_by_type:
+            # Build dish description
+            attrs = []
+            if dish["vegetarian"]:
+                attrs.append("vegetarian")
+            if dish["vegan"]:
+                attrs.append("vegan")
+            if dish["contains_gluten"]:
+                attrs.append("conține gluten")
+            if dish["contains_lactose"]:
+                attrs.append("conține lactoză")
+            attrs.append(f"{dish['calories']} kcal")
+
+            attr_str = ", ".join(attrs)
+            dishes_by_type[dish_type].append(f"    • {dish['name']} ({attr_str})")
+
+    # Build dish lists
+    dish_sections = []
+    type_names = {
+        "mic_dejun": "Mic dejun",
+        "pranz": "Prânz",
+        "cina": "Cină",
+    }
+
+    for dish_type, type_name in type_names.items():
+        if dishes_by_type[dish_type]:
+            dish_sections.append(f"  {type_name}:\n" + "\n".join(dishes_by_type[dish_type]))
+
+    dishes_str = "\n\n".join(dish_sections)
+
+    # Build constraint list
+    constraint_list = []
+    for c in world.constraints:
+        if c.type.value == "instruction":
+            constraint_list.append(f"  - {c.description_ro}")
+
+    constraint_list_str = "\n".join(constraint_list) if constraint_list else "  - Nicio restricție specială."
+
+    # Build prompt
+    prompt = f"""Trebuie să planifici meniurile pentru {num_days} zile.
+
+Pentru fiecare zi, alege câte un preparat pentru mic dejun, prânz și cină din opțiunile de mai jos.
+
+Preparate disponibile:
+
+{dishes_str}
+
+Te rog să:
+
+1. Scrii o explicație în limba română (2-3 paragrafe) despre cum ai ales meniurile și de ce.
+
+2. La final, creezi un plan în format JSON.
+
+Respectă următoarele cerințe:
+
+{constraint_list_str}
+
+IMPORTANT:
+- La finalul răspunsului, include EXACT un bloc JSON cu următorul format:
+{{
+  "day1_mic_dejun": "numele preparatului",
+  "day1_pranz": "numele preparatului",
+  "day1_cina": "numele preparatului",
+  "day2_mic_dejun": "numele preparatului",
+  ...
+}}
+- Folosește EXACT numele preparatelor din lista de mai sus.
+- Nu adăuga comentarii sau text după blocul JSON.
+"""
+
+    return prompt
+
+
 def generate_prompt(world: World) -> str:
     """Generate Romanian prompt based on world type"""
     if world.world_type == "travel":
@@ -187,5 +277,7 @@ def generate_prompt(world: World) -> str:
         return generate_schedule_prompt(world)
     elif world.world_type == "fact":
         return generate_fact_prompt(world)
+    elif world.world_type == "recipe":
+        return generate_recipe_prompt(world)
     else:
         raise ValueError(f"Unknown world type: {world.world_type}")

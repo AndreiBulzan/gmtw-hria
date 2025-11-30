@@ -8,10 +8,19 @@ Developed by the **Hub Român de Inteligență Artificială (HRIA)**.
 
 GMTW-Ro addresses the "Knowledge-Behavior Gap" in multilingual LLM evaluation by testing models on realistic, constraint-satisfaction tasks in Romanian. Unlike traditional benchmarks that rely on multiple-choice questions or LLM-as-a-judge approaches, GMTW-Ro uses:
 
-- **Grounded Task Worlds**: Fully-specified environments (travel planning, scheduling, fact retrieval)
+- **Grounded Task Worlds**: Fully-specified environments (travel, scheduling, fact retrieval, meal planning)
 - **Dual-Channel Architecture**: Models produce both structured output (JSON) and natural language explanations
 - **Deterministic Evaluation**: No human raters, no LLM judges, completely reproducible
 - **Decomposed Metrics**: Separate scores for Understanding (U), Reasoning (R), Generation (G), and Faithfulness (F)
+
+## Task Worlds
+
+| World | Task | Sample Constraints |
+|-------|------|-------------------|
+| **Travel** | Plan multi-day itinerary | Budget limits, outdoor activity caps, family-friendly |
+| **Schedule** | Organize calendar | Keep high-priority, max per day, no overlaps |
+| **Fact** | Answer from context | Context adherence (tests parametric vs. grounded knowledge) |
+| **Recipe** | Plan daily menus | Vegetarian, gluten-free, calorie limits |
 
 ## Installation
 
@@ -26,13 +35,14 @@ Required dependencies will be installed automatically: `ortools`, `rapidfuzz`, `
 
 ### 1. Generate Evaluation Questions
 
-Create a dataset of 25 instances (10 travel, 10 schedule, 5 fact):
+Create a dataset of 30 instances across all world types:
 
 ```bash
 python scripts/generate_gmtw_v0.py \
   --num-travel 10 \
   --num-schedule 10 \
   --num-fact 5 \
+  --num-recipe 5 \
   --output test.jsonl
 ```
 
@@ -40,9 +50,10 @@ For a full benchmark dataset (500+ instances):
 
 ```bash
 python scripts/generate_gmtw_v0.py \
-  --num-travel 200 \
-  --num-schedule 200 \
+  --num-travel 150 \
+  --num-schedule 150 \
   --num-fact 100 \
+  --num-recipe 100 \
   --output data/gmtw_ro_v0/instances.jsonl
 ```
 
@@ -293,14 +304,14 @@ Measures whether the plan is logically valid within the world's rules.
 
 ### G - Generation Quality Score
 
-Measures linguistic hygiene of the Romanian text.
+Measures linguistic quality of the Romanian text using a deterministic, lexicon-based analyzer.
 
 Components:
-- Grammar correctness
-- Diacritic usage (ă, â, î, ș, ț)
-- Code-switching (mixing English words)
+- **G_dia (50%)**: Diacritic correctness — checks ~200 high-frequency words that must have diacritics (și, în, țară, fără...)
+- **G_cs (30%)**: Code-switch detection — flags English contamination while excluding Romanian lookalikes
+- **G_len (20%)**: Length adequacy — penalizes suspiciously short responses
 
-**Low G indicates**: Poor Romanian generation (grammar errors, missing diacritics, English contamination).
+**Low G indicates**: Missing diacritics, English contamination, or degenerate output.
 
 ### F - Faithfulness Score
 
@@ -319,31 +330,23 @@ rombench/
 │   ├── gmtw_ro/                    # Core implementation
 │   │   ├── worlds/                 # World generators
 │   │   │   ├── base.py             # Data models
-│   │   │   ├── travel.py           # Travel world generator
-│   │   │   ├── schedule.py         # Schedule world generator
-│   │   │   ├── fact.py             # Fact world generator
+│   │   │   ├── travel.py           # Travel (6 cities, 37 attractions)
+│   │   │   ├── schedule.py         # Schedule (calendar management)
+│   │   │   ├── fact.py             # Fact (context adherence, misbelief traps)
+│   │   │   ├── recipe.py           # Recipe (meal planning, dietary constraints)
 │   │   │   ├── templates_ro.py     # Romanian prompts
 │   │   │   └── templates_en.py     # English prompts
 │   │   └── eval/                   # Evaluation tools
 │   │       ├── parser.py           # Dual-channel parser
 │   │       ├── faithfulness.py     # Deterministic F metric
-│   │       ├── constraints.py      # Constraint checkers
+│   │       ├── constraints.py      # Constraint checkers (20+ functions)
 │   │       ├── metrics.py          # U/R/G/F metrics
 │   │       └── scorer.py           # Main evaluator
-│   └── nlp_ro/                     # Romanian NLP toolkit (stub)
-├── scripts/
-│   ├── generate_gmtw_v0.py         # Dataset generation
-│   ├── create_dummy_outputs.py     # Synthetic outputs for testing
-│   ├── run_groq_batch.py           # Groq API integration
-│   ├── evaluate_outputs.py         # Batch evaluation
-│   ├── view_instances.py           # View questions
-│   ├── debug_results.py            # Detailed result viewer
-│   ├── peek_output.py              # Quick output inspector
-│   └── compare_models.py           # Model comparison
+│   └── nlp_ro/                     # Romanian NLP toolkit (84-word diacritic lexicon)
+├── scripts/                        # CLI tools
 ├── data/                           # Generated datasets
-├── examples/
-│   └── simple_example.py           # Working end-to-end example
-└── tests/                          # Unit tests (future)
+├── examples/                       # Usage examples
+└── tests/                          # Unit tests
 ```
 
 ## Example Workflow
@@ -352,7 +355,7 @@ Complete evaluation workflow:
 
 ```bash
 # 1. Generate questions
-python scripts/generate_gmtw_v0.py --num-travel 10 --num-schedule 10 --num-fact 5 --output eval.jsonl
+python scripts/generate_gmtw_v0.py --num-travel 10 --num-schedule 10 --num-fact 5 --num-recipe 5 --output eval.jsonl
 
 # 2. Preview questions
 python scripts/view_instances.py eval.jsonl --max 3
@@ -385,14 +388,15 @@ This demonstrates the complete pipeline: world generation, prompt creation, simu
 For large-scale evaluation, process in batches:
 
 ```bash
-# Generate large dataset
+# Generate large dataset (500 instances)
 python scripts/generate_gmtw_v0.py \
-  --num-travel 500 \
-  --num-schedule 500 \
-  --num-fact 250 \
+  --num-travel 150 \
+  --num-schedule 150 \
+  --num-fact 100 \
+  --num-recipe 100 \
   --output full_benchmark.jsonl
 
-# Run model (takes ~50 minutes with 2s delay)
+# Run model
 python scripts/run_groq_batch.py full_benchmark.jsonl --output results.jsonl
 
 # Evaluate
@@ -400,15 +404,6 @@ python scripts/evaluate_outputs.py full_benchmark.jsonl results.jsonl --save-met
 ```
 
 ## Known Limitations
-
-### G Metric Simplification
-
-The current G (Generation Quality) metric uses simplified heuristics:
-- Basic code-switching detection (checks for common English words)
-- Simple diacritic presence check
-- No full grammar checking
-
-For production use, integrate Romanian NLP tools (Stanza, LanguageTool) for more accurate linguistic analysis.
 
 ### English Prompts
 
@@ -418,10 +413,10 @@ The current English prompt templates contain Romanian entity names and are not s
 
 ### Core Functionality
 
-- **Integrate Romanian NLP toolkit**: Replace simplified G metric with full Stanza pipeline for grammar, morphology, and diacritic checking
 - **Add constraint solver**: Integrate OR-Tools CP-SAT to verify all generated worlds are mathematically solvable
-- **Expand world types**: Add more task families (logistics, recipe planning, route optimization)
-- **Fully localized English prompts**: Translate entity names and attributes for valid cross-lingual comparison
+- **Expand world types**: Add budget/shopping world, logistics planning
+- **Fully localized English prompts**: Translate entity names for valid cross-lingual Δ comparison
+- **Grammar checking**: Integrate LanguageTool for deeper G metric analysis (optional)
 
 ### Evaluation Improvements
 
@@ -462,8 +457,8 @@ MIT License - See LICENSE file for details.
 Contributions welcome! Please open an issue to discuss major changes before submitting pull requests.
 
 Key areas for contribution:
-- Romanian NLP integration (Stanza, LanguageTool)
 - Additional world types and constraints
+- Expanded diacritic lexicon coverage
 - Test coverage
 - Documentation improvements
 - Bug reports and evaluation edge cases

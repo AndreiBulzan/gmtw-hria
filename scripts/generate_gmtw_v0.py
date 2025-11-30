@@ -18,6 +18,7 @@ from rombench.gmtw_ro.worlds.base import Instance
 from rombench.gmtw_ro.worlds.travel import TravelWorldGenerator
 from rombench.gmtw_ro.worlds.schedule import ScheduleWorldGenerator
 from rombench.gmtw_ro.worlds.fact import FactWorldGenerator
+from rombench.gmtw_ro.worlds.recipe import RecipeWorldGenerator
 from rombench.gmtw_ro.worlds import templates_ro, templates_en
 
 
@@ -25,6 +26,7 @@ def generate_dataset(
     num_travel: int = 100,
     num_schedule: int = 100,
     num_fact: int = 50,
+    num_recipe: int = 50,
     seed_start: int = 0,
     output_file: str = "instances.jsonl"
 ):
@@ -35,6 +37,7 @@ def generate_dataset(
         num_travel: Number of travel instances
         num_schedule: Number of schedule instances
         num_fact: Number of fact instances
+        num_recipe: Number of recipe instances
         seed_start: Starting seed value
         output_file: Output JSONL file
     """
@@ -45,6 +48,7 @@ def generate_dataset(
     travel_gen = TravelWorldGenerator(spec_version="0.1")
     schedule_gen = ScheduleWorldGenerator(spec_version="0.1")
     fact_gen = FactWorldGenerator(spec_version="0.1")
+    recipe_gen = RecipeWorldGenerator(spec_version="0.1")
 
     print(f"Generating {num_travel} Travel instances...")
     for i in range(num_travel):
@@ -115,6 +119,30 @@ def generate_dataset(
         instances.append(instance)
         seed += 1
 
+    print(f"Generating {num_recipe} Recipe instances...")
+    for i in range(num_recipe):
+        world_id = f"recipe_{seed:06d}"
+        difficulty = "easy" if i < num_recipe // 3 else ("medium" if i < 2 * num_recipe // 3 else "hard")
+        world = recipe_gen.generate(
+            world_id=world_id,
+            seed=seed,
+            difficulty=difficulty
+        )
+
+        prompt_ro = templates_ro.generate_prompt(world)
+        prompt_en = templates_en.generate_prompt(world)
+
+        instance = Instance(
+            instance_id=world_id,
+            world=world,
+            prompt_ro=prompt_ro,
+            prompt_en=prompt_en,
+            meta=world.meta
+        )
+
+        instances.append(instance)
+        seed += 1
+
     # Write to JSONL
     print(f"Writing {len(instances)} instances to {output_file}...")
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -125,6 +153,7 @@ def generate_dataset(
     print(f"  Travel: {num_travel}")
     print(f"  Schedule: {num_schedule}")
     print(f"  Fact: {num_fact}")
+    print(f"  Recipe: {num_recipe}")
 
 
 def main():
@@ -150,6 +179,12 @@ def main():
         help="Number of fact instances (default: 50)"
     )
     parser.add_argument(
+        "--num-recipe",
+        type=int,
+        default=50,
+        help="Number of recipe instances (default: 50)"
+    )
+    parser.add_argument(
         "--seed-start",
         type=int,
         default=0,
@@ -172,6 +207,7 @@ def main():
         num_travel=args.num_travel,
         num_schedule=args.num_schedule,
         num_fact=args.num_fact,
+        num_recipe=args.num_recipe,
         seed_start=args.seed_start,
         output_file=args.output
     )
