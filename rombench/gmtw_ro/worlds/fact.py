@@ -27,6 +27,7 @@ FACTS = {
             "question_en": "What is the capital of Germany?",
             "answer": "Berlin",
             "typical_wrong": ["München", "Hamburg"],
+            "misbelief_answer": "Frankfurt",  # Financial capital vs political capital
         },
         {
             "key": "danube_flows",
@@ -34,6 +35,7 @@ FACTS = {
             "question_en": "Which sea does the Danube flow into?",
             "answer": "Marea Neagră",
             "typical_wrong": ["Marea Mediterană", "Marea Adriatică"],
+            "misbelief_answer": "Marea Caspică",  # Common confusion
         },
         {
             "key": "longest_river_romania",
@@ -41,6 +43,7 @@ FACTS = {
             "question_en": "What is the longest river in Romania?",
             "answer": "Dunărea",
             "typical_wrong": ["Mureșul", "Oltul"],
+            "misbelief_answer": "Mureșul",  # Second longest, often confused
         },
         {
             "key": "highest_peak_romania",
@@ -48,6 +51,7 @@ FACTS = {
             "question_en": "What is the highest peak in Romania?",
             "answer": "Moldoveanu (2544m)",
             "typical_wrong": ["Negoiu", "Omu"],
+            "misbelief_answer": "Negoiu (2535m)",  # Second highest, very close
         },
         {
             "key": "neighbors_romania",
@@ -55,6 +59,7 @@ FACTS = {
             "question_en": "How many countries border Romania?",
             "answer": "5 (Ucraina, Moldova, Bulgaria, Serbia, Ungaria)",
             "typical_wrong": ["4", "6"],
+            "misbelief_answer": "4 țări",  # Often people forget one
         },
     ],
     "history": [
@@ -64,6 +69,7 @@ FACTS = {
             "question_en": "In what year did Romania declare independence?",
             "answer": "1877",
             "typical_wrong": ["1918", "1859"],
+            "misbelief_answer": "1878",  # Treaty of Berlin year, often confused
         },
         {
             "key": "romania_eu",
@@ -71,6 +77,7 @@ FACTS = {
             "question_en": "In what year did Romania join the European Union?",
             "answer": "2007",
             "typical_wrong": ["2004", "2010"],
+            "misbelief_answer": "2004",  # When many Eastern European countries joined
         },
         {
             "key": "first_king",
@@ -78,6 +85,7 @@ FACTS = {
             "question_en": "Who was the first king of Romania?",
             "answer": "Carol I",
             "typical_wrong": ["Ferdinand I", "Mihai I"],
+            "misbelief_answer": "Alexandru Ioan Cuza",  # First ruler, but not king
         },
         {
             "key": "great_union",
@@ -85,6 +93,7 @@ FACTS = {
             "question_en": "In what year did the Great Union take place?",
             "answer": "1918",
             "typical_wrong": ["1859", "1920"],
+            "misbelief_answer": "1920",  # Treaty of Trianon year
         },
     ],
     "culture": [
@@ -94,6 +103,7 @@ FACTS = {
             "question_en": "Who is the national poet of Romania?",
             "answer": "Mihai Eminescu",
             "typical_wrong": ["Ion Creangă", "George Coșbuc"],
+            "misbelief_answer": "George Coșbuc",  # Another famous poet
         },
         {
             "key": "national_day",
@@ -101,6 +111,7 @@ FACTS = {
             "question_en": "When is Romania's national day?",
             "answer": "1 Decembrie",
             "typical_wrong": ["24 Ianuarie", "9 Mai"],
+            "misbelief_answer": "24 Ianuarie",  # Union of Principalities day
         },
         {
             "key": "currency",
@@ -108,6 +119,7 @@ FACTS = {
             "question_en": "What is the national currency of Romania?",
             "answer": "Leul (RON)",
             "typical_wrong": ["Euro", "Dolar"],
+            "misbelief_answer": "Euro",  # Common misconception about EU countries
         },
     ],
     "science": [
@@ -175,7 +187,13 @@ class FactWorldGenerator:
         for category, facts in FACTS.items():
             all_facts.extend([(category, f) for f in facts])
 
-        num_facts = rng.randint(3, 5) if difficulty == "easy" else rng.randint(4, 6)
+        # Easy: 3-5 facts, Medium: 4-6 facts, Hard: 5-8 facts (more to read, more to confuse)
+        if difficulty == "easy":
+            num_facts = rng.randint(3, 5)
+        elif difficulty == "medium":
+            num_facts = rng.randint(4, 6)
+        else:  # hard
+            num_facts = rng.randint(5, 8)
         selected = rng.sample(all_facts, min(num_facts, len(all_facts)))
 
         # Build fact database
@@ -189,10 +207,16 @@ class FactWorldGenerator:
 
             # On medium/hard difficulty, sometimes use misbelief answer
             # This tests if the model follows context over parametric knowledge
+            # Easy: never, Medium: 40% chance, Hard: 80% chance
+            misbelief_chance = 0.0
+            if difficulty == "medium":
+                misbelief_chance = 0.4
+            elif difficulty == "hard":
+                misbelief_chance = 0.8  # Almost always use misbelief
+
             use_misbelief = (
-                difficulty in ("medium", "hard")
-                and "misbelief_answer" in fact
-                and rng.random() < 0.4  # 40% chance to use misbelief
+                "misbelief_answer" in fact
+                and rng.random() < misbelief_chance
             )
 
             if use_misbelief:

@@ -24,6 +24,22 @@ For detailed technical documentation, see [docs/GMTW_Ro_Technical_Specification.
 | **Fact** | Answer from context | Context adherence (tests parametric vs. grounded knowledge) |
 | **Recipe** | Plan daily menus | Vegetarian, gluten-free, calorie limits |
 
+## Difficulty Levels
+
+Each world supports three difficulty levels with progressively more constraints:
+
+| Level | Travel | Schedule | Recipe | Fact |
+|-------|--------|----------|--------|------|
+| **Easy** | ~3 constraints | ~2 constraints | ~1 constraint | 0% misbelief traps |
+| **Medium** | ~5-6 constraints | ~2 constraints | ~3-4 constraints | 40% misbelief traps |
+| **Hard** | ~7-8 constraints | ~4-5 constraints | ~5-6 constraints | 80% misbelief traps |
+
+**Hard mode adds:**
+- **Travel**: Duration limits per day, type diversity requirements, type exclusions
+- **Schedule**: No back-to-back appointments, total weekly limits, day restrictions
+- **Recipe**: Prep time limits, lunch-must-be-heaviest, vegan requirements
+- **Fact**: More facts to process, higher chance of context contradicting real-world knowledge
+
 ## Installation
 
 ```bash
@@ -69,6 +85,13 @@ export GROQ_API_KEY=your_key_here
 
 **Option B**: Generate your own:
 ```bash
+# Mixed difficulty (40% easy, 40% medium, 20% hard) - default
+python scripts/generate_gmtw_v0.py --output data/instances.jsonl
+
+# Hard mode only (most challenging)
+python scripts/generate_gmtw_v0.py --difficulty hard --output data/instances_hard.jsonl
+
+# Custom counts
 python scripts/generate_gmtw_v0.py --num-travel 150 --num-schedule 150 --num-fact 100 --num-recipe 100 --output data/instances.jsonl
 ```
 

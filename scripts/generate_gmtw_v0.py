@@ -22,13 +22,38 @@ from rombench.gmtw_ro.worlds.recipe import RecipeWorldGenerator
 from rombench.gmtw_ro.worlds import templates_ro, templates_en
 
 
+def get_difficulty_for_index(i: int, total: int, difficulty_mode: str) -> str:
+    """
+    Determine difficulty level for instance at index i.
+
+    Args:
+        i: Current index
+        total: Total instances of this type
+        difficulty_mode: 'mixed' (default), 'easy', 'medium', or 'hard'
+
+    Returns:
+        Difficulty string: 'easy', 'medium', or 'hard'
+    """
+    if difficulty_mode in ("easy", "medium", "hard"):
+        return difficulty_mode
+
+    # Mixed mode: 40% easy, 40% medium, 20% hard
+    if i < total * 0.4:
+        return "easy"
+    elif i < total * 0.8:
+        return "medium"
+    else:
+        return "hard"
+
+
 def generate_dataset(
     num_travel: int = 100,
     num_schedule: int = 100,
     num_fact: int = 50,
     num_recipe: int = 50,
     seed_start: int = 0,
-    output_file: str = "instances.jsonl"
+    output_file: str = "instances.jsonl",
+    difficulty: str = "mixed"
 ):
     """
     Generate a complete dataset
@@ -40,6 +65,7 @@ def generate_dataset(
         num_recipe: Number of recipe instances
         seed_start: Starting seed value
         output_file: Output JSONL file
+        difficulty: 'mixed' (40% easy, 40% medium, 20% hard), 'easy', 'medium', or 'hard'
     """
     instances = []
     seed = seed_start
@@ -50,13 +76,13 @@ def generate_dataset(
     fact_gen = FactWorldGenerator(spec_version="0.1")
     recipe_gen = RecipeWorldGenerator(spec_version="0.1")
 
-    print(f"Generating {num_travel} Travel instances...")
+    print(f"Generating {num_travel} Travel instances (difficulty={difficulty})...")
     for i in range(num_travel):
         world_id = f"travel_{seed:06d}"
         world = travel_gen.generate(
             world_id=world_id,
             seed=seed,
-            difficulty="easy" if i < num_travel // 2 else "medium"
+            difficulty=get_difficulty_for_index(i, num_travel, difficulty)
         )
 
         prompt_ro = templates_ro.generate_prompt(world)
@@ -73,13 +99,13 @@ def generate_dataset(
         instances.append(instance)
         seed += 1
 
-    print(f"Generating {num_schedule} Schedule instances...")
+    print(f"Generating {num_schedule} Schedule instances (difficulty={difficulty})...")
     for i in range(num_schedule):
         world_id = f"schedule_{seed:06d}"
         world = schedule_gen.generate(
             world_id=world_id,
             seed=seed,
-            difficulty="easy" if i < num_schedule // 2 else "medium"
+            difficulty=get_difficulty_for_index(i, num_schedule, difficulty)
         )
 
         prompt_ro = templates_ro.generate_prompt(world)
@@ -96,13 +122,13 @@ def generate_dataset(
         instances.append(instance)
         seed += 1
 
-    print(f"Generating {num_fact} Fact instances...")
+    print(f"Generating {num_fact} Fact instances (difficulty={difficulty})...")
     for i in range(num_fact):
         world_id = f"fact_{seed:06d}"
         world = fact_gen.generate(
             world_id=world_id,
             seed=seed,
-            difficulty="easy" if i < num_fact // 2 else "medium"
+            difficulty=get_difficulty_for_index(i, num_fact, difficulty)
         )
 
         prompt_ro = templates_ro.generate_prompt(world)
@@ -119,14 +145,13 @@ def generate_dataset(
         instances.append(instance)
         seed += 1
 
-    print(f"Generating {num_recipe} Recipe instances...")
+    print(f"Generating {num_recipe} Recipe instances (difficulty={difficulty})...")
     for i in range(num_recipe):
         world_id = f"recipe_{seed:06d}"
-        difficulty = "easy" if i < num_recipe // 3 else ("medium" if i < 2 * num_recipe // 3 else "hard")
         world = recipe_gen.generate(
             world_id=world_id,
             seed=seed,
-            difficulty=difficulty
+            difficulty=get_difficulty_for_index(i, num_recipe, difficulty)
         )
 
         prompt_ro = templates_ro.generate_prompt(world)
@@ -196,6 +221,13 @@ def main():
         default="data/gmtw_ro_v0/instances.jsonl",
         help="Output JSONL file (default: data/gmtw_ro_v0/instances.jsonl)"
     )
+    parser.add_argument(
+        "--difficulty",
+        type=str,
+        choices=["mixed", "easy", "medium", "hard"],
+        default="mixed",
+        help="Difficulty level: mixed (40%% easy, 40%% medium, 20%% hard), easy, medium, or hard (default: mixed)"
+    )
 
     args = parser.parse_args()
 
@@ -209,7 +241,8 @@ def main():
         num_fact=args.num_fact,
         num_recipe=args.num_recipe,
         seed_start=args.seed_start,
-        output_file=args.output
+        output_file=args.output,
+        difficulty=args.difficulty
     )
 
 

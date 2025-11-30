@@ -575,6 +575,92 @@ class TravelWorldGenerator:
                 )
             )
 
+        # =====================================================================
+        # HARD MODE CONSTRAINTS
+        # =====================================================================
+
+        if difficulty == "hard":
+            # Duration limit per day - calculate based on available attractions
+            total_duration = sum(a["duration_hours"] for a in selected_attractions)
+            avg_duration = total_duration / len(selected_attractions) if selected_attractions else 2.0
+            # Allow about 2-3 activities worth of time per day
+            max_hours = rng.uniform(avg_duration * 2, avg_duration * 3)
+            max_hours = round(max_hours, 1)
+
+            constraints.append(
+                Constraint(
+                    id="C_MAX_DURATION",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro=f"Timpul total de vizită pe zi nu trebuie să depășească {max_hours} ore.",
+                    description_en=f"The total visit time per day must not exceed {max_hours} hours.",
+                    check_fn="check_max_duration_per_day",
+                    params={"max_hours": max_hours},
+                )
+            )
+
+            # Type diversity - must include at least 3 different types
+            available_types = set(a["type"] for a in selected_attractions)
+            if len(available_types) >= 3:
+                constraints.append(
+                    Constraint(
+                        id="C_TYPE_DIVERSITY",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Planul trebuie să includă cel puțin 3 tipuri diferite de activități (ex: muzeu, parc, monument).",
+                        description_en="The plan must include at least 3 different types of activities (e.g., museum, park, monument).",
+                        check_fn="check_type_diversity",
+                        params={"min_types": 3},
+                    )
+                )
+
+            # Exclude a type (50% chance) - pick a type that has alternatives
+            type_counts = {}
+            for a in selected_attractions:
+                t = a["type"]
+                type_counts[t] = type_counts.get(t, 0) + 1
+
+            # Types that are required by other constraints - cannot exclude these
+            required_types = set()
+            if has_monument:
+                required_types.add("monument")
+            if has_museum and difficulty in ("medium", "hard"):
+                required_types.add("muzeu")
+
+            # Only exclude if there are enough other activities and it's not required
+            excludable_types = [
+                t for t, c in type_counts.items()
+                if c == 1 and len(type_counts) > 2 and t not in required_types
+            ]
+            if excludable_types and rng.random() < 0.5:
+                type_to_exclude = rng.choice(excludable_types)
+                type_names_ro = {
+                    "monument": "monumente",
+                    "parc": "parcuri",
+                    "muzeu": "muzee",
+                    "sport": "activități sportive",
+                    "transport": "transport turistic",
+                    "piață": "piețe",
+                    "plajă": "plaje",
+                }
+                type_names_en = {
+                    "monument": "monuments",
+                    "parc": "parks",
+                    "muzeu": "museums",
+                    "sport": "sports activities",
+                    "transport": "tourist transport",
+                    "piață": "squares",
+                    "plajă": "beaches",
+                }
+                constraints.append(
+                    Constraint(
+                        id="C_EXCLUDE_TYPE",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro=f"Nu include {type_names_ro.get(type_to_exclude, type_to_exclude)} în plan.",
+                        description_en=f"Do not include {type_names_en.get(type_to_exclude, type_to_exclude)} in the plan.",
+                        check_fn="check_must_exclude_type",
+                        params={"type_forbidden": type_to_exclude},
+                    )
+                )
+
         # Generate goals
         goals = [
             Goal(

@@ -123,6 +123,57 @@ class ScheduleWorldGenerator:
                 )
             )
 
+        # =====================================================================
+        # HARD MODE CONSTRAINTS
+        # =====================================================================
+
+        if difficulty == "hard":
+            # No back-to-back appointments on same day
+            constraints.append(
+                Constraint(
+                    id="C_NO_BACK_TO_BACK",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro="Nu programa două întâlniri în aceeași zi (nu poți avea atât dimineață cât și după-amiază ocupate).",
+                    description_en="Do not schedule two appointments on the same day (you cannot have both morning and afternoon occupied).",
+                    check_fn="check_no_back_to_back",
+                    params={},
+                )
+            )
+
+            # Total appointments limit (make it challenging)
+            # If we have 5 appointments and 3 days, limit to 4 to force dropping one
+            max_total = max(2, len(appointments) - 1)
+            constraints.append(
+                Constraint(
+                    id="C_MAX_TOTAL",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro=f"Poți avea maxim {max_total} programări în total pe săptămână.",
+                    description_en=f"You can have at most {max_total} appointments total for the week.",
+                    check_fn="check_max_total_appointments",
+                    params={"max_total": max_total},
+                )
+            )
+
+            # Priority day restriction (50% chance)
+            # Medium priority appointments cannot be on the last day
+            has_medium = any(a["priority"] == "medium" for a in appointments)
+            if has_medium and rng.random() < 0.5:
+                last_day_ro = selected_days_ro[-1]
+                last_day_en = selected_days_en[-1]
+                constraints.append(
+                    Constraint(
+                        id="C_PRIORITY_DAY_RESTRICTION",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro=f"Programările cu prioritate medie nu pot fi programate {last_day_ro}.",
+                        description_en=f"Medium priority appointments cannot be scheduled on {last_day_en}.",
+                        check_fn="check_priority_day_restriction",
+                        params={
+                            "priority": "medium",
+                            "forbidden_days": [last_day_ro, last_day_en],
+                        },
+                    )
+                )
+
         # Generate goals
         goals = [
             Goal(

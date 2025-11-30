@@ -386,6 +386,58 @@ class RecipeWorldGenerator:
                 )
             )
 
+        # =====================================================================
+        # HARD MODE CONSTRAINTS
+        # =====================================================================
+
+        if difficulty == "hard":
+            # Prep time limit per day
+            # Calculate reasonable limit based on available dishes
+            avg_prep_time = sum(d["prep_time_min"] for d in dishes_list) / len(dishes_list) if dishes_list else 30
+            # Allow about 2.5x average per meal * 3 meals = 7.5x, but cap reasonably
+            max_prep = int(avg_prep_time * 3.5)  # Tighter than comfortable
+            max_prep = max(60, min(120, max_prep))  # Clamp between 60-120 minutes
+
+            constraints.append(
+                Constraint(
+                    id="C_MAX_PREP_TIME",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro=f"Timpul total de preparare pe zi nu trebuie să depășească {max_prep} de minute.",
+                    description_en=f"The total preparation time per day must not exceed {max_prep} minutes.",
+                    check_fn="check_max_prep_time_per_day",
+                    params={"max_prep_time": max_prep},
+                )
+            )
+
+            # Lunch must be heaviest meal (traditional Romanian pattern)
+            # Only add if there are enough calorie options
+            constraints.append(
+                Constraint(
+                    id="C_LUNCH_HEAVIEST",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro="Prânzul trebuie să fie masa principală - să aibă mai multe calorii decât micul dejun și cina.",
+                    description_en="Lunch must be the main meal - it should have more calories than breakfast and dinner.",
+                    check_fn="check_lunch_heaviest_meal",
+                    params={"num_days": num_days},
+                )
+            )
+
+            # Vegan option (50% chance) - stricter than vegetarian
+            if rng.random() < 0.5:
+                # Only if we have vegan options available
+                vegan_available = any(d["vegan"] for d in dishes_list)
+                if vegan_available:
+                    constraints.append(
+                        Constraint(
+                            id="C_VEGAN",
+                            type=ConstraintType.INSTRUCTION,
+                            description_ro="Toate preparatele trebuie să fie vegane (fără produse de origine animală).",
+                            description_en="All dishes must be vegan (no animal products).",
+                            check_fn="check_all_vegan",
+                            params={},
+                        )
+                    )
+
         # Generate goals
         goals = [
             Goal(
