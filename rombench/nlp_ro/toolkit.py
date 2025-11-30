@@ -206,12 +206,12 @@ class RomanianNLPToolkit:
             "diacritic_details": {
                 "correct": report.diacritics.correct_diacritics,
                 "missing": report.diacritics.missing_diacritics,
-                "examples": report.diacritics.missing_words[:5],
+                "examples": report.diacritics.missing_words[:15],  # Show up to 15 examples
             },
             "codeswitch_details": {
                 "english_count": report.codeswitch.english_words,
                 "english_rate": report.codeswitch.english_rate,
-                "examples": report.codeswitch.flagged_words[:5],
+                "examples": report.codeswitch.flagged_words[:10],  # Show up to 10 examples
             },
         }
 

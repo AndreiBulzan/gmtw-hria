@@ -38,11 +38,6 @@ env/
 .env
 .env.local
 
-# Data and outputs (generated files)
-data/
+# Model outputs (not the benchmark dataset)
 results/
 metrics/
-*.jsonl
-
-# Keep .gitkeep files
-!data/.gitkeep

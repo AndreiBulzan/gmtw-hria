@@ -13,6 +13,8 @@ GMTW-Ro addresses the "Knowledge-Behavior Gap" in multilingual LLM evaluation by
 - **Deterministic Evaluation**: No human raters, no LLM judges, completely reproducible
 - **Decomposed Metrics**: Separate scores for Understanding (U), Reasoning (R), Generation (G), and Faithfulness (F)
 
+For detailed technical documentation, see [docs/GMTW_Ro_Technical_Specification.md](docs/GMTW_Ro_Technical_Specification.md).
+
 ## Task Worlds
 
 | World | Task | Sample Constraints |
@@ -29,440 +31,271 @@ cd rombench
 pip install -e .
 ```
 
-Required dependencies will be installed automatically: `ortools`, `rapidfuzz`, `json-repair`, `pydantic`, `requests`, and others.
+Required dependencies will be installed automatically: `json-repair`, `pydantic`, `requests`, and others.
 
-## Quick Start
+---
 
-### 1. Generate Evaluation Questions
+## Quick Start: End-to-End Evaluation
 
-Create a dataset of 30 instances across all world types:
+### Step 1: Set Up API Key
 
-```bash
-python scripts/generate_gmtw_v0.py \
-  --num-travel 10 \
-  --num-schedule 10 \
-  --num-fact 5 \
-  --num-recipe 5 \
-  --output test.jsonl
-```
+Choose one provider:
 
-For a full benchmark dataset (500+ instances):
-
-```bash
-python scripts/generate_gmtw_v0.py \
-  --num-travel 150 \
-  --num-schedule 150 \
-  --num-fact 100 \
-  --num-recipe 100 \
-  --output data/gmtw_ro_v0/instances.jsonl
-```
-
-### 2. View Generated Questions
-
-```bash
-python scripts/view_instances.py test.jsonl
-```
-
-This displays each instance with:
-- World type and difficulty
-- Available entities (attractions, appointments, facts)
-- Constraints to satisfy
-- Full Romanian prompt
-
-Press Enter to navigate through instances, 'q' to quit.
-
-### 3. Test with Dummy Data
-
-Generate synthetic outputs that satisfy most constraints (useful for testing the evaluator):
-
-```bash
-python scripts/create_dummy_outputs.py test.jsonl --output dummy_outputs.jsonl
-```
-
-Evaluate the dummy outputs:
-
-```bash
-python scripts/evaluate_outputs.py test.jsonl dummy_outputs.jsonl
-```
-
-Expected results: High scores (U≈0.83, R≈0.97, G≈1.0, F≈1.0) showing the evaluator works correctly.
-
-## Running Models
-
-### Using Groq API
-
-#### Setup
-
-Set your API key (only needed once per session):
-
+**OpenRouter (recommended - free models available)**:
 ```bash
 # Windows
-set GROQ_API_KEY=your_api_key_here
+set OPENROUTER_API_KEY=your_key_here
 
 # Linux/Mac
-export GROQ_API_KEY=your_api_key_here
+export OPENROUTER_API_KEY=your_key_here
+```
+Get a free key at: https://openrouter.ai/keys
+
+**Groq**:
+```bash
+# Windows
+set GROQ_API_KEY=your_key_here
+
+# Linux/Mac
+export GROQ_API_KEY=your_key_here
 ```
 
-Or pass it directly with `--api-key` flag.
+### Step 2: Get the Dataset
 
-#### Run Evaluation
-
+**Option A**: Use the pre-generated v0 dataset (500 instances):
 ```bash
-# Full evaluation with 70B model
-python scripts/run_groq_batch.py test.jsonl --output groq_70b.jsonl
+# Dataset included in data/gmtw_ro_v0.jsonl
+```
 
-# Faster 8B model
-python scripts/run_groq_batch.py test.jsonl \
-  --model llama-3.1-8b-instant \
-  --output groq_8b.jsonl
+**Option B**: Generate your own:
+```bash
+python scripts/generate_gmtw_v0.py --num-travel 150 --num-schedule 150 --num-fact 100 --num-recipe 100 --output data/instances.jsonl
+```
+
+### Step 3: Run a Model
+
+**Using OpenRouter (free models)**:
+```bash
+# Grok 4.1 Fast (default, recommended)
+python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --output data/outputs_grok.jsonl
+
+# Or specify a different model
+python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --model google/gemma-3-12b-it:free --output data/outputs_gemma.jsonl
 
 # Test on just 5 instances first
-python scripts/run_groq_batch.py test.jsonl \
-  --model llama-3.3-70b-versatile \
-  --output groq_test.jsonl \
-  --max 5
+python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --output data/test_outputs.jsonl --max 5
 ```
 
-Available models:
-- `llama-3.3-70b-versatile` (default, best quality)
-- `llama-3.1-8b-instant` (fastest, cheapest)
-- `openai/gpt-oss-20b` (middle ground)
-- `openai/gpt-oss-120b` (highest quality)
+**Using Groq**:
+```bash
+python scripts/run_groq_batch.py data/gmtw_ro_v0.jsonl --model llama-3.3-70b-versatile --output data/outputs_llama70b.jsonl
+```
 
-Options:
-- `--delay`: Delay in seconds between API calls (default: 2.0). Adjust if you hit rate limits:
-  ```bash
-  python scripts/run_groq_batch.py test.jsonl --delay 5.0
-  ```
+### Step 4: Evaluate
 
-### Using Custom Models
+```bash
+python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_grok.jsonl
+```
 
-Create a JSONL file with model outputs in this format:
+Output:
+```
+============================================================
+AVERAGE SCORES (500 instances)
+============================================================
+  U (Understanding): 0.847
+  R (Reasoning):     0.923
+  G (Generation):    0.891
+  F (Faithfulness):  0.756
+============================================================
+```
+
+### Step 5: Debug Failures
+
+```bash
+# View all results interactively
+python scripts/debug_results.py data/gmtw_ro_v0.jsonl data/outputs_grok.jsonl
+
+# View only failures
+python scripts/debug_results.py data/gmtw_ro_v0.jsonl data/outputs_grok.jsonl --filter failed
+```
+
+---
+
+## Using Custom Models / Your Own API
+
+If you want to run a model not supported by the provided scripts, create a JSONL file with this format:
 
 ```json
-{"instance_id": "travel_000000", "output": "Model's Romanian response with JSON here..."}
+{"instance_id": "travel_000000", "output": "Model's response here..."}
 {"instance_id": "travel_000001", "output": "Another response..."}
 ```
 
-The output should contain:
-1. Romanian explanation (2-3 paragraphs)
-2. JSON plan at the end
+### Required Output Format
 
-Example format:
+**CRITICAL**: Models must produce output in this exact order:
+
+1. **FIRST**: Romanian explanation (2-3 paragraphs)
+2. **THEN**: JSON plan at the very end
+
 ```
 Pentru călătoria de 3 zile în Cluj-Napoca, propun următorul plan:
 
-[Explanation in Romanian...]
+Am ales să vizităm Grădina Botanică în prima zi deoarece...
+[More explanation paragraphs...]
 
 {
-  "day1": ["Muzeul Național de Artă", "Cetățuia"],
-  "day2": ["Grădina Botanică"]
+  "day1": ["Grădina Botanică", "Cetățuia"],
+  "day2": ["Muzeul Național de Artă"],
+  "day3": ["Parcul Central"]
 }
 ```
 
-## Evaluation
+**Models that put JSON before the explanation will be penalized** (format violation counts as a failed constraint in the U score).
 
-### Basic Evaluation
+---
 
-```bash
-python scripts/evaluate_outputs.py test.jsonl groq_70b.jsonl
-```
+## Available Models
 
-Output:
-```
-Loaded 25 instances
-Loaded 25 outputs
-✓ travel_000002: U=1.00 R=1.00 G=1.00 F=1.00
-✗ travel_000000: U=1.00 R=1.00 G=1.00 F=0.67
-...
-
-============================================================
-AVERAGE SCORES (25 instances)
-============================================================
-  U (Understanding): 0.840
-  R (Reasoning):     0.920
-  G (Generation):    0.992
-  F (Faithfulness):  0.739
-============================================================
-```
-
-### Save Detailed Metrics
+### OpenRouter (Free Tier)
 
 ```bash
-python scripts/evaluate_outputs.py test.jsonl groq_70b.jsonl \
-  --save-metrics detailed_metrics.jsonl
+python scripts/run_openrouter_batch.py --list-models
 ```
 
-This creates a JSONL file with complete breakdowns for each instance.
+| Model | Command |
+|-------|---------|
+| Grok 4.1 Fast (default) | `--model x-ai/grok-4.1-fast:free` |
+| Gemma 3 12B | `--model google/gemma-3-12b-it:free` |
+| Llama 3.1 8B | `--model meta-llama/llama-3.1-8b-instruct:free` |
+| DeepSeek R1 | `--model deepseek/deepseek-r1:free` |
 
-## Visualizing Results
+### Groq
 
-### View All Results
+| Model | Command |
+|-------|---------|
+| Llama 3.3 70B (best) | `--model llama-3.3-70b-versatile` |
+| Llama 3.1 8B (fastest) | `--model llama-3.1-8b-instant` |
 
-```bash
-python scripts/debug_results.py test.jsonl groq_70b.jsonl
-```
-
-Shows for each instance:
-- Actual prompt used
-- Model output
-- Scores (U/R/G/F)
-- Detailed failure analysis (which constraints violated, which entities missing)
-
-### View Only Failures
-
-```bash
-python scripts/debug_results.py test.jsonl groq_70b.jsonl --filter failed
-```
-
-### View Only Passes
-
-```bash
-python scripts/debug_results.py test.jsonl groq_70b.jsonl --filter passed
-```
-
-### Inspect Specific Outputs
-
-```bash
-# View first output
-python scripts/peek_output.py groq_70b.jsonl 1
-
-# View 10th output
-python scripts/peek_output.py groq_70b.jsonl 10
-```
-
-## Comparing Multiple Models
-
-### Run Multiple Models
-
-```bash
-# 70B model
-python scripts/run_groq_batch.py test.jsonl \
-  --model llama-3.3-70b-versatile \
-  --output groq_70b.jsonl
-
-# 8B model
-python scripts/run_groq_batch.py test.jsonl \
-  --model llama-3.1-8b-instant \
-  --output groq_8b.jsonl
-
-# GPT OSS 20B
-python scripts/run_groq_batch.py test.jsonl \
-  --model openai/gpt-oss-20b \
-  --output groq_20b.jsonl
-```
-
-### Compare Side-by-Side
-
-```bash
-python scripts/compare_models.py test.jsonl groq_70b.jsonl groq_8b.jsonl groq_20b.jsonl
-```
-
-Output:
-```
-================================================================================
-MODEL COMPARISON
-================================================================================
-
-Model                               U        R        G        F      Avg
---------------------------------------------------------------------------------
-llama-3.3-70b-versatile          0.840    0.920    0.992    0.739    0.873
-llama-3.1-8b-instant             0.720    0.780    0.950    0.620    0.768
-openai/gpt-oss-20b               0.780    0.850    0.970    0.680    0.820
-================================================================================
-
-Per-Instance Breakdown:
---------------------------------------------------------------------------------
-
-travel_000000 (travel)
-  ✓ llama-3.3-70b      U=1.00 R=1.00 G=1.00 F=1.00
-  ✗ llama-3.1-8b       U=0.50 R=0.67 G=1.00 F=0.89
-  ✓ openai/gpt-oss     U=1.00 R=1.00 G=0.98 F=0.95
-...
-```
+---
 
 ## Understanding the Metrics
 
 ### U - Understanding Score
 
-Measures whether the model correctly understood the Romanian constraints.
+Measures whether the model correctly understood and followed the Romanian constraints.
 
-- **1.0**: All constraints satisfied
-- **0.5**: Half the constraints satisfied
-- **0.0**: No constraints satisfied
+- **1.0**: All constraints satisfied + correct output format
+- **< 1.0**: One or more constraints violated
 
-**Low U indicates**: Model failed to parse or understand Romanian instructions.
+**Includes**: Explicit constraints (e.g., "include a monument") + format compliance (JSON at end)
 
 ### R - Reasoning Score
 
-Measures whether the plan is logically valid within the world's rules.
+Measures whether the plan is structurally valid.
 
-- **1.0**: All structural goals satisfied (no logical errors)
-- **0.0**: Plan is logically invalid
-
-**Low R indicates**: Model has reasoning deficits (impossible plans, empty days, invalid entity IDs).
+- **1.0**: All structural goals satisfied
+- **< 1.0**: Plan has logical errors (empty days, invalid entity references)
 
 ### G - Generation Quality Score
 
-Measures linguistic quality of the Romanian text using a deterministic, lexicon-based analyzer.
+Measures linguistic quality of the Romanian text (deterministic, lexicon-based).
 
 Components:
-- **G_dia (50%)**: Diacritic correctness — checks ~200 high-frequency words that must have diacritics (și, în, țară, fără...)
-- **G_cs (30%)**: Code-switch detection — flags English contamination while excluding Romanian lookalikes
+- **G_dia (50%)**: Diacritic correctness — checks 84 high-frequency words that must have diacritics (și, în, fără, când...)
+- **G_cs (30%)**: Code-switch detection — flags English contamination
 - **G_len (20%)**: Length adequacy — penalizes suspiciously short responses
-
-**Low G indicates**: Missing diacritics, English contamination, or degenerate output.
 
 ### F - Faithfulness Score
 
-Measures consistency between the JSON plan and the Romanian explanation.
+Measures consistency between the JSON plan and the explanation.
 
-- **1.0**: Perfect consistency (all planned entities mentioned in explanation)
-- **0.0**: Complete mismatch
+- **1.0**: All planned entities mentioned in explanation
+- **0.0**: Complete mismatch (often indicates format violation where explanation is empty)
 
-**Low F indicates**: The model's explanation doesn't match what it actually planned (hallucination or incomplete descriptions).
+---
+
+## Detailed Workflows
+
+### Save Detailed Metrics
+
+```bash
+python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_grok.jsonl --save-metrics data/metrics_grok.jsonl
+```
+
+### Compare Multiple Models
+
+```bash
+# Run multiple models
+python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --model x-ai/grok-4.1-fast:free --output data/outputs_grok.jsonl
+python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --model google/gemma-3-12b-it:free --output data/outputs_gemma.jsonl
+
+# Compare side-by-side
+python scripts/compare_models.py data/gmtw_ro_v0.jsonl data/outputs_grok.jsonl data/outputs_gemma.jsonl
+```
+
+### Cross-Lingual Evaluation (Delta Metric)
+
+Measure the "foreign language penalty" by comparing Romanian vs English performance:
+
+```bash
+# Run with Romanian prompts (default)
+python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --output data/outputs_ro.jsonl
+
+# Run with English prompts
+python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --language en --output data/outputs_en.jsonl
+
+# Compute Delta
+python scripts/compute_delta.py data/gmtw_ro_v0.jsonl data/outputs_ro.jsonl data/outputs_en.jsonl
+```
+
+English prompts use fully translated entity names (e.g., "The Black Church" instead of "Biserica Neagră").
+
+---
 
 ## Repository Structure
 
 ```
 rombench/
+├── data/
+│   └── gmtw_ro_v0.jsonl          # Pre-generated 500-instance dataset
+├── docs/
+│   └── GMTW_Ro_Technical_Specification.md
 ├── rombench/
-│   ├── gmtw_ro/                    # Core implementation
-│   │   ├── worlds/                 # World generators
-│   │   │   ├── base.py             # Data models
-│   │   │   ├── travel.py           # Travel (6 cities, 37 attractions)
-│   │   │   ├── schedule.py         # Schedule (calendar management)
-│   │   │   ├── fact.py             # Fact (context adherence, misbelief traps)
-│   │   │   ├── recipe.py           # Recipe (meal planning, dietary constraints)
-│   │   │   ├── templates_ro.py     # Romanian prompts
-│   │   │   └── templates_en.py     # English prompts
-│   │   └── eval/                   # Evaluation tools
-│   │       ├── parser.py           # Dual-channel parser
-│   │       ├── faithfulness.py     # Deterministic F metric
-│   │       ├── constraints.py      # Constraint checkers (20+ functions)
-│   │       ├── metrics.py          # U/R/G/F metrics
-│   │       └── scorer.py           # Main evaluator
-│   └── nlp_ro/                     # Romanian NLP toolkit (84-word diacritic lexicon)
-├── scripts/                        # CLI tools
-├── data/                           # Generated datasets
-├── examples/                       # Usage examples
-└── tests/                          # Unit tests
+│   ├── gmtw_ro/
+│   │   ├── worlds/               # World generators
+│   │   │   ├── travel.py         # 6 cities, 37 attractions
+│   │   │   ├── schedule.py       # Calendar management
+│   │   │   ├── fact.py           # Context adherence, misbelief traps
+│   │   │   ├── recipe.py         # 19 dishes, dietary constraints
+│   │   │   ├── templates_ro.py   # Romanian prompts
+│   │   │   └── templates_en.py   # English prompts
+│   │   └── eval/                 # Evaluation tools
+│   │       ├── parser.py         # Dual-channel parser
+│   │       ├── constraints.py    # 20+ constraint checkers
+│   │       ├── metrics.py        # U/R/G/F computation
+│   │       └── faithfulness.py   # Deterministic F metric
+│   └── nlp_ro/                   # Romanian NLP toolkit
+│       ├── diacritics.py         # 84-word diacritic lexicon
+│       └── codeswitch.py         # English contamination detector
+├── scripts/
+│   ├── generate_gmtw_v0.py       # Generate instances
+│   ├── run_openrouter_batch.py   # Run via OpenRouter API
+│   ├── run_groq_batch.py         # Run via Groq API
+│   ├── evaluate_outputs.py       # Compute metrics
+│   ├── debug_results.py          # Interactive result viewer
+│   ├── compare_models.py         # Side-by-side comparison
+│   └── compute_delta.py          # Cross-lingual analysis
+└── commands.txt                  # Copy-paste commands for Windows
 ```
 
-## Example Workflow
-
-Complete evaluation workflow:
-
-```bash
-# 1. Generate questions
-python scripts/generate_gmtw_v0.py --num-travel 10 --num-schedule 10 --num-fact 5 --num-recipe 5 --output eval.jsonl
-
-# 2. Preview questions
-python scripts/view_instances.py eval.jsonl --max 3
-
-# 3. Run model
-python scripts/run_groq_batch.py eval.jsonl --output model_outputs.jsonl
-
-# 4. Evaluate
-python scripts/evaluate_outputs.py eval.jsonl model_outputs.jsonl
-
-# 5. Debug failures
-python scripts/debug_results.py eval.jsonl model_outputs.jsonl --filter failed
-
-# 6. Save detailed metrics
-python scripts/evaluate_outputs.py eval.jsonl model_outputs.jsonl --save-metrics metrics.jsonl
-```
-
-## Advanced Usage
-
-### Running the Built-in Example
-
-```bash
-python examples/simple_example.py
-```
-
-This demonstrates the complete pipeline: world generation, prompt creation, simulated output, and evaluation.
-
-### Batch Processing
-
-For large-scale evaluation, process in batches:
-
-```bash
-# Generate large dataset (500 instances)
-python scripts/generate_gmtw_v0.py \
-  --num-travel 150 \
-  --num-schedule 150 \
-  --num-fact 100 \
-  --num-recipe 100 \
-  --output full_benchmark.jsonl
-
-# Run model
-python scripts/run_groq_batch.py full_benchmark.jsonl --output results.jsonl
-
-# Evaluate
-python scripts/evaluate_outputs.py full_benchmark.jsonl results.jsonl --save-metrics full_metrics.jsonl
-```
-
-## Cross-Lingual Evaluation (Delta Metric)
-
-The benchmark supports computing the Foreign Language Penalty (Δ) to measure performance degradation when models process Romanian vs English prompts.
-
-### How Delta Works
-
-Run the same instances through a model twice:
-1. With Romanian prompts (native benchmark)
-2. With English prompts (translated entity names, diacritic-free)
-
-Then compare:
-```bash
-python scripts/compute_delta.py instances.jsonl ro_outputs.jsonl en_outputs.jsonl
-```
-
-### English Prompt Features
-
-- **Travel**: City names use ASCII (Brasov, Timisoara, Iasi), attraction names fully translated (Biserica Neagra → The Black Church)
-- **Recipe**: Dish names fully translated (Oua jumari cu rosii → Scrambled Eggs with Tomatoes), JSON keys use English (day1_breakfast vs day1_mic_dejun)
-- **Schedule**: Already supported via days_en/slots_en/name_en fields
-- **Fact**: Questions in English, answers remain as-is (facts about Romania)
-
-### Delta Interpretation
-
-- **ΔU, ΔR, ΔF**: Compare these across languages (positive = worse in Romanian)
-- **G metric**: Only meaningful for Romanian outputs (measures diacritic correctness)
-
-## Future Work
-
-### Core Functionality
-
-- **Add constraint solver**: Integrate OR-Tools CP-SAT to verify all generated worlds are mathematically solvable
-- **Expand world types**: Add budget/shopping world, logistics planning
-- **Grammar checking**: Integrate LanguageTool for deeper G metric analysis (optional)
-
-### Evaluation Improvements
-
-- **Test suite**: Unit tests for all constraint checkers and metrics
-- **CLI runner**: Unified command-line interface for batch evaluation
-- **Aggregation tools**: Statistical analysis, confidence intervals, difficulty stratification
-- **Leaderboard**: Public benchmark results for Romanian LLMs
-
-### RoWriteBench
-
-- **Implement creative writing benchmark**: Micro-essays, register-shift rewriting, summarization tasks
-- **Deterministic stylometry**: Lexical diversity, discourse markers, readability metrics
-- **Register detection**: Formal/informal tone analysis using lexicons
-
-### Infrastructure
-
-- **Dataset versioning**: Freeze benchmark versions for reproducible comparisons
-- **Contamination resistance**: Procedural world generation to prevent training set leakage
-- **Multi-language expansion**: Extend framework to other mid-resource languages
+---
 
 ## Citation
 
 ```bibtex
 @misc{gmtwro2025,
   title={GMTW-Ro: Grounded Multilingual Task Worlds for Romanian LLM Evaluation},
-  author={GMTW-Ro Team, Hub Român de Inteligență Artificială (HRIA)},
+  author={Hub Român de Inteligență Artificială (HRIA)},
   year={2025},
   url={https://github.com/AndreiBulzan/gmtw-hria}
 }
@@ -480,5 +313,4 @@ Key areas for contribution:
 - Additional world types and constraints
 - Expanded diacritic lexicon coverage
 - Test coverage
-- Documentation improvements
 - Bug reports and evaluation edge cases

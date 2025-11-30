@@ -179,7 +179,7 @@ def debug_results(instances_file: str, outputs_file: str, filter_type: str = Non
                 examples = dia.get('examples', [])
                 print(f"  Missing diacritics: {dia.get('missing', 0)} words")
                 if examples:
-                    print(f"    Examples: {', '.join(examples[:5])}")
+                    print(f"    Words: {', '.join(examples)}")
 
             # Code-switching issues
             cs = g.get('codeswitch_details', {})

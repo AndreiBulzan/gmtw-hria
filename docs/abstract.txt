@@ -1,0 +1,9 @@
+Abstract
+
+Large language models that generate fluent Romanian text do not necessarily reason competently in Romanian. This distinction—between linguistic knowledge and task behavior—remains invisible to conventional benchmarks, which rely on multiple-choice formats, translated test sets, or LLM-as-judge evaluation. We introduce GMTW-Ro (Grounded Multilingual Task Worlds for Romanian), a benchmark that makes this gap measurable.
+
+GMTW-Ro evaluates models on constraint-satisfaction tasks within fully-specified environments: planning travel itineraries, organizing schedules, answering questions from provided context, and composing menus under dietary restrictions. Each task demands that models parse Romanian instructions, reason over explicit constraints, and produce verifiable plans. Crucially, evaluation is entirely deterministic—no human raters, no LLM judges, no ambiguity.
+
+We decompose performance into four orthogonal metrics: Understanding (U) measures constraint satisfaction, Reasoning (R) measures structural validity, Generation (G) measures Romanian linguistic quality via a lexicon-based diacritic analyzer, and Faithfulness (F) measures consistency between the model's plan and its explanation. This decomposition enables precise diagnosis: a model may understand instructions yet fail at reasoning, or reason correctly yet generate text with missing diacritics.
+
+Existing benchmarks reveal whether a model generates fluent Romanian or selects correct answers from a list. What they leave unanswered is whether the model genuinely understands and reasons in the language. GMTW-Ro is designed to answer precisely that.
