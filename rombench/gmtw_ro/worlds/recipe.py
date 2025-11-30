@@ -11,11 +11,15 @@ from .base import World, Constraint, Goal, Entity, ConstraintType, GoalType
 
 
 # Dishes with their attributes
+# Each dish has both Romanian (name) and English (name_en) names
+# type_en provides English meal type for EN prompts
 DISHES = {
     "mic_dejun": [  # Breakfast
         {
             "name": "Ouă jumări cu roșii",
+            "name_en": "Scrambled Eggs with Tomatoes",
             "type": "mic_dejun",
+            "type_en": "breakfast",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": False,
@@ -25,7 +29,9 @@ DISHES = {
         },
         {
             "name": "Mămăligă cu brânză și smântână",
+            "name_en": "Polenta with Cheese and Sour Cream",
             "type": "mic_dejun",
+            "type_en": "breakfast",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": False,
@@ -35,7 +41,9 @@ DISHES = {
         },
         {
             "name": "Clătite cu gem",
+            "name_en": "Pancakes with Jam",
             "type": "mic_dejun",
+            "type_en": "breakfast",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": True,
@@ -45,7 +53,9 @@ DISHES = {
         },
         {
             "name": "Sandviș cu brânză și legume",
+            "name_en": "Cheese and Vegetable Sandwich",
             "type": "mic_dejun",
+            "type_en": "breakfast",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": True,
@@ -55,7 +65,9 @@ DISHES = {
         },
         {
             "name": "Iaurt cu fructe și granola",
+            "name_en": "Yogurt with Fruit and Granola",
             "type": "mic_dejun",
+            "type_en": "breakfast",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": True,
@@ -65,7 +77,9 @@ DISHES = {
         },
         {
             "name": "Smoothie verde cu spanac",
+            "name_en": "Green Spinach Smoothie",
             "type": "mic_dejun",
+            "type_en": "breakfast",
             "vegetarian": True,
             "vegan": True,
             "contains_gluten": False,
@@ -77,7 +91,9 @@ DISHES = {
     "pranz": [  # Lunch
         {
             "name": "Ciorbă de legume",
+            "name_en": "Vegetable Soup",
             "type": "pranz",
+            "type_en": "lunch",
             "vegetarian": True,
             "vegan": True,
             "contains_gluten": False,
@@ -87,7 +103,9 @@ DISHES = {
         },
         {
             "name": "Sarmale în foi de viță",
+            "name_en": "Stuffed Cabbage Rolls",
             "type": "pranz",
+            "type_en": "lunch",
             "vegetarian": False,
             "vegan": False,
             "contains_gluten": False,
@@ -97,7 +115,9 @@ DISHES = {
         },
         {
             "name": "Tocană de cartofi cu carne",
+            "name_en": "Potato and Meat Stew",
             "type": "pranz",
+            "type_en": "lunch",
             "vegetarian": False,
             "vegan": False,
             "contains_gluten": False,
@@ -107,7 +127,9 @@ DISHES = {
         },
         {
             "name": "Salată grecească",
+            "name_en": "Greek Salad",
             "type": "pranz",
+            "type_en": "lunch",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": False,
@@ -117,7 +139,9 @@ DISHES = {
         },
         {
             "name": "Paste cu sos de roșii",
+            "name_en": "Pasta with Tomato Sauce",
             "type": "pranz",
+            "type_en": "lunch",
             "vegetarian": True,
             "vegan": True,
             "contains_gluten": True,
@@ -127,7 +151,9 @@ DISHES = {
         },
         {
             "name": "Piept de pui la grătar cu legume",
+            "name_en": "Grilled Chicken Breast with Vegetables",
             "type": "pranz",
+            "type_en": "lunch",
             "vegetarian": False,
             "vegan": False,
             "contains_gluten": False,
@@ -137,7 +163,9 @@ DISHES = {
         },
         {
             "name": "Mâncare de fasole",
+            "name_en": "Bean Stew",
             "type": "pranz",
+            "type_en": "lunch",
             "vegetarian": True,
             "vegan": True,
             "contains_gluten": False,
@@ -149,7 +177,9 @@ DISHES = {
     "cina": [  # Dinner
         {
             "name": "Supă cremă de ciuperci",
+            "name_en": "Cream of Mushroom Soup",
             "type": "cina",
+            "type_en": "dinner",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": False,
@@ -159,7 +189,9 @@ DISHES = {
         },
         {
             "name": "Orez cu legume",
+            "name_en": "Rice with Vegetables",
             "type": "cina",
+            "type_en": "dinner",
             "vegetarian": True,
             "vegan": True,
             "contains_gluten": False,
@@ -169,7 +201,9 @@ DISHES = {
         },
         {
             "name": "Omletă cu ciuperci și brânză",
+            "name_en": "Mushroom and Cheese Omelette",
             "type": "cina",
+            "type_en": "dinner",
             "vegetarian": True,
             "vegan": False,
             "contains_gluten": False,
@@ -179,7 +213,9 @@ DISHES = {
         },
         {
             "name": "Pește la cuptor cu cartofi",
+            "name_en": "Baked Fish with Potatoes",
             "type": "cina",
+            "type_en": "dinner",
             "vegetarian": False,
             "vegan": False,
             "contains_gluten": False,
@@ -189,7 +225,9 @@ DISHES = {
         },
         {
             "name": "Salată de ton",
+            "name_en": "Tuna Salad",
             "type": "cina",
+            "type_en": "dinner",
             "vegetarian": False,
             "vegan": False,
             "contains_gluten": False,
@@ -199,7 +237,9 @@ DISHES = {
         },
         {
             "name": "Wrap vegetarian",
+            "name_en": "Vegetarian Wrap",
             "type": "cina",
+            "type_en": "dinner",
             "vegetarian": True,
             "vegan": True,
             "contains_gluten": True,
@@ -256,17 +296,26 @@ class RecipeWorldGenerator:
                 dish_id = f"D{dish_idx + 1}"
                 dish_idx += 1
 
+                name_en = dish.get("name_en", dish["name"])
+                # Build aliases: Romanian name, English name, both lowercase
+                aliases = [
+                    dish["name"].lower(),
+                    name_en,
+                    name_en.lower(),
+                ]
                 entities[dish_id] = Entity(
                     id=dish_id,
                     name=dish["name"],
-                    aliases=[dish["name"].lower()],
+                    aliases=aliases,
                     attributes=dish,
                 )
 
                 dishes_list.append({
                     "id": dish_id,
                     "name": dish["name"],
+                    "name_en": dish.get("name_en", dish["name"]),
                     "type": dish["type"],
+                    "type_en": dish.get("type_en", dish["type"]),
                     "vegetarian": dish["vegetarian"],
                     "vegan": dish["vegan"],
                     "contains_gluten": dish["contains_gluten"],
@@ -355,10 +404,14 @@ class RecipeWorldGenerator:
             ),
         ]
 
+        # English meal type mapping
+        meals_per_day_en = ["breakfast", "lunch", "dinner"]
+
         # Build payload
         payload = {
             "num_days": num_days,
             "meals_per_day": meals_per_day,
+            "meals_per_day_en": meals_per_day_en,
             "available_dishes": available_dishes,
             "dishes": dishes_list,
         }

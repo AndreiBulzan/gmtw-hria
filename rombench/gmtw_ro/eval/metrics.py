@@ -247,6 +247,24 @@ def compute_all_metrics(
     G_details = compute_G(explanation, nlp_tools)
     F_details = compute_F(world, plan, explanation)
 
+    # Format compliance check: JSON should be at the END, not the beginning
+    # If explanation is empty/very short, model put JSON first → penalize U
+    format_violation = len(explanation.strip()) < 50  # Less than 50 chars = no real explanation
+
+    if format_violation:
+        # Add format violation as a failed constraint in U
+        U_details["format_violation"] = True
+        U_details["constraints"].append({
+            "id": "C_FORMAT_JSON_AT_END",
+            "description": "JSON trebuie să fie la finalul răspunsului, nu la început.",
+            "satisfied": False,
+        })
+        # Recalculate U with the format constraint
+        U_details["total"] += 1
+        U_details["U"] = U_details["satisfied"] / U_details["total"]
+    else:
+        U_details["format_violation"] = False
+
     return MetricScores(
         U=U_details["U"],
         R=R_details["R"],

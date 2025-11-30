@@ -54,7 +54,8 @@ class DualChannelParser:
                 error_message="No JSON block found",
             )
 
-        # Extract explanation (everything before JSON)
+        # Extract explanation (everything BEFORE the JSON block)
+        # If model puts JSON first, explanation is empty → F=0 (strict mode)
         explanation = output[:json_start].strip()
 
         # Try to parse JSON

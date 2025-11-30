@@ -344,15 +344,31 @@ def check_all_meals_filled(world: World, plan: dict, params: dict) -> bool:
 
     Params:
         num_days: int - number of days
-        meals: list[str] - meal types per day
+        meals: list[str] - meal types per day (Romanian format)
+
+    Handles both Romanian (mic_dejun, pranz, cina) and
+    English (breakfast, lunch, dinner) key formats.
     """
     num_days = params.get("num_days", 2)
-    meals = params.get("meals", ["mic_dejun", "pranz", "cina"])
+    meals_ro = params.get("meals", ["mic_dejun", "pranz", "cina"])
+
+    # Map Romanian meal types to English equivalents
+    meal_map = {
+        "mic_dejun": "breakfast",
+        "pranz": "lunch",
+        "cina": "dinner",
+    }
 
     for day_num in range(1, num_days + 1):
-        for meal in meals:
-            key = f"day{day_num}_{meal}"
-            if key not in plan or not plan[key]:
+        for meal_ro in meals_ro:
+            # Try Romanian key first, then English
+            key_ro = f"day{day_num}_{meal_ro}"
+            key_en = f"day{day_num}_{meal_map.get(meal_ro, meal_ro)}"
+
+            has_ro = key_ro in plan and plan[key_ro]
+            has_en = key_en in plan and plan[key_en]
+
+            if not has_ro and not has_en:
                 return False
 
     return True

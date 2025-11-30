@@ -9,17 +9,20 @@ from .base import World
 def generate_travel_prompt(world: World) -> str:
     """Generate English prompt for travel world"""
     payload = world.payload
-    city = payload["city"]
+    city_en = payload.get("city_en", payload["city"])
     num_days = payload["num_days"]
     attractions = payload["attractions"]
 
-    # Build attraction list
+    # Build attraction list using English names and types
     attr_list = []
     for attr in attractions:
+        name_en = attr.get("name_en", attr["name"])
+        type_en = attr.get("type_en", attr["type"])
         indoor_str = "indoor" if attr["indoor"] else "outdoor"
         family_str = "suitable for children" if attr["family_friendly"] else "not suitable for small children"
+        cost_str = f", {attr.get('cost_lei', 0)} lei" if attr.get("cost_lei", 0) > 0 else ", free"
         attr_list.append(
-            f"  • {attr['name']} ({attr['type']}, {indoor_str}, {family_str})"
+            f"  - {name_en} ({type_en}, {indoor_str}, {family_str}{cost_str})"
         )
 
     attr_list_str = "\n".join(attr_list)
@@ -33,7 +36,7 @@ def generate_travel_prompt(world: World) -> str:
     constraint_list_str = "\n".join(constraint_list)
 
     # Build prompt
-    prompt = f"""You have {num_days} days available in {city} for a trip.
+    prompt = f"""You have {num_days} days available in {city_en} for a trip.
 
 You have the following visiting options:
 
@@ -49,14 +52,18 @@ You must respect the following requirements:
 
 {constraint_list_str}
 
-IMPORTANT:
-- At the end of your response, include EXACTLY one JSON block with the following format:
+IMPORTANT - RESPONSE ORDER:
+1. FIRST write your explanation in English (2-3 paragraphs).
+2. THEN, at the END of your response, include the JSON block.
+
+JSON format (at the end):
 {{
   "day1": ["attraction name 1", "attraction name 2"],
   "day2": ["attraction name 1"],
   ...
 }}
-- Do not add comments or text after the JSON block.
+
+Do NOT add any text or comments after the JSON block.
 """
 
     return prompt
@@ -107,14 +114,18 @@ Respect the following requirements:
 
 {constraint_list_str}
 
-IMPORTANT:
-- At the end of your response, include EXACTLY one JSON block with the following format:
+IMPORTANT - RESPONSE ORDER:
+1. FIRST write your explanation in English.
+2. THEN, at the END of your response, include the JSON block.
+
+JSON format (at the end):
 {{
   "Monday_morning": "appointment name or null",
   "Monday_afternoon": "appointment name or null",
   ...
 }}
-- Do not add comments or text after the JSON block.
+
+Do NOT add any text or comments after the JSON block.
 """
 
     return prompt
@@ -164,12 +175,16 @@ Respect the following requirements:
 
 {constraint_list_str}
 
-IMPORTANT:
-- At the end of your response, include EXACTLY one JSON block with the following format:
+IMPORTANT - RESPONSE ORDER:
+1. FIRST write your explanation in English (1-2 paragraphs).
+2. THEN, at the END of your response, include the JSON block.
+
+JSON format (at the end):
 {{
   "answer": "your answer here"
 }}
-- Do not add comments or text after the JSON block.
+
+Do NOT add any text or comments after the JSON block.
 """
 
     return prompt
@@ -181,16 +196,21 @@ def generate_recipe_prompt(world: World) -> str:
     num_days = payload["num_days"]
     dishes = payload["dishes"]
 
-    # Group dishes by type
+    # Group dishes by English type
     dishes_by_type = {
-        "mic_dejun": [],
-        "pranz": [],
-        "cina": [],
+        "breakfast": [],
+        "lunch": [],
+        "dinner": [],
     }
+
+    # Map Romanian types to English
+    type_map = {"mic_dejun": "breakfast", "pranz": "lunch", "cina": "dinner"}
 
     for dish in dishes:
         dish_type = dish["type"]
-        if dish_type in dishes_by_type:
+        type_en = type_map.get(dish_type, dish.get("type_en", dish_type))
+        if type_en in dishes_by_type:
+            name_en = dish.get("name_en", dish["name"])
             attrs = []
             if dish["vegetarian"]:
                 attrs.append("vegetarian")
@@ -203,19 +223,14 @@ def generate_recipe_prompt(world: World) -> str:
             attrs.append(f"{dish['calories']} kcal")
 
             attr_str = ", ".join(attrs)
-            dishes_by_type[dish_type].append(f"    • {dish['name']} ({attr_str})")
+            dishes_by_type[type_en].append(f"    - {name_en} ({attr_str})")
 
     # Build dish lists
     dish_sections = []
-    type_names = {
-        "mic_dejun": "Breakfast",
-        "pranz": "Lunch",
-        "cina": "Dinner",
-    }
-
-    for dish_type, type_name in type_names.items():
-        if dishes_by_type[dish_type]:
-            dish_sections.append(f"  {type_name}:\n" + "\n".join(dishes_by_type[dish_type]))
+    for type_name in ["breakfast", "lunch", "dinner"]:
+        if dishes_by_type[type_name]:
+            type_title = type_name.capitalize()
+            dish_sections.append(f"  {type_title}:\n" + "\n".join(dishes_by_type[type_name]))
 
     dishes_str = "\n\n".join(dish_sections)
 
@@ -246,17 +261,21 @@ Respect the following requirements:
 
 {constraint_list_str}
 
-IMPORTANT:
-- At the end of your response, include EXACTLY one JSON block with the following format:
+IMPORTANT - RESPONSE ORDER:
+1. FIRST write your explanation in English (2-3 paragraphs).
+2. THEN, at the END of your response, include the JSON block.
+
+JSON format (at the end):
 {{
-  "day1_mic_dejun": "dish name",
-  "day1_pranz": "dish name",
-  "day1_cina": "dish name",
-  "day2_mic_dejun": "dish name",
+  "day1_breakfast": "dish name",
+  "day1_lunch": "dish name",
+  "day1_dinner": "dish name",
+  "day2_breakfast": "dish name",
   ...
 }}
-- Use EXACTLY the dish names from the list above.
-- Do not add comments or text after the JSON block.
+
+Use EXACTLY the dish names from the list above.
+Do NOT add any text or comments after the JSON block.
 """
 
     return prompt

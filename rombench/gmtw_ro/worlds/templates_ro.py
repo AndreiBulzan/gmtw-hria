@@ -54,14 +54,18 @@ Trebuie să respecți următoarele cerințe:
 
 {constraint_list_str}
 
-IMPORTANT:
-- La finalul răspunsului, include EXACT un bloc JSON cu următorul format:
+IMPORTANT - ORDINEA RĂSPUNSULUI:
+1. ÎNTÂI scrie explicația în limba română (2-3 paragrafe).
+2. APOI, la FINALUL răspunsului, include blocul JSON.
+
+Format JSON (la final):
 {{
   "day1": ["nume obiectiv 1", "nume obiectiv 2"],
   "day2": ["nume obiectiv 1"],
   ...
 }}
-- Nu adăuga comentarii sau text după blocul JSON.
+
+NU adăuga text sau comentarii după blocul JSON.
 """
 
     return prompt
@@ -112,14 +116,18 @@ Respectă următoarele cerințe:
 
 {constraint_list_str}
 
-IMPORTANT:
-- La finalul răspunsului, include EXACT un bloc JSON cu următorul format:
+IMPORTANT - ORDINEA RĂSPUNSULUI:
+1. ÎNTÂI scrie explicația în limba română.
+2. APOI, la FINALUL răspunsului, include blocul JSON.
+
+Format JSON (la final):
 {{
   "Luni_dimineață": "nume programare sau null",
   "Luni_după-amiază": "nume programare sau null",
   ...
 }}
-- Nu adăuga comentarii sau text după blocul JSON.
+
+NU adăuga text sau comentarii după blocul JSON.
 """
 
     return prompt
@@ -170,12 +178,16 @@ Respectă următoarele cerințe:
 
 {constraint_list_str}
 
-IMPORTANT:
-- La finalul răspunsului, include EXACT un bloc JSON cu următorul format:
+IMPORTANT - ORDINEA RĂSPUNSULUI:
+1. ÎNTÂI scrie explicația în limba română (1-2 paragrafe).
+2. APOI, la FINALUL răspunsului, include blocul JSON.
+
+Format JSON (la final):
 {{
   "answer": "răspunsul tău aici"
 }}
-- Nu adăuga comentarii sau text după blocul JSON.
+
+NU adăuga text sau comentarii după blocul JSON.
 """
 
     return prompt
@@ -253,8 +265,11 @@ Respectă următoarele cerințe:
 
 {constraint_list_str}
 
-IMPORTANT:
-- La finalul răspunsului, include EXACT un bloc JSON cu următorul format:
+IMPORTANT - ORDINEA RĂSPUNSULUI:
+1. ÎNTÂI scrie explicația în limba română (2-3 paragrafe).
+2. APOI, la FINALUL răspunsului, include blocul JSON.
+
+Format JSON (la final):
 {{
   "day1_mic_dejun": "numele preparatului",
   "day1_pranz": "numele preparatului",
@@ -262,8 +277,9 @@ IMPORTANT:
   "day2_mic_dejun": "numele preparatului",
   ...
 }}
-- Folosește EXACT numele preparatelor din lista de mai sus.
-- Nu adăuga comentarii sau text după blocul JSON.
+
+Folosește EXACT numele preparatelor din lista de mai sus.
+NU adăuga text sau comentarii după blocul JSON.
 """
 
     return prompt

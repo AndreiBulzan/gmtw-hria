@@ -1,0 +1,80 @@
+# ============================================
+# SETUP (run once per session)
+# ============================================
+
+# Set OpenRouter API key (get free key at https://openrouter.ai/keys)
+set OPENROUTER_API_KEY=your_key_here
+
+# Or set Groq API key
+set GROQ_API_KEY=your_key_here
+
+# ============================================
+# STEP 1: Generate instances
+# ============================================
+
+python scripts/generate_gmtw_v0.py --num-travel 150 --num-schedule 150 --num-fact 100 --num-recipe 100 --output data/instances_v0.jsonl
+
+# ============================================
+# STEP 2: Run models (OpenRouter - FREE)
+# ============================================
+
+# Grok 4.1 Fast (free, fast - RECOMMENDED)
+python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model x-ai/grok-4.1-fast:free --output data/outputs_grok.jsonl --delay 1.0
+
+# Gemma 3 12B (free, good quality but slower)
+python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model google/gemma-3-12b-it:free --output data/outputs_gemma12b.jsonl --delay 1.0
+
+# Llama 3.1 8B (free)
+python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model meta-llama/llama-3.1-8b-instruct:free --output data/outputs_llama8b.jsonl --delay 1.0
+
+# DeepSeek R1 (free, reasoning model)
+python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model deepseek/deepseek-r1:free --output data/outputs_deepseek.jsonl --delay 1.0
+
+# List all suggested models
+python scripts/run_openrouter_batch.py --list-models
+
+# ============================================
+# STEP 2 ALT: Run models (Groq - requires paid key)
+# ============================================
+
+python scripts/run_groq_batch.py data/instances_v0.jsonl --model llama-3.1-8b-instant --output data/outputs_groq8b.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/instances_v0.jsonl --model llama-3.3-70b-versatile --output data/outputs_groq70b.jsonl --delay 2.0
+
+# ============================================
+# STEP 3: Evaluate outputs
+# ============================================
+
+python scripts/evaluate_outputs.py data/instances_v0.jsonl data/outputs_grok.jsonl --save-metrics data/metrics_grok.jsonl
+
+python scripts/evaluate_outputs.py data/instances_v0.jsonl data/outputs_gemma12b.jsonl --save-metrics data/metrics_gemma12b.jsonl
+
+python scripts/evaluate_outputs.py data/instances_v0.jsonl data/outputs_llama8b.jsonl --save-metrics data/metrics_llama8b.jsonl
+
+# ============================================
+# STEP 4: Debug and compare
+# ============================================
+
+# View failures for a specific model
+python scripts/debug_results.py data/instances_v0.jsonl data/outputs_grok.jsonl --filter failed
+
+# Compare multiple models side-by-side
+python scripts/compare_models.py data/instances_v0.jsonl data/outputs_grok.jsonl data/outputs_gemma12b.jsonl data/outputs_llama8b.jsonl
+
+# ============================================
+# DELTA: Cross-lingual comparison (EN vs RO)
+# ============================================
+
+# Run same model on English prompts
+python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model x-ai/grok-4.1-fast:free --language en --output data/outputs_grok_en.jsonl --delay 1.0
+
+# Compute delta (foreign language penalty)
+python scripts/compute_delta.py data/instances_v0.jsonl data/outputs_grok.jsonl data/outputs_grok_en.jsonl
+
+# ============================================
+# QUICK TEST (5 instances only)
+# ============================================
+
+python scripts/run_openrouter_batch.py data/instances_v0.jsonl --output data/test_out.jsonl --max 5
+
+python scripts/evaluate_outputs.py data/instances_v0.jsonl data/test_out.jsonl

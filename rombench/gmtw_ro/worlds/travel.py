@@ -10,12 +10,17 @@ from .base import World, Constraint, Goal, Entity, ConstraintType, GoalType
 
 
 # Romanian cities with attractions
+# Each attraction has both Romanian (name) and English (name_en) names
+# city_en provides ASCII-friendly city names for English prompts
 CITIES = {
     "Brașov": {
+        "city_en": "Brasov",
         "attractions": [
             {
                 "name": "Biserica Neagră",
+                "name_en": "The Black Church",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -23,7 +28,9 @@ CITIES = {
             },
             {
                 "name": "Parcul Central",
+                "name_en": "Central Park",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -31,7 +38,9 @@ CITIES = {
             },
             {
                 "name": "Pârtia Poiana Brașov",
+                "name_en": "Poiana Brasov Ski Slope",
                 "type": "sport",
+                "type_en": "sports",
                 "indoor": False,
                 "family_friendly": False,
                 "duration_hours": 4.0,
@@ -39,7 +48,9 @@ CITIES = {
             },
             {
                 "name": "Muzeul de Istorie",
+                "name_en": "History Museum",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -47,7 +58,9 @@ CITIES = {
             },
             {
                 "name": "Telecabina Tâmpa",
+                "name_en": "Tampa Cable Car",
                 "type": "transport",
+                "type_en": "transport",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.0,
@@ -55,7 +68,9 @@ CITIES = {
             },
             {
                 "name": "Turnul Alb",
+                "name_en": "The White Tower",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.0,
@@ -63,7 +78,9 @@ CITIES = {
             },
             {
                 "name": "Casa Sfatului",
+                "name_en": "The Council House",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -72,10 +89,13 @@ CITIES = {
         ]
     },
     "Cluj-Napoca": {
+        "city_en": "Cluj-Napoca",
         "attractions": [
             {
                 "name": "Grădina Botanică",
+                "name_en": "Botanical Garden",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -83,7 +103,9 @@ CITIES = {
             },
             {
                 "name": "Muzeul Național de Artă",
+                "name_en": "National Art Museum",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -91,7 +113,9 @@ CITIES = {
             },
             {
                 "name": "Cetățuia",
+                "name_en": "Cetatuia Hill Fortress",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -99,7 +123,9 @@ CITIES = {
             },
             {
                 "name": "Parcul Central Simion Bărnuțiu",
+                "name_en": "Central Park",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -107,7 +133,9 @@ CITIES = {
             },
             {
                 "name": "Muzeul Etnografic al Transilvaniei",
+                "name_en": "Ethnographic Museum of Transylvania",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.5,
@@ -115,7 +143,9 @@ CITIES = {
             },
             {
                 "name": "Biserica Sfântul Mihail",
+                "name_en": "St. Michael's Church",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.0,
@@ -124,10 +154,13 @@ CITIES = {
         ]
     },
     "Sibiu": {
+        "city_en": "Sibiu",
         "attractions": [
             {
                 "name": "Piața Mare",
+                "name_en": "Grand Square",
                 "type": "piață",
+                "type_en": "square",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -135,7 +168,9 @@ CITIES = {
             },
             {
                 "name": "Muzeul Brukenthal",
+                "name_en": "Brukenthal Museum",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.5,
@@ -143,7 +178,9 @@ CITIES = {
             },
             {
                 "name": "Podul Minciunilor",
+                "name_en": "Bridge of Lies",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 0.5,
@@ -151,7 +188,9 @@ CITIES = {
             },
             {
                 "name": "Turnul Sfatului",
+                "name_en": "Council Tower",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.0,
@@ -159,7 +198,9 @@ CITIES = {
             },
             {
                 "name": "Grădina Zoologică",
+                "name_en": "Zoo",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 3.0,
@@ -167,7 +208,9 @@ CITIES = {
             },
             {
                 "name": "Muzeul ASTRA",
+                "name_en": "ASTRA Open-Air Museum",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 4.0,
@@ -176,10 +219,13 @@ CITIES = {
         ]
     },
     "Timișoara": {
+        "city_en": "Timisoara",
         "attractions": [
             {
                 "name": "Piața Victoriei",
+                "name_en": "Victory Square",
                 "type": "piață",
+                "type_en": "square",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -187,7 +233,9 @@ CITIES = {
             },
             {
                 "name": "Catedrala Mitropolitană",
+                "name_en": "Metropolitan Cathedral",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.0,
@@ -195,7 +243,9 @@ CITIES = {
             },
             {
                 "name": "Parcul Rozelor",
+                "name_en": "Rose Park",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -203,7 +253,9 @@ CITIES = {
             },
             {
                 "name": "Muzeul de Artă",
+                "name_en": "Art Museum",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -211,7 +263,9 @@ CITIES = {
             },
             {
                 "name": "Bastionul Theresia",
+                "name_en": "Theresia Bastion",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": False,
                 "duration_hours": 1.5,
@@ -219,7 +273,9 @@ CITIES = {
             },
             {
                 "name": "Grădina Zoologică Timișoara",
+                "name_en": "Timisoara Zoo",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 3.0,
@@ -228,10 +284,13 @@ CITIES = {
         ]
     },
     "Iași": {
+        "city_en": "Iasi",
         "attractions": [
             {
                 "name": "Palatul Culturii",
+                "name_en": "Palace of Culture",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 3.0,
@@ -239,7 +298,9 @@ CITIES = {
             },
             {
                 "name": "Grădina Botanică Iași",
+                "name_en": "Iasi Botanical Garden",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 2.5,
@@ -247,7 +308,9 @@ CITIES = {
             },
             {
                 "name": "Mănăstirea Trei Ierarhi",
+                "name_en": "Three Hierarchs Monastery",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.0,
@@ -255,7 +318,9 @@ CITIES = {
             },
             {
                 "name": "Teatrul Național Iași",
+                "name_en": "Iasi National Theatre",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 0.5,
@@ -263,7 +328,9 @@ CITIES = {
             },
             {
                 "name": "Parcul Copou",
+                "name_en": "Copou Park",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -271,7 +338,9 @@ CITIES = {
             },
             {
                 "name": "Casa Memorială Mihai Eminescu",
+                "name_en": "Mihai Eminescu Memorial House",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -280,10 +349,13 @@ CITIES = {
         ]
     },
     "Constanța": {
+        "city_en": "Constanta",
         "attractions": [
             {
                 "name": "Cazinoul din Constanța",
+                "name_en": "Constanta Casino",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 1.0,
@@ -291,7 +363,9 @@ CITIES = {
             },
             {
                 "name": "Muzeul de Istorie și Arheologie",
+                "name_en": "History and Archaeology Museum",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -299,7 +373,9 @@ CITIES = {
             },
             {
                 "name": "Delfinariul",
+                "name_en": "Dolphinarium",
                 "type": "parc",
+                "type_en": "park",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 2.0,
@@ -307,7 +383,9 @@ CITIES = {
             },
             {
                 "name": "Plaja Modern",
+                "name_en": "Modern Beach",
                 "type": "plajă",
+                "type_en": "beach",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 4.0,
@@ -315,7 +393,9 @@ CITIES = {
             },
             {
                 "name": "Acvariul Constanța",
+                "name_en": "Constanta Aquarium",
                 "type": "muzeu",
+                "type_en": "museum",
                 "indoor": True,
                 "family_friendly": True,
                 "duration_hours": 1.5,
@@ -323,7 +403,9 @@ CITIES = {
             },
             {
                 "name": "Farul Genovez",
+                "name_en": "Genoese Lighthouse",
                 "type": "monument",
+                "type_en": "monument",
                 "indoor": False,
                 "family_friendly": True,
                 "duration_hours": 0.5,
@@ -376,20 +458,27 @@ class TravelWorldGenerator:
 
         for idx, attr in enumerate(selected_attractions):
             attr_id = f"A{idx + 1}"
+            name_en = attr.get("name_en", attr["name"])
+            # Build aliases: Romanian name, Romanian stripped, English name, English lower
+            aliases = [
+                attr["name"].lower(),
+                attr["name"].lower().replace("ă", "a").replace("â", "a").replace("î", "i").replace("ș", "s").replace("ț", "t"),
+                name_en,
+                name_en.lower(),
+            ]
             entities[attr_id] = Entity(
                 id=attr_id,
                 name=attr["name"],
-                aliases=[
-                    attr["name"].lower(),
-                    attr["name"].lower().replace("ă", "a").replace("â", "a").replace("î", "i").replace("ș", "s").replace("ț", "t"),
-                ],
+                aliases=aliases,
                 attributes=attr,
             )
 
             attractions_list.append({
                 "id": attr_id,
                 "name": attr["name"],
+                "name_en": attr.get("name_en", attr["name"]),
                 "type": attr["type"],
+                "type_en": attr.get("type_en", attr["type"]),
                 "indoor": attr["indoor"],
                 "family_friendly": attr["family_friendly"],
                 "duration_hours": attr["duration_hours"],
@@ -507,6 +596,7 @@ class TravelWorldGenerator:
         # Build payload
         payload = {
             "city": city,
+            "city_en": city_data.get("city_en", city),
             "num_days": num_days,
             "attractions": attractions_list,
         }

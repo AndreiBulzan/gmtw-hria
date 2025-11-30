@@ -132,8 +132,13 @@ def debug_results(instances_file: str, outputs_file: str, filter_type: str = Non
             for c in result.U_details.get('constraints', []):
                 if not c['satisfied']:
                     print(f"  ✗ {c['id']}")
-                    desc = [con for con in world.constraints if con.id == c['id']][0]
-                    actual_desc = desc.description_en if language == "en" else desc.description_ro
+                    # Try to find constraint in world, or use description from result dict
+                    matching = [con for con in world.constraints if con.id == c['id']]
+                    if matching:
+                        actual_desc = matching[0].description_en if language == "en" else matching[0].description_ro
+                    else:
+                        # Synthetic constraint (e.g., C_FORMAT_JSON_AT_END) - use description from dict
+                        actual_desc = c.get('description', 'Format violation')
                     print(f"    Required: {actual_desc}")
                     print(f"    Status: VIOLATED")
 
@@ -163,11 +168,32 @@ def debug_results(instances_file: str, outputs_file: str, filter_type: str = Non
             print("\n" + "─"*80)
             print("⚠️  GENERATION QUALITY NOTES:")
             print("─"*80)
-            g_details = result.G_details
-            if language == "en":
-                print(f"  Note: G score may be affected by English output (expects Romanian)")
-            if g_details.get('cs_rate', 0) > 0:
-                print(f"  Code-switching detected: {g_details.get('cs_rate', 0):.1%}")
+            g = result.G_details
+
+            # Show component scores
+            print(f"  G={result.G:.2f} (G_dia={g.get('G_dia', 0):.2f}, G_cs={g.get('G_cs', 0):.2f}, G_len={g.get('G_len', 0):.2f})")
+
+            # Diacritic issues
+            dia = g.get('diacritic_details', {})
+            if dia.get('missing', 0) > 0:
+                examples = dia.get('examples', [])
+                print(f"  Missing diacritics: {dia.get('missing', 0)} words")
+                if examples:
+                    print(f"    Examples: {', '.join(examples[:5])}")
+
+            # Code-switching issues
+            cs = g.get('codeswitch_details', {})
+            if cs.get('english_count', 0) > 0:
+                print(f"  English words detected: {cs.get('english_count', 0)} ({cs.get('english_rate', 0):.1%})")
+                examples = cs.get('examples', [])
+                if examples:
+                    print(f"    Examples: {', '.join(examples[:5])}")
+
+            # Flags
+            if g.get('is_likely_english'):
+                print(f"  ⚠️  Text appears to be in English, not Romanian")
+            if g.get('is_too_short'):
+                print(f"  ⚠️  Text is too short ({g.get('n_words', 0)} words)")
 
         # Navigation
         if idx < len(results):

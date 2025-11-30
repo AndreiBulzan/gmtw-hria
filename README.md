@@ -403,11 +403,32 @@ python scripts/run_groq_batch.py full_benchmark.jsonl --output results.jsonl
 python scripts/evaluate_outputs.py full_benchmark.jsonl results.jsonl --save-metrics full_metrics.jsonl
 ```
 
-## Known Limitations
+## Cross-Lingual Evaluation (Delta Metric)
 
-### English Prompts
+The benchmark supports computing the Foreign Language Penalty (Δ) to measure performance degradation when models process Romanian vs English prompts.
 
-The current English prompt templates contain Romanian entity names and are not suitable for true cross-lingual comparison. The Foreign Language Penalty (Delta) calculation should be considered experimental.
+### How Delta Works
+
+Run the same instances through a model twice:
+1. With Romanian prompts (native benchmark)
+2. With English prompts (translated entity names, diacritic-free)
+
+Then compare:
+```bash
+python scripts/compute_delta.py instances.jsonl ro_outputs.jsonl en_outputs.jsonl
+```
+
+### English Prompt Features
+
+- **Travel**: City names use ASCII (Brasov, Timisoara, Iasi), attraction names fully translated (Biserica Neagra → The Black Church)
+- **Recipe**: Dish names fully translated (Oua jumari cu rosii → Scrambled Eggs with Tomatoes), JSON keys use English (day1_breakfast vs day1_mic_dejun)
+- **Schedule**: Already supported via days_en/slots_en/name_en fields
+- **Fact**: Questions in English, answers remain as-is (facts about Romania)
+
+### Delta Interpretation
+
+- **ΔU, ΔR, ΔF**: Compare these across languages (positive = worse in Romanian)
+- **G metric**: Only meaningful for Romanian outputs (measures diacritic correctness)
 
 ## Future Work
 
@@ -415,7 +436,6 @@ The current English prompt templates contain Romanian entity names and are not s
 
 - **Add constraint solver**: Integrate OR-Tools CP-SAT to verify all generated worlds are mathematically solvable
 - **Expand world types**: Add budget/shopping world, logistics planning
-- **Fully localized English prompts**: Translate entity names for valid cross-lingual Δ comparison
 - **Grammar checking**: Integrate LanguageTool for deeper G metric analysis (optional)
 
 ### Evaluation Improvements
