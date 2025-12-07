@@ -44,7 +44,7 @@ def evaluate_batch(instances_file: str, outputs_file: str, output_metrics: str =
     results = []
     for inst_id, instance in instances.items():
         if inst_id not in outputs:
-            print(f"⚠️  Missing output for {inst_id}")
+            print(f" Missing output for {inst_id}")
             continue
 
         result = evaluate_instance(instance, outputs[inst_id])
