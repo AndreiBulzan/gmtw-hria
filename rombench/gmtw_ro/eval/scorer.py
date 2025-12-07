@@ -41,14 +41,23 @@ class EvaluationResult:
 class GMTWEvaluator:
     """Main evaluator for GMTW-Ro instances"""
 
-    def __init__(self, nlp_tools: Any = None):
+    def __init__(
+        self,
+        nlp_tools: Any = None,
+        use_languagetool: bool = False,
+        use_stanza: bool = False,
+    ):
         """
         Initialize evaluator
 
         Args:
-            nlp_tools: Optional NLP toolkit (Stanza, etc.)
+            nlp_tools: Optional NLP toolkit (if provided, use_languagetool is ignored)
+            use_languagetool: If True, include LanguageTool grammar checking in G score
+            use_stanza: If True, use Stanza for Romanian lemmatization in F score
         """
         self.nlp_tools = nlp_tools
+        self.use_languagetool = use_languagetool
+        self.use_stanza = use_stanza
 
     def evaluate_output(
         self,
@@ -93,7 +102,9 @@ class GMTWEvaluator:
                 world=world,
                 plan=parse_result.plan,
                 explanation=parse_result.explanation,
-                nlp_tools=self.nlp_tools
+                nlp_tools=self.nlp_tools,
+                use_languagetool=self.use_languagetool,
+                use_stanza=self.use_stanza,
             )
 
             return EvaluationResult(
@@ -132,7 +143,9 @@ class GMTWEvaluator:
 def evaluate_instance(
     instance: Instance,
     output: str,
-    nlp_tools: Any = None
+    nlp_tools: Any = None,
+    use_languagetool: bool = False,
+    use_stanza: bool = False,
 ) -> EvaluationResult:
     """
     Convenience function to evaluate a single instance
@@ -141,9 +154,15 @@ def evaluate_instance(
         instance: The evaluation instance
         output: Raw model output
         nlp_tools: Optional NLP toolkit
+        use_languagetool: If True, include LanguageTool grammar checking in G score
+        use_stanza: If True, use Stanza for Romanian lemmatization in F score
 
     Returns:
         EvaluationResult
     """
-    evaluator = GMTWEvaluator(nlp_tools=nlp_tools)
+    evaluator = GMTWEvaluator(
+        nlp_tools=nlp_tools,
+        use_languagetool=use_languagetool,
+        use_stanza=use_stanza,
+    )
     return evaluator.evaluate_output(instance, output)

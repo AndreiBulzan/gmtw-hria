@@ -9,12 +9,18 @@ Scoring uses a severity exponent to penalize violations more harshly:
 - Harsh (exponent=3): 2/3 satisfied = 0.30
 
 Default is exponent=2 (strict mode).
+
+Optional enhancements (require additional dependencies):
+- use_languagetool: Adds G_grammar sub-score using LanguageTool
+- use_stanza: Uses Stanza for more accurate Romanian lemmatization in F score
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 from ..worlds.base import World, ConstraintType, GoalType
 from .constraints import check_constraint
+
+# Default faithfulness implementation (fast, no external deps)
 from .faithfulness import compute_faithfulness_deterministic
 
 # Severity exponent for U and R scores
@@ -181,7 +187,11 @@ def compute_R(world: World, plan: dict) -> dict[str, Any]:
 # G - Generation Quality Score
 # ============================================================================
 
-def compute_G(text: str, nlp_tools: Any = None) -> dict[str, Any]:
+def compute_G(
+    text: str,
+    nlp_tools: Any = None,
+    use_languagetool: bool = False
+) -> dict[str, Any]:
     """
     Compute Generation Quality score
 
@@ -193,10 +203,12 @@ def compute_G(text: str, nlp_tools: Any = None) -> dict[str, Any]:
     - G_dia: Diacritic correctness (are Romanian diacritics used properly?)
     - G_cs: Code-switch score (absence of English contamination)
     - G_len: Length score (is the text adequately long?)
+    - G_grammar: (optional) Grammar/spelling score via LanguageTool
 
     Args:
         text: The natural language explanation
         nlp_tools: Optional RomanianNLPToolkit instance (created if not provided)
+        use_languagetool: If True, include LanguageTool grammar checking (requires language-tool-python)
 
     Returns:
         Dictionary with G score and component details
@@ -207,7 +219,7 @@ def compute_G(text: str, nlp_tools: Any = None) -> dict[str, Any]:
     else:
         # Import here to avoid circular imports
         from ...nlp_ro import RomanianNLPToolkit
-        toolkit = RomanianNLPToolkit()
+        toolkit = RomanianNLPToolkit(use_grammar=use_languagetool)
 
     # Get full analysis from toolkit
     return toolkit.compute_g_score(text)
@@ -221,6 +233,7 @@ def compute_F(
     world: World,
     plan: dict,
     explanation: str,
+    use_stanza: bool = False,
 ) -> dict[str, Any]:
     """
     Compute Faithfulness score using deterministic substring matching
@@ -233,10 +246,22 @@ def compute_F(
         world: The world specification
         plan: The extracted JSON plan
         explanation: The natural language explanation
+        use_stanza: If True, use Stanza for Romanian lemmatization (more accurate but slower)
 
     Returns:
         Dictionary with F score and details
     """
+    if use_stanza:
+        try:
+            from .faithfulness_stanza import compute_faithfulness_deterministic as compute_f_stanza
+            return compute_f_stanza(world, plan, explanation)
+        except ImportError:
+            import warnings
+            warnings.warn(
+                "use_stanza=True but stanza is not available. "
+                "Falling back to default faithfulness implementation."
+            )
+
     return compute_faithfulness_deterministic(world, plan, explanation)
 
 
@@ -248,7 +273,9 @@ def compute_all_metrics(
     world: World,
     plan: dict,
     explanation: str,
-    nlp_tools: Any = None
+    nlp_tools: Any = None,
+    use_languagetool: bool = False,
+    use_stanza: bool = False,
 ) -> MetricScores:
     """
     Compute all four metrics
@@ -257,15 +284,17 @@ def compute_all_metrics(
         world: The world specification
         plan: The extracted JSON plan
         explanation: The natural language explanation
-        nlp_tools: Optional NLP toolkit
+        nlp_tools: Optional NLP toolkit (if provided, use_languagetool is ignored)
+        use_languagetool: If True, include LanguageTool grammar checking in G score
+        use_stanza: If True, use Stanza for Romanian lemmatization in F score
 
     Returns:
         MetricScores with all four scores and details
     """
     U_details = compute_U(world, plan)
     R_details = compute_R(world, plan)
-    G_details = compute_G(explanation, nlp_tools)
-    F_details = compute_F(world, plan, explanation)
+    G_details = compute_G(explanation, nlp_tools, use_languagetool=use_languagetool)
+    F_details = compute_F(world, plan, explanation, use_stanza=use_stanza)
 
     # Format compliance check: JSON should be at the END, not the beginning
     # If explanation is empty/very short, model put JSON first → penalize U

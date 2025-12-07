@@ -1,38 +1,183 @@
 """
 Deterministic Faithfulness Checker for GMTW-Ro
 — With Romanian Lemmatization + Articulated Forms
+
+This module uses Stanza for Romanian lemmatization, which provides
+more accurate entity matching than the default morphology rules.
+
+Optimizations:
+- GPU acceleration (automatic if CUDA available)
+- Batch processing for multiple texts
+- LRU cache for repeated lemmatizations
+
+Requires: pip install stanza
+Or: pip install rombench[stanza]
 """
 
 from typing import Any
+from functools import lru_cache
 
-try:
-    import stanza
-    stanza.download("ro", verbose=False)
-    nlp = stanza.Pipeline(
-        "ro",
-        processors="tokenize,pos,lemma",    
-        tokenize_no_ssplit=True
-    )
-except Exception:
-    nlp = None
+# Lazy initialization of Stanza (only load when first used)
+_nlp = None
+_stanza_initialized = False
+
+# Cache for lemmatization results (avoid re-processing same text)
+_lemma_cache: dict[str, list[str]] = {}
+
+
+def _check_gpu_available():
+    """Check if CUDA GPU is available."""
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except ImportError:
+        return False
+
+
+def _get_stanza_nlp():
+    """Lazy initialization of Stanza pipeline with GPU support."""
+    global _nlp, _stanza_initialized
+
+    if _stanza_initialized:
+        return _nlp
+
+    _stanza_initialized = True
+    use_gpu = _check_gpu_available()
+
+    try:
+        import stanza
+
+        # Check if model is already downloaded
+        try:
+            _nlp = stanza.Pipeline(
+                "ro",
+                processors="tokenize,pos,lemma",
+                tokenize_no_ssplit=True,
+                download_method=None,  # Don't auto-download
+                use_gpu=use_gpu,
+                verbose=False,
+            )
+        except Exception:
+            # Model not downloaded, try to download it
+            stanza.download("ro", verbose=False)
+            _nlp = stanza.Pipeline(
+                "ro",
+                processors="tokenize,pos,lemma",
+                tokenize_no_ssplit=True,
+                use_gpu=use_gpu,
+                verbose=False,
+            )
+
+        if use_gpu:
+            import sys
+            print("Stanza: Using GPU acceleration", file=sys.stderr)
+
+    except ImportError:
+        import warnings
+        warnings.warn(
+            "stanza is not installed. Falling back to simple tokenization. "
+            "Install with: pip install stanza"
+        )
+        _nlp = None
+    except Exception as e:
+        import warnings
+        warnings.warn(f"Failed to initialize Stanza: {e}. Falling back to simple tokenization.")
+        _nlp = None
+
+    return _nlp
 
 
 def lemmatize_ro(text: str) -> list[str]:
     """
-    Lemmatize Romanian text using Stanza.
+    Lemmatize Romanian text using Stanza with caching.
     If stanza is unavailable, return simple tokens as fallback.
     """
+    # Check cache first
+    if text in _lemma_cache:
+        return _lemma_cache[text]
+
     import re
     tokens = re.findall(r"[A-Za-zăâîșțĂÂÎȘȚ]+", text.lower())
 
+    nlp = _get_stanza_nlp()
     if nlp is None:
         return tokens
 
     try:
         doc = nlp(text)
-        return [w.lemma for s in doc.sentences for w in s.words]
+        result = [w.lemma for s in doc.sentences for w in s.words]
+        # Cache the result (limit cache size to prevent memory issues)
+        if len(_lemma_cache) < 10000:
+            _lemma_cache[text] = result
+        return result
     except Exception:
         return tokens
+
+
+def lemmatize_batch(texts: list[str]) -> list[list[str]]:
+    """
+    Batch lemmatize multiple texts at once (more efficient on GPU).
+
+    Args:
+        texts: List of texts to lemmatize
+
+    Returns:
+        List of lemma lists, one per input text
+    """
+    import re
+
+    nlp = _get_stanza_nlp()
+
+    # Check which texts need processing (not in cache)
+    results = [None] * len(texts)
+    texts_to_process = []
+    indices_to_process = []
+
+    for i, text in enumerate(texts):
+        if text in _lemma_cache:
+            results[i] = _lemma_cache[text]
+        else:
+            texts_to_process.append(text)
+            indices_to_process.append(i)
+
+    # If all cached, return early
+    if not texts_to_process:
+        return results
+
+    # Fallback if no Stanza
+    if nlp is None:
+        for i, text in zip(indices_to_process, texts_to_process):
+            tokens = re.findall(r"[A-Za-zăâîșțĂÂÎȘȚ]+", text.lower())
+            results[i] = tokens
+        return results
+
+    # Batch process with Stanza
+    try:
+        import stanza
+        docs = nlp.bulk_process(
+            [stanza.Document([], text=t) for t in texts_to_process]
+        )
+
+        for idx, (i, doc) in enumerate(zip(indices_to_process, docs)):
+            lemmas = [w.lemma for s in doc.sentences for w in s.words]
+            results[i] = lemmas
+            # Cache results
+            if len(_lemma_cache) < 10000:
+                _lemma_cache[texts_to_process[idx]] = lemmas
+
+    except Exception:
+        # Fallback to simple tokenization
+        for i, text in zip(indices_to_process, texts_to_process):
+            tokens = re.findall(r"[A-Za-zăâîșțĂÂÎȘȚ]+", text.lower())
+            results[i] = tokens
+
+    return results
+
+
+def clear_cache():
+    """Clear the lemmatization cache."""
+    global _lemma_cache
+    _lemma_cache = {}
 
 
 def normalize_text(text: str) -> str:

@@ -21,7 +21,6 @@ classifiers = [
 
 dependencies = [
     "ortools>=9.8",
-    "stanza>=1.7",
     "rapidfuzz>=3.5",
     "json-repair>=0.25",
     "pydantic>=2.5",
@@ -33,6 +32,23 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Grammar checking via LanguageTool
+grammar = [
+    "language-tool-python>=2.7",
+]
+
+# Enhanced Romanian NLP via Stanza
+stanza = [
+    "stanza>=1.7",
+]
+
+# All optional enhancements
+full = [
+    "language-tool-python>=2.7",
+    "stanza>=1.7",
+]
+
+# Development dependencies
 dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",

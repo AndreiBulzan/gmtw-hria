@@ -22,7 +22,13 @@ def detect_language(outputs_file: str) -> str:
     return 'ro'
 
 
-def debug_results(instances_file: str, outputs_file: str, filter_type: str = None):
+def debug_results(
+    instances_file: str,
+    outputs_file: str,
+    filter_type: str = None,
+    use_languagetool: bool = False,
+    use_stanza: bool = False,
+):
     """
     Show detailed debugging info for each result
 
@@ -30,6 +36,8 @@ def debug_results(instances_file: str, outputs_file: str, filter_type: str = Non
         instances_file: JSONL with instances
         outputs_file: JSONL with model outputs
         filter_type: Show only 'failed', 'passed', or None for all
+        use_languagetool: Use LanguageTool for grammar checking
+        use_stanza: Use Stanza for Romanian lemmatization
     """
     # Detect language
     language = detect_language(outputs_file)
@@ -59,7 +67,12 @@ def debug_results(instances_file: str, outputs_file: str, filter_type: str = Non
         if inst_id not in outputs:
             continue
 
-        result = evaluate_instance(instance, outputs[inst_id])
+        result = evaluate_instance(
+            instance,
+            outputs[inst_id],
+            use_languagetool=use_languagetool,
+            use_stanza=use_stanza,
+        )
         results.append((instance, outputs[inst_id], result))
 
     # Filter if requested
@@ -214,7 +227,23 @@ if __name__ == "__main__":
         choices=["failed", "passed"],
         help="Show only failed or passed instances"
     )
+    parser.add_argument(
+        "--use-languagetool",
+        action="store_true",
+        help="Use LanguageTool for grammar checking"
+    )
+    parser.add_argument(
+        "--use-stanza",
+        action="store_true",
+        help="Use Stanza for Romanian lemmatization (better entity matching)"
+    )
 
     args = parser.parse_args()
 
-    debug_results(args.instances, args.outputs, args.filter)
+    debug_results(
+        args.instances,
+        args.outputs,
+        args.filter,
+        use_languagetool=args.use_languagetool,
+        use_stanza=args.use_stanza,
+    )

@@ -55,6 +55,14 @@ from .toolkit import (
     compute_generation_quality,
 )
 
+# Optional grammar module (requires language-tool-python)
+# Import conditionally to avoid ImportError if not installed
+from .grammar import (
+    is_available as grammar_is_available,
+    compute_grammar_score,
+    GrammarAnalysis,
+)
+
 __all__ = [
     # Tokenizer
     "Token",
@@ -77,4 +85,8 @@ __all__ = [
     "RomanianNLPToolkit",
     "analyze_romanian_text",
     "compute_generation_quality",
+    # Grammar (optional - requires language-tool-python)
+    "grammar_is_available",
+    "compute_grammar_score",
+    "GrammarAnalysis",
 ]

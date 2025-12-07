@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
 Evaluate model outputs for GMTW-Ro instances
+
+Optional enhancements:
+  --use-languagetool  Include LanguageTool grammar checking in G score
+                      (requires: pip install language-tool-python)
+  --use-stanza        Use Stanza for Romanian lemmatization in F score
+                      (requires: pip install stanza)
 """
 
 import json
@@ -12,7 +18,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from rombench.gmtw_ro import Instance, evaluate_instance
 
 
-def evaluate_batch(instances_file: str, outputs_file: str, output_metrics: str = None):
+def evaluate_batch(
+    instances_file: str,
+    outputs_file: str,
+    output_metrics: str = None,
+    use_languagetool: bool = False,
+    use_stanza: bool = False,
+):
     """
     Evaluate a batch of model outputs
 
@@ -20,7 +32,20 @@ def evaluate_batch(instances_file: str, outputs_file: str, output_metrics: str =
         instances_file: JSONL file with instances
         outputs_file: JSONL file with model outputs (format: {"instance_id": "...", "output": "..."})
         output_metrics: Optional file to save detailed metrics
+        use_languagetool: If True, include LanguageTool grammar checking in G score
+        use_stanza: If True, use Stanza for Romanian lemmatization in F score
     """
+
+    # Print mode info
+    modes = []
+    if use_languagetool:
+        modes.append("LanguageTool (G_grammar)")
+    if use_stanza:
+        modes.append("Stanza (F lemmatization)")
+    if modes:
+        print(f"Enhanced mode: {', '.join(modes)}")
+    else:
+        print("Standard mode (fast, no optional dependencies)")
 
     # Load instances
     instances = {}
@@ -47,7 +72,12 @@ def evaluate_batch(instances_file: str, outputs_file: str, output_metrics: str =
             print(f" Missing output for {inst_id}")
             continue
 
-        result = evaluate_instance(instance, outputs[inst_id])
+        result = evaluate_instance(
+            instance,
+            outputs[inst_id],
+            use_languagetool=use_languagetool,
+            use_stanza=use_stanza,
+        )
         results.append(result)
 
         # Print individual result
@@ -81,11 +111,51 @@ def evaluate_batch(instances_file: str, outputs_file: str, output_metrics: str =
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Evaluate GMTW-Ro outputs")
+    parser = argparse.ArgumentParser(
+        description="Evaluate GMTW-Ro outputs",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Optional enhancements (require additional dependencies):
+
+  --use-languagetool  Include grammar checking in G score
+                      Install: pip install language-tool-python
+                      Effect: Adds G_grammar component (25% of G score)
+
+  --use-stanza        Use Stanza for Romanian lemmatization in F score
+                      Install: pip install stanza
+                      Effect: More accurate entity matching in explanations
+
+Examples:
+  # Standard evaluation (fast)
+  python evaluate_outputs.py data/instances.jsonl data/outputs.jsonl
+
+  # With grammar checking
+  python evaluate_outputs.py data/instances.jsonl data/outputs.jsonl --use-languagetool
+
+  # Full enhanced mode
+  python evaluate_outputs.py data/instances.jsonl data/outputs.jsonl --use-languagetool --use-stanza
+"""
+    )
     parser.add_argument("instances", help="JSONL file with instances")
     parser.add_argument("outputs", help="JSONL file with model outputs")
     parser.add_argument("--save-metrics", help="Save detailed metrics to file")
+    parser.add_argument(
+        "--use-languagetool",
+        action="store_true",
+        help="Include LanguageTool grammar checking in G score (slower)"
+    )
+    parser.add_argument(
+        "--use-stanza",
+        action="store_true",
+        help="Use Stanza for Romanian lemmatization in F score (slower)"
+    )
 
     args = parser.parse_args()
 
-    evaluate_batch(args.instances, args.outputs, args.save_metrics)
+    evaluate_batch(
+        args.instances,
+        args.outputs,
+        args.save_metrics,
+        use_languagetool=args.use_languagetool,
+        use_stanza=args.use_stanza,
+    )
