@@ -123,45 +123,145 @@ def add_genitive_dative_for_phrase(term: str) -> set:
 
     "Parcul Central" → {"parcului central", ...}
     "Muzeul Satului" → {"muzeului satului", ...}
+    "Grădina Botanică" → {"grădinei botanice", ...}
     """
     tokens = term.split()
     if not tokens:
         return {term}
 
-    last = tokens[-1]
     forms = set()
 
+    # Single-word handling (original behavior for last token)
+    last = tokens[-1]
+    last_forms = set()
+
     if last.endswith("ul"):
-        forms.add(last + "ui")           
-        forms.add(last[:-2] + "ului")
+        last_forms.add(last + "ui")
+        last_forms.add(last[:-2] + "ului")
     elif last.endswith("u"):
         stem = last[:-1]
-        forms.add(stem + "ului")
-        forms.add(stem + "ui")
+        last_forms.add(stem + "ului")
+        last_forms.add(stem + "ui")
     elif last.endswith("a"):
         stem = last[:-1]
-        forms.add(stem + "ei")
+        last_forms.add(stem + "ei")
     elif last.endswith("e"):
-        forms.add(last + "lui")
-        forms.add(last + "i")
+        last_forms.add(last + "lui")
+        last_forms.add(last + "i")
     elif last.endswith("i"):
-        forms.add(last + "lor")
+        last_forms.add(last + "lor")
     else:
-        forms.add(last + "ului")
+        last_forms.add(last + "ului")
 
-    # build full phrase variants
-    phrase_forms = {
-        " ".join(tokens[:-1] + [f])
-        for f in forms
-    }
+    # Build full phrase variants with only last word changed
+    for f in last_forms:
+        forms.add(" ".join(tokens[:-1] + [f]))
 
-    return phrase_forms
+    return forms
+
+
+def generate_coordinated_genitive_forms(tokens: list[str]) -> set[str]:
+    """
+    Generate genitive forms where multiple adjacent tokens are inflected together.
+
+    In Romanian, noun+adjective pairs must agree in case:
+    - "Grădina Botanică" → "Grădinei Botanice"
+    - "Casa Memorială" → "Casei Memoriale"
+    - "Biblioteca Națională" → "Bibliotecii Naționale"
+    - "Biserica Neagră" → "Bisericii Negre"
+
+    This handles the common pattern where:
+    - Feminine noun (-a/-ă) + feminine adjective (-a/-ă) both change to genitive
+    """
+    forms = set()
+
+    if len(tokens) < 2:
+        return forms
+
+    # Pattern 1: First word is feminine noun, following words are adjectives
+    # Examples: "gradina botanica", "casa memoriala", "biblioteca nationala"
+    first = tokens[0]
+    if first.endswith("a") and len(first) > 2:
+        # Special case: words ending in -ica/-ică have genitive -icii
+        # Examples: biserica → bisericii, America → Americii
+        if first.endswith("ica") or first.endswith("ică"):
+            first_gen = first[:-1] + "ii"
+        else:
+            # Standard genitive of feminine noun: -a → -ei
+            first_gen = first[:-1] + "ei"
+
+        # Now inflect any following adjectives that also end in -a/-ă/-e
+        rest_original = tokens[1:]
+        rest_genitive = []
+
+        for tok in rest_original:
+            if tok.endswith("a") and len(tok) > 2:
+                # Feminine adjective: -a → -e (genitive)
+                gen_form = tok[:-1] + "e"
+                rest_genitive.append(gen_form)
+            elif tok.endswith("ă") and len(tok) > 2:
+                # Alternative feminine ending: -ă → -e
+                gen_form = tok[:-1] + "e"
+                rest_genitive.append(gen_form)
+            else:
+                # Keep as-is (proper nouns like names, or masculine adjectives)
+                rest_genitive.append(tok)
+
+        # Handle vowel reduction: "ea" → "e" in adjectives like neagră → negre
+        rest_genitive_reduced = []
+        for tok in rest_genitive:
+            if "ea" in tok:
+                rest_genitive_reduced.append(tok.replace("ea", "e"))
+            else:
+                rest_genitive_reduced.append(tok)
+
+        # Full coordinated genitive form
+        forms.add(first_gen + " " + " ".join(rest_genitive))
+
+        # Also add form with vowel reduction (neagre → negre)
+        if rest_genitive_reduced != rest_genitive:
+            forms.add(first_gen + " " + " ".join(rest_genitive_reduced))
+
+        # Also try partial: first word genitive, rest unchanged
+        forms.add(first_gen + " " + " ".join(rest_original))
+
+    # Pattern 2: Articulated masculine noun (ending in -ul) followed by adjective
+    # Examples: "parcul central" → "parcului central"
+    if first.endswith("ul") and len(first) > 3:
+        first_gen = first[:-2] + "ului"
+        rest = tokens[1:]
+        forms.add(first_gen + " " + " ".join(rest))
+
+    # Pattern 3: Feminine noun ending in -ă (alternative to -a)
+    if first.endswith("ă") and len(first) > 2:
+        first_gen = first[:-1] + "ei"
+        rest_original = tokens[1:]
+        rest_genitive = []
+
+        for tok in rest_original:
+            if tok.endswith("a") and len(tok) > 2:
+                rest_genitive.append(tok[:-1] + "e")
+            elif tok.endswith("ă") and len(tok) > 2:
+                rest_genitive.append(tok[:-1] + "e")
+            else:
+                rest_genitive.append(tok)
+
+        forms.add(first_gen + " " + " ".join(rest_genitive))
+        forms.add(first_gen + " " + " ".join(rest_original))
+
+    return forms
 
 
 
 def get_entity_search_terms(entity: Any) -> list[str]:
     """
     Build normalized terms + morphological expansions.
+
+    This includes:
+    1. Base forms and aliases
+    2. Token-wise morphology (each word inflected independently)
+    3. Coordinated genitive forms (noun+adjective inflected together)
+    4. Phrase-level genitive/dative forms
     """
     base_terms = [normalize_text(entity.name)]
     base_terms.extend(normalize_text(a) for a in entity.aliases)
@@ -171,8 +271,9 @@ def get_entity_search_terms(entity: Any) -> list[str]:
     for term in base_terms:
         final.add(term)
 
-        # token-wise morphology
         tokens = term.split()
+
+        # Token-wise morphology (original behavior)
         for i, tok in enumerate(tokens):
             if len(tok) < 2:
                 continue
@@ -182,6 +283,11 @@ def get_entity_search_terms(entity: Any) -> list[str]:
                 variant[i] = form
                 final.add(" ".join(variant))
 
+        # Coordinated genitive forms (NEW - handles noun+adjective pairs)
+        for gd in generate_coordinated_genitive_forms(tokens):
+            final.add(gd)
+
+        # Phrase-level genitive/dative (last token only)
         for gd in add_genitive_dative_for_phrase(term):
             final.add(gd)
 

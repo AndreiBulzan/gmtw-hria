@@ -81,6 +81,108 @@ HIGH_CONFIDENCE_ENGLISH: set[str] = {
 
     # Articles (very strong signal)
     "the", "a", "an",
+
+    # Additional English-only words (definitely not Romanian)
+    # Common verbs with no Romanian cognate
+    "said", "says", "saying", "asked", "asking", "told", "telling",
+    "looked", "looking", "walked", "walking", "talked", "talking",
+    "started", "starting", "stopped", "stopping", "helped", "helping",
+    "needed", "needing", "wanted", "wanting", "liked", "liking",
+    "loved", "loving", "hated", "hating", "hoped", "hoping",
+    "believed", "believing", "understood", "understanding",
+    "remembered", "remembering", "forgot", "forgotten", "forgetting",
+    "learned", "learning", "taught", "teaching",
+    "bought", "buying", "sold", "selling", "paid", "paying",
+    "sent", "sending", "received", "receiving",
+    "written", "writing", "read", "reading",  # "read" as past tense
+    "shown", "showing", "given", "giving", "taken", "taking",
+    "brought", "bringing", "kept", "keeping", "let", "letting",
+    "heard", "hearing", "meant", "meaning",
+    "became", "becoming", "stood", "standing", "sat", "sitting",
+    "ran", "running", "held", "holding", "turned", "turning",
+    "moved", "moving", "lived", "living", "died", "dying",
+    "opened", "opening", "closed", "closing",
+    "played", "playing", "watched", "watching",
+    "stayed", "staying", "waited", "waiting",
+    "happened", "happening", "seemed", "seeming",
+    "changed", "changing", "followed", "following",
+    "met", "meeting", "led", "leading",
+    "lost", "losing", "won", "winning",
+    "built", "building", "cut", "cutting",
+    "spoke", "speaking", "written",
+
+    # Common English nouns with no Romanian cognate
+    "something", "nothing", "everything", "anything",
+    "someone", "anyone", "everyone", "nobody", "somebody", "anybody", "everybody",
+    "somewhere", "anywhere", "everywhere", "nowhere",
+    "sometimes", "always",  # already have but ensuring
+    "maybe", "perhaps", "probably", "certainly", "definitely",
+    "please", "thanks", "sorry", "hello", "goodbye", "okay",
+    "today", "tomorrow", "yesterday",
+    "morning", "afternoon", "evening", "tonight",
+    "week", "month",  # already have some
+    "people", "person", "friend", "friends",
+    "job", "jobs", "house", "houses", "car", "cars",
+    "school", "teacher", "teachers", "student", "students",
+    "money", "price", "cost", "costs",
+    "food", "drink", "drinks", "meal", "meals",
+    "story", "stories", "news", "game", "games",
+    "movie", "movies", "book", "books", "song", "songs",
+    "city", "cities", "town", "towns", "street", "streets",
+    "door", "doors", "window", "windows", "floor", "floors",
+    "side", "sides", "top", "bottom", "front", "middle",
+    "end", "ends", "beginning", "start",
+    "kind", "kinds", "type", "types", "sort", "sorts",
+    "set", "sets", "piece", "pieces", "bit", "bits",
+    "lot", "lots", "deal", "deals",
+    "issue", "issues", "matter", "matters",
+    "power", "powers", "force", "forces",
+    "light", "lights", "sound", "sounds",
+    "picture", "pictures", "view", "views",
+    "word", "words", "letter", "letters",
+    "page", "pages", "line", "lines",
+    "step", "steps", "move", "moves",
+    "change", "changes", "difference", "differences",
+    "answer", "answers", "reason", "reasons",
+    "sense", "senses", "feeling", "feelings",
+    "mind", "minds", "heart", "hearts", "body", "bodies",
+    "eye", "eyes", "face", "faces", "head", "heads",
+    "hair", "foot", "feet", "arm", "arms", "leg", "legs",
+    "blood", "skin", "bone", "bones",
+    "air", "fire", "earth", "sky", "sea", "sun", "moon", "star", "stars",
+    "tree", "trees", "flower", "flowers", "grass",
+    "dog", "dogs", "cat", "cats", "bird", "birds", "fish",
+    "horse", "horses", "cow", "cows", "sheep",
+
+    # English adjectives with no Romanian cognate
+    "happy", "sad", "angry", "afraid", "sorry", "glad", "proud",
+    "tired", "sick", "hungry", "thirsty", "busy", "ready", "quick", "slow",
+    "hard", "soft", "hot", "cold", "warm", "cool", "wet", "dry",
+    "clean", "dirty", "empty", "full",
+    "dark", "bright", "deep", "wide", "narrow", "thick", "thin",
+    "cheap", "expensive", "rich", "poor",
+    "strong", "weak", "heavy", "light",
+    "beautiful", "ugly", "pretty", "handsome",
+    "smart", "stupid", "clever", "wise", "crazy", "strange", "weird",
+    "nice", "kind", "mean", "funny", "serious",
+    "easy", "difficult", "simple", "hard",
+    "safe", "dangerous", "healthy", "ill",
+    "alive", "dead", "awake", "asleep",
+    "alone", "together", "single", "double",
+    "whole", "half", "main", "major", "minor",
+    "wrong", "fair", "unfair",
+    "available", "possible", "impossible", "necessary", "likely", "unlikely",
+    "common", "rare", "usual", "unusual", "typical", "obvious", "clear",
+
+    # English adverbs
+    "quickly", "slowly", "easily", "hardly", "nearly", "mostly", "mainly",
+    "simply", "clearly", "obviously", "certainly", "probably", "possibly",
+    "suddenly", "immediately", "finally", "eventually", "recently", "lately",
+    "usually", "often", "sometimes", "rarely", "seldom",
+    "anyway", "somehow", "somewhat", "otherwise", "anywhere", "everywhere",
+    "indeed", "instead", "besides", "meanwhile", "therefore", "thus",
+    "forward", "backward", "upward", "downward", "inward", "outward",
+    "tonight", "nowadays", "forever", "ago",
 }
 
 # Romanian words that look like English (false positives to avoid)
@@ -164,6 +266,121 @@ ROMANIAN_LOOKALIKES: set[str] = {
     "ani",      # "years"
     "mod",      # "mode/way"
     "tip",      # "type"
+
+    # ==========================================================================
+    # Romanian words identical to English (cognates/loanwords - valid Romanian)
+    # These are commonly used Romanian words that happen to be spelled the same
+    # as English words. They should NOT be flagged as code-switching.
+    # ==========================================================================
+
+    # Common adjectives (Romanian = English spelling)
+    "important",    # RO: important (same meaning)
+    "special",      # RO: special (same meaning)
+    "normal",       # RO: normal
+    "modern",       # RO: modern
+    "original",     # RO: original
+    "natural",      # RO: natural
+    "general",      # RO: general
+    "central",      # RO: central
+    "cultural",     # RO: cultural
+    "actual",       # RO: actual (means "current" in RO)
+    "final",        # RO: final
+    "local",        # RO: local
+    "total",        # RO: total
+    "principal",    # RO: principal (main)
+    "ideal",        # RO: ideal
+    "real",         # RO: real
+    "formal",       # RO: formal
+    "popular",      # RO: popular
+    "similar",      # RO: similar
+    "familiar",     # RO: familiar
+    "particular",   # RO: particular
+    "regulat",      # RO: regular (slightly different spelling)
+    "international", # RO: internațional (close enough)
+    "national",     # RO: național
+    "regional",     # RO: regional
+    "traditional",  # RO: tradițional
+    "personal",     # RO: personal
+    "professional", # RO: profesional
+    "social",       # RO: social
+    "medical",      # RO: medical
+    "legal",        # RO: legal
+    "moral",        # RO: moral
+    "mental",       # RO: mental
+    "vocal",        # RO: vocal
+    "vital",        # RO: vital
+    "fatal",        # RO: fatal
+    "brutal",       # RO: brutal
+    "rural",        # RO: rural
+    "urban",        # RO: urban
+
+    # Common nouns (Romanian = English spelling)
+    "program",      # RO: program
+    "moment",       # RO: moment
+    "content",      # RO: content (satisfied - adj)
+    "plan",         # RO: plan
+    "transport",    # RO: transport
+    "restaurant",   # RO: restaurant
+    "monument",     # RO: monument
+    "element",      # RO: element
+    "segment",      # RO: segment
+    "document",     # RO: document
+    "argument",     # RO: argument
+    "instrument",   # RO: instrument
+    "experiment",   # RO: experiment
+    "apartament",   # RO: apartament
+    "departament",  # RO: departament
+    "sentiment",    # RO: sentiment
+    "hotel",        # RO: hotel
+    "model",        # RO: model
+    "nivel",        # RO: nivel (level)
+    "material",     # RO: material
+    "animal",       # RO: animal
+    "canal",        # RO: canal
+    "festival",     # RO: festival
+    "capital",      # RO: capital
+    "potential",    # RO: potențial
+    "serial",       # RO: serial
+    "ritual",       # RO: ritual
+    "manual",       # RO: manual
+    "jurnal",       # RO: jurnal (journal)
+    "tribunal",     # RO: tribunal
+    "minister",     # RO: ministru (close)
+    "profesor",     # RO: profesor
+    "doctor",       # RO: doctor
+    "director",     # RO: director
+    "sector",       # RO: sector
+    "factor",       # RO: factor
+    "motor",        # RO: motor
+    "autor",        # RO: autor
+    "actor",        # RO: actor
+    "senator",      # RO: senator
+    "spectator",    # RO: spectator
+    "calculator",   # RO: calculator (computer)
+    "indicator",    # RO: indicator
+
+    # Time-related
+    "an",           # RO: an (year) - NOT English "an" article!
+    "moment",       # RO: moment
+
+    # Other common words
+    "roman",        # RO: roman (novel) or român (Romanian)
+    "fond",         # RO: fond (fund/background)
+    "conflict",     # RO: conflict
+    "contact",      # RO: contact
+    "contract",     # RO: contract
+    "impact",       # RO: impact
+    "aspect",       # RO: aspect
+    "respect",      # RO: respect
+    "concept",      # RO: concept
+    "context",      # RO: context
+    "text",         # RO: text
+    "pretext",      # RO: pretext
+    "reflex",       # RO: reflex
+    "complex",      # RO: complex
+    "index",        # RO: index
+    "prefix",       # RO: prefix
+    "sufix",        # RO: sufix
 }
 
 

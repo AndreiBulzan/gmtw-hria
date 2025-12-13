@@ -30,7 +30,7 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
     "daca": {"dacă"},
     "deasupra": {"deasupra"},
     "dimineata": {"dimineața", "dimineață"},
-    "doua": {"două"},
+    "doua": {"două", "doua"},  # "două" = cardinal (two), "doua" = ordinal (a doua = the second)
     "fara": {"fără"},
     "fata": {"fata", "fată"},  # Can be "the face" or "girl"
     "grădina": {"grădina"},
@@ -139,7 +139,7 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
     "intreaba": {"întreabă"},
     "intrebare": {"întrebare"},
     "intreg": {"întreg"},
-    "intreaga": {"întreagă"},
+    "intreaga": {"întreagă", "întreaga"},  # Both indefinite and articulated forms valid
     "invata": {"învăța", "învață"},
     "invatamant": {"învățământ"},
 
@@ -400,7 +400,60 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     # =========================================================================
     "sase": "șase",       # six
     "sapte": "șapte",     # seven
-    "doua": "două",       # two (fem)
+    # "doua" removed - context-dependent: "două" (cardinal) vs "doua" in "a doua" (ordinal)
+
+    # =========================================================================
+    # ADDITIONAL COMMON WORDS (expanded coverage)
+    # =========================================================================
+    # Prepositions and adverbs with î-
+    "intre": "între",           # between
+    "inauntru": "înăuntru",     # inside
+    "imprejur": "împrejur",     # around
+    "inapoi": "înapoi",         # back (already present but ensuring)
+    "inainte": "înainte",       # before/forward (already present)
+
+    # Compound words
+    "bineinteles": "bineînțeles",     # of course
+    "niciodata": "niciodată",         # never (already present)
+    "totdeauna": "totdeauna",         # always (no diacritic needed)
+    "oriunde": "oriunde",             # anywhere
+
+    # Nouns with diacritics
+    "intelegere": "înțelegere",       # understanding
+    "intelepciune": "înțelepciune",   # wisdom
+    "insemnatate": "însemnătate",     # importance
+
+    # Verbs with diacritics
+    "insemna": "însemna",       # to mean
+    "insoti": "însoți",         # to accompany
+    "indruma": "îndruma",       # to guide
+    "ingriji": "îngriji",       # to care for
+    "invata": "învăța",         # to learn (already present)
+
+    # Reflexives and pronouns
+    "insusi": "însuși",         # himself
+    "insasi": "însăși",         # herself
+    "insesi": "înseși",         # themselves (fem)
+    "insisi": "înșiși",         # themselves (masc)
+
+    # Common adjectives
+    "insarcinat": "însărcinat",       # pregnant/charged
+    "insarcinata": "însărcinată",     # pregnant (fem)
+    "intelept": "înțelept",           # wise
+    "inteleapta": "înțeleaptă",       # wise (fem)
+    "intreaga": "întreagă",           # whole (already in DIACRITIC_WORDS)
+
+    # Days and time
+    "duminica": "duminică",     # Sunday (when without article)
+    "dimineata": "dimineața",   # morning (already present)
+    "seara": "seară",           # evening (without article)
+
+    # More verb forms
+    "incearca": "încearcă",     # tries
+    "incercam": "încercăm",     # we try
+    "incercati": "încercați",   # you try (plural)
+    "intelegem": "înțelegem",   # we understand
+    "intelegeti": "înțelegeți", # you understand (plural)
 }
 
 # Common English words that indicate code-switching (should not appear in Romanian)
@@ -440,4 +493,9 @@ ENGLISH_WHITELIST: set[str] = {
     "din", "cu", "la", "prin", "spre", "sub", "asupra",
     "mare", "mic", "bun", "nou", "alt", "tot", "ori",
     "am", "ai", "are", "au",  # Romanian verb forms
+    # JSON format tokens (expected in structured output)
+    "day", "day1", "day2", "day3", "day4", "day5",
+    "null", "true", "false",  # JSON literals
+    # Priority levels used in schedule world prompts
+    "high", "medium", "low",
 }

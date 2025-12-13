@@ -211,7 +211,8 @@ def generate_articulated_forms(word: str) -> list[str]:
         forms |= {word + "a", word + "le", word + "lui", word + "lor"}
 
     elif word.endswith("a"):
-        forms |= {word + "ua", word[:-1] + "lei"}
+        # Genitive form: -a → -ei
+        forms |= {word + "ua", word[:-1] + "ei", word[:-1] + "ele", word[:-1] + "elor"}
 
     elif word.endswith("iu"):
         forms |= {word + "l", word + "lui", word[:-1] + "ii", word[:-1] + "ilor"}
@@ -232,6 +233,86 @@ def generate_articulated_forms(word: str) -> list[str]:
     return list(forms)
 
 
+def generate_coordinated_genitive_forms(tokens: list[str]) -> set[str]:
+    """
+    Generate genitive forms where multiple adjacent tokens are inflected together.
+
+    In Romanian, noun+adjective pairs must agree in case:
+    - "gradina botanica" → "gradinei botanice"
+    - "casa memoriala" → "casei memoriale"
+    - "biserica neagra" → "bisericii negre"
+    """
+    forms = set()
+
+    if len(tokens) < 2:
+        return forms
+
+    first = tokens[0]
+
+    # Feminine noun (-a) + adjectives
+    if first.endswith("a") and len(first) > 2:
+        # Special case: words ending in -ica/-ică have genitive -icii
+        if first.endswith("ica") or first.endswith("ică"):
+            first_gen = first[:-1] + "ii"
+        else:
+            first_gen = first[:-1] + "ei"
+
+        rest_original = tokens[1:]
+        rest_genitive = []
+
+        for tok in rest_original:
+            if tok.endswith("a") and len(tok) > 2:
+                rest_genitive.append(tok[:-1] + "e")
+            elif tok.endswith("ă") and len(tok) > 2:
+                rest_genitive.append(tok[:-1] + "e")
+            else:
+                rest_genitive.append(tok)
+
+        # Handle vowel reduction: "ea" → "e" (neagră → negre)
+        rest_genitive_reduced = [
+            tok.replace("ea", "e") if "ea" in tok else tok
+            for tok in rest_genitive
+        ]
+
+        forms.add(first_gen + " " + " ".join(rest_genitive))
+        if rest_genitive_reduced != rest_genitive:
+            forms.add(first_gen + " " + " ".join(rest_genitive_reduced))
+        forms.add(first_gen + " " + " ".join(rest_original))
+
+    # Articulated masculine noun (-ul)
+    if first.endswith("ul") and len(first) > 3:
+        first_gen = first[:-2] + "ului"
+        rest = tokens[1:]
+        forms.add(first_gen + " " + " ".join(rest))
+
+    # Feminine noun (-ă)
+    if first.endswith("ă") and len(first) > 2:
+        first_gen = first[:-1] + "ei"
+        rest_original = tokens[1:]
+        rest_genitive = []
+
+        for tok in rest_original:
+            if tok.endswith("a") and len(tok) > 2:
+                rest_genitive.append(tok[:-1] + "e")
+            elif tok.endswith("ă") and len(tok) > 2:
+                rest_genitive.append(tok[:-1] + "e")
+            else:
+                rest_genitive.append(tok)
+
+        # Handle vowel reduction: "ea" → "e" (neagră → negre)
+        rest_genitive_reduced = [
+            tok.replace("ea", "e") if "ea" in tok else tok
+            for tok in rest_genitive
+        ]
+
+        forms.add(first_gen + " " + " ".join(rest_genitive))
+        if rest_genitive_reduced != rest_genitive:
+            forms.add(first_gen + " " + " ".join(rest_genitive_reduced))
+        forms.add(first_gen + " " + " ".join(rest_original))
+
+    return forms
+
+
 def get_entity_search_terms(entity: Any) -> list[str]:
     base_terms = [
         normalize_text(entity.name),
@@ -242,10 +323,15 @@ def get_entity_search_terms(entity: Any) -> list[str]:
 
     # Add articulated forms
     for term in base_terms:
-        for token in term.split():
+        tokens = term.split()
+        for token in tokens:
             if len(token) >= 3:
                 for form in generate_articulated_forms(token):
                     final_terms.add(term.replace(token, form))
+
+        # Add coordinated genitive forms (noun+adjective together)
+        for form in generate_coordinated_genitive_forms(tokens):
+            final_terms.add(form)
 
     # Add lemma forms
     for term in base_terms:

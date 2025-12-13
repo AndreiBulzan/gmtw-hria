@@ -169,7 +169,14 @@ def debug_results(
             print("─"*80)
             missing = result.F_details.get('missing', [])
             if missing:
-                print(f"  Missing from explanation: {', '.join(missing)}")
+                print(f"  Missing from explanation:")
+                # Look up entity names from the world
+                for eid in missing:
+                    if eid in world.canonical_entities:
+                        ent = world.canonical_entities[eid]
+                        print(f"    • {eid}: {ent.name}")
+                    else:
+                        print(f"    • {eid}: (unknown entity)")
                 print(f"  → These entities are in the JSON plan but not mentioned in the text")
 
             total = result.F_details.get('total_count', 0)
