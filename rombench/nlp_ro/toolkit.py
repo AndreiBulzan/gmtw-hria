@@ -22,6 +22,7 @@ from .tokenizer import (
 )
 from .diacritics import analyze_diacritics, DiacriticAnalysis
 from .codeswitch import detect_code_switching, CodeSwitchAnalysis, is_likely_english_text
+from .punctuation import analyze_punctuation, PunctuationAnalysis
 
 
 @dataclass
@@ -35,6 +36,7 @@ class TextQualityReport:
     diacritic_score: float      # Diacritic correctness
     codeswitch_score: float     # Absence of code-switching (1.0 = no English)
     length_score: float         # Adequate length (not too short)
+    punctuation_score: float = 1.0  # Punctuation quality
     grammar_score: Optional[float] = None  # Grammar/spelling (optional, requires LanguageTool)
 
     # Combined score
@@ -43,6 +45,7 @@ class TextQualityReport:
     # Detailed analyses
     diacritics: DiacriticAnalysis = None
     codeswitch: CodeSwitchAnalysis = None
+    punctuation: PunctuationAnalysis = None
     grammar_details: Optional[dict] = None  # Grammar analysis details
 
     # Basic stats
@@ -105,16 +108,18 @@ class RomanianNLPToolkit:
 
     # Default weights WITHOUT grammar (sum = 1.0)
     DEFAULT_WEIGHTS = {
-        "diacritic": 0.50,
+        "diacritic": 0.45,
         "codeswitch": 0.30,
-        "length": 0.20,
+        "punctuation": 0.15,
+        "length": 0.10,
     }
 
     # Weights WITH grammar enabled (sum = 1.0)
     WEIGHTS_WITH_GRAMMAR = {
-        "diacritic": 0.40,
+        "diacritic": 0.35,
         "codeswitch": 0.20,
-        "length": 0.15,
+        "punctuation": 0.10,
+        "length": 0.10,
         "grammar": 0.25,
     }
 
@@ -124,6 +129,7 @@ class RomanianNLPToolkit:
         use_grammar: bool = False,
         diacritic_weight: Optional[float] = None,
         codeswitch_weight: Optional[float] = None,
+        punctuation_weight: Optional[float] = None,
         length_weight: Optional[float] = None,
         grammar_weight: Optional[float] = None,
     ):
@@ -135,6 +141,7 @@ class RomanianNLPToolkit:
             use_grammar: If True, use LanguageTool for grammar checking (requires language-tool-python)
             diacritic_weight: Override weight for diacritic score
             codeswitch_weight: Override weight for code-switch score
+            punctuation_weight: Override weight for punctuation score
             length_weight: Override weight for length score
             grammar_weight: Override weight for grammar score (only used if use_grammar=True)
         """
@@ -151,6 +158,7 @@ class RomanianNLPToolkit:
         # Apply any overrides
         self.diacritic_weight = diacritic_weight if diacritic_weight is not None else base_weights["diacritic"]
         self.codeswitch_weight = codeswitch_weight if codeswitch_weight is not None else base_weights["codeswitch"]
+        self.punctuation_weight = punctuation_weight if punctuation_weight is not None else base_weights["punctuation"]
         self.length_weight = length_weight if length_weight is not None else base_weights["length"]
         self.grammar_weight = grammar_weight if grammar_weight is not None else base_weights.get("grammar", 0.0)
 
@@ -220,6 +228,10 @@ class RomanianNLPToolkit:
         codeswitch_analysis = detect_code_switching(normalized)
         codeswitch_score = codeswitch_analysis.score
 
+        # Punctuation analysis
+        punctuation_analysis = analyze_punctuation(normalized)
+        punctuation_score = punctuation_analysis.score
+
         # Check if text is predominantly English
         is_english = is_likely_english_text(normalized)
         if is_english:
@@ -255,6 +267,7 @@ class RomanianNLPToolkit:
             overall_score = (
                 self.diacritic_weight * diacritic_score +
                 self.codeswitch_weight * codeswitch_score +
+                self.punctuation_weight * punctuation_score +
                 self.length_weight * length_score +
                 self.grammar_weight * grammar_score
             )
@@ -263,6 +276,7 @@ class RomanianNLPToolkit:
             overall_score = (
                 self.DEFAULT_WEIGHTS["diacritic"] * diacritic_score +
                 self.DEFAULT_WEIGHTS["codeswitch"] * codeswitch_score +
+                self.DEFAULT_WEIGHTS["punctuation"] * punctuation_score +
                 self.DEFAULT_WEIGHTS["length"] * length_score
             )
 
@@ -270,10 +284,12 @@ class RomanianNLPToolkit:
             diacritic_score=diacritic_score,
             codeswitch_score=codeswitch_score,
             length_score=length_score,
+            punctuation_score=punctuation_score,
             grammar_score=grammar_score,
             overall_score=overall_score,
             diacritics=diacritic_analysis,
             codeswitch=codeswitch_analysis,
+            punctuation=punctuation_analysis,
             grammar_details=grammar_details,
             total_tokens=total_tokens,
             total_words=total_words,
@@ -302,6 +318,7 @@ class RomanianNLPToolkit:
             "G": report.overall_score,
             "G_dia": report.diacritic_score,
             "G_cs": report.codeswitch_score,
+            "G_punct": report.punctuation_score,
             "G_len": report.length_score,
             "n_tokens": report.total_tokens,
             "n_words": report.total_words,
@@ -317,6 +334,13 @@ class RomanianNLPToolkit:
                 "english_count": report.codeswitch.english_words,
                 "english_rate": report.codeswitch.english_rate,
                 "examples": report.codeswitch.flagged_words[:10],
+            },
+            "punctuation_details": {
+                "total_issues": report.punctuation.total_issues,
+                "space_before_punct": report.punctuation.space_before_punct,
+                "missing_space_after": report.punctuation.missing_space_after,
+                "double_spaces": report.punctuation.double_spaces,
+                "examples": report.punctuation.examples[:5],
             },
         }
 

@@ -381,6 +381,19 @@ ROMANIAN_LOOKALIKES: set[str] = {
     "index",        # RO: index
     "prefix",       # RO: prefix
     "sufix",        # RO: sufix
+
+    # More Romanian = English words
+    "cost",         # RO: cost (same meaning)
+    "vast",         # RO: vast
+    "test",         # RO: test
+    "protest",      # RO: protest
+    "rest",         # RO: rest (remainder)
+    "vest",         # RO: vest (west)
+    "gust",         # RO: gust (taste)
+    "august",       # RO: august (month)
+    "robust",       # RO: robust
+    "just",         # RO: just
+    "bust",         # RO: bust
 }
 
 

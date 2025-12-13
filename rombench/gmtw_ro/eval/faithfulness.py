@@ -65,11 +65,23 @@ def romanian_morphological_forms(token: str) -> set:
 
     if w.endswith("a") or w.endswith("ă"):
         stem = w[:-1]
-        forms.add(stem + "a")        
-        forms.add(stem + "ei")      
-        forms.add(stem + "e")        
-        forms.add(stem + "elor")     
-        forms.add(stem + "ele")      
+        forms.add(stem + "a")
+        forms.add(stem + "e")
+        forms.add(stem + "elor")
+        forms.add(stem + "ele")
+
+        # Genitive forms depend on the ending pattern
+        # Words ending in -ica/-ină/-ina/-uia use -ii genitive (NOT -ei)
+        if w.endswith("ica") or w.endswith("ică"):
+            forms.add(stem + "ii")     # biserica → bisericii
+        elif w.endswith("ina") or w.endswith("ină"):
+            forms.add(stem + "ii")     # grădina → grădinii (NOT grădinei!)
+        elif w.endswith("uia"):
+            forms.add(stem + "i")      # cetățuia → cetățuii
+        else:
+            # Standard genitive for other -a/-ă words: -a → -ei
+            forms.add(stem + "ei")     # casa → casei
+            forms.add(stem + "ii")     # Also add -ii as alternative
         return forms
 
     if w.endswith("e"):
@@ -182,10 +194,17 @@ def generate_coordinated_genitive_forms(tokens: list[str]) -> set[str]:
     # Examples: "gradina botanica", "casa memoriala", "biblioteca nationala"
     first = tokens[0]
     if first.endswith("a") and len(first) > 2:
-        # Special case: words ending in -ica/-ică have genitive -icii
-        # Examples: biserica → bisericii, America → Americii
+        # Special cases for genitive forms:
+        # -ica/-ică → -icii (biserica → bisericii)
+        # -ina/-ină → -inii (grădina → grădinii)
+        # -uia → -uii (cetățuia → cetățuii)
+        # -ia → -iei (Maria → Mariei) - but also try -ii
         if first.endswith("ica") or first.endswith("ică"):
             first_gen = first[:-1] + "ii"
+        elif first.endswith("ina") or first.endswith("ină"):
+            first_gen = first[:-1] + "ii"
+        elif first.endswith("uia"):
+            first_gen = first[:-1] + "ii"  # cetățuia → cetățuii
         else:
             # Standard genitive of feminine noun: -a → -ei
             first_gen = first[:-1] + "ei"

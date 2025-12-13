@@ -251,8 +251,15 @@ def generate_coordinated_genitive_forms(tokens: list[str]) -> set[str]:
 
     # Feminine noun (-a) + adjectives
     if first.endswith("a") and len(first) > 2:
-        # Special case: words ending in -ica/-ică have genitive -icii
+        # Special cases for genitive:
+        # -ica/-ică → -icii (biserica → bisericii)
+        # -ina/-ină → -inii (grădina → grădinii)
+        # -uia → -uii (cetățuia → cetățuii)
         if first.endswith("ica") or first.endswith("ică"):
+            first_gen = first[:-1] + "ii"
+        elif first.endswith("ina") or first.endswith("ină"):
+            first_gen = first[:-1] + "ii"
+        elif first.endswith("uia"):
             first_gen = first[:-1] + "ii"
         else:
             first_gen = first[:-1] + "ei"
