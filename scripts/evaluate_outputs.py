@@ -91,6 +91,11 @@ def evaluate_batch(
         avg_G = sum(r.G for r in results) / len(results)
         avg_F = sum(r.F for r in results) / len(results)
 
+        # Compute final score (weighted average)
+        # U and R are task performance, G and F are language quality
+        # Weights: U=30%, R=30%, G=20%, F=20%
+        final_score = (0.30 * avg_U + 0.30 * avg_R + 0.20 * avg_G + 0.20 * avg_F)
+
         print("\n" + "="*60)
         print(f"AVERAGE SCORES ({len(results)} instances)")
         print("="*60)
@@ -98,6 +103,8 @@ def evaluate_batch(
         print(f"  R (Reasoning):     {avg_R:.3f}")
         print(f"  G (Generation):    {avg_G:.3f}")
         print(f"  F (Faithfulness):  {avg_F:.3f}")
+        print("="*60)
+        print(f"  FINAL SCORE:       {final_score:.1%}")
         print("="*60)
 
         # Save detailed metrics if requested
