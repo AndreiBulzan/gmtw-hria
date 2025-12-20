@@ -97,12 +97,16 @@ def analyze_punctuation(text: str) -> PunctuationAnalysis:
         issues.append(f"Found {double_spaces} instances of multiple consecutive spaces")
 
     # Check for space after opening brackets/quotes (less severe)
+    # Only check unambiguous opening: ( [ { „ «
     space_after_open = len(re.findall(r'[([\[{„«]\s+\w', text))
     if space_after_open > 0:
         other_issues += space_after_open
 
     # Check for space before closing brackets/quotes (less severe)
-    space_before_close = len(re.findall(r'\w\s+[)\]}"»]', text))
+    # Only check unambiguous closing: ) ] } " »
+    # NOTE: ASCII " is ambiguous (opening or closing) - don't include it
+    # Romanian closing quotes: " (right quote) or » (right guillemet)
+    space_before_close = len(re.findall(r'\w\s+[)\]}»]', text))
     if space_before_close > 0:
         other_issues += space_before_close
 

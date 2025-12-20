@@ -29,34 +29,47 @@ except ImportError:
     sys.exit(1)
 
 
-def call_cerebras(client: Cerebras, prompt: str, model: str = "llama3.1-8b") -> str:
+def call_cerebras(client: Cerebras, prompt: str, model: str = "llama3.1-8b", max_retries: int = 5) -> str:
     """
-    Call Cerebras API with a prompt
+    Call Cerebras API with a prompt, with retry logic for rate limits
 
     Args:
         client: Cerebras client instance
         prompt: The prompt to send
         model: Model name (default: llama3.1-8b)
+        max_retries: Maximum retry attempts for rate limit errors
 
     Returns:
         Model response text
     """
-    try:
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            model=model,
-            temperature=0.3,
-            max_tokens=2048,
-        )
-        return chat_completion.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return ""
+    for attempt in range(max_retries):
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                model=model,
+                temperature=0.3,
+                max_tokens=2048,
+            )
+            return chat_completion.choices[0].message.content.strip()
+        except Exception as e:
+            error_str = str(e).lower()
+            # Check for rate limit errors
+            if "rate" in error_str or "limit" in error_str or "429" in error_str or "too many" in error_str:
+                wait_time = (attempt + 1) * 15  # 15s, 30s, 45s, 60s, 75s
+                print(f"⏳ Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})...", end=" ", flush=True)
+                time.sleep(wait_time)
+                continue
+            else:
+                print(f"❌ Error: {e}")
+                return ""
+
+    print(f"❌ Max retries exceeded")
+    return ""
 
 
 def run_batch(

@@ -106,13 +106,18 @@ class RomanianNLPToolkit:
         report = toolkit.analyze(text)
     """
 
-    # Default weights WITHOUT grammar (sum = 1.0)
+    # Default weights WITHOUT grammar
+    # Punctuation is now a PENALTY MULTIPLIER, not a weighted component
+    # So these three sum to 1.0, then punctuation reduces the result
     DEFAULT_WEIGHTS = {
-        "diacritic": 0.45,
-        "codeswitch": 0.30,
-        "punctuation": 0.15,
-        "length": 0.10,
+        "diacritic": 0.50,
+        "codeswitch": 0.35,
+        "punctuation": 0.0,   # Not used - punctuation is a penalty multiplier
+        "length": 0.15,
     }
+
+    # Minimum words required for full length score (stricter)
+    MIN_WORDS_REQUIRED = 100
 
     # Weights WITH grammar enabled (sum = 1.0)
     WEIGHTS_WITH_GRAMMAR = {
@@ -209,12 +214,16 @@ class RomanianNLPToolkit:
         # Check for diacritics presence
         has_diacritics = has_romanian_diacritics(normalized)
 
-        # Length score - penalize very short texts
-        if total_words < 5:
-            length_score = 0.3
+        # Length score - penalize short texts (require 100 words for full score)
+        min_required = self.MIN_WORDS_REQUIRED  # 100 words
+        if total_words < 10:
+            length_score = 0.2
             is_too_short = True
-        elif total_words < self.min_words:
-            length_score = 0.5 + 0.5 * (total_words / self.min_words)
+        elif total_words < 50:
+            length_score = 0.4 + 0.2 * ((total_words - 10) / 40)
+            is_too_short = True
+        elif total_words < min_required:
+            length_score = 0.6 + 0.4 * ((total_words - 50) / (min_required - 50))
             is_too_short = True
         else:
             length_score = 1.0
@@ -262,23 +271,30 @@ class RomanianNLPToolkit:
                 pass
 
         # Compute overall score (weighted combination)
+        # Calculate base score from diacritic, codeswitch, and length
+        # Punctuation acts as a PENALTY MULTIPLIER (can only reduce score, not increase)
         if grammar_available and grammar_score is not None:
             # Use grammar-enabled weights
-            overall_score = (
+            base_score = (
                 self.diacritic_weight * diacritic_score +
                 self.codeswitch_weight * codeswitch_score +
-                self.punctuation_weight * punctuation_score +
                 self.length_weight * length_score +
                 self.grammar_weight * grammar_score
             )
         else:
             # Fall back to default weights (sum to 1.0)
-            overall_score = (
+            base_score = (
                 self.DEFAULT_WEIGHTS["diacritic"] * diacritic_score +
                 self.DEFAULT_WEIGHTS["codeswitch"] * codeswitch_score +
-                self.DEFAULT_WEIGHTS["punctuation"] * punctuation_score +
                 self.DEFAULT_WEIGHTS["length"] * length_score
             )
+
+        # Apply punctuation as penalty multiplier
+        # Perfect punctuation (1.0) → no effect
+        # Bad punctuation (0.5) → reduces score by 25% (sqrt penalty)
+        # Terrible punctuation (0.0) → reduces score by 50%
+        punctuation_penalty = 0.5 + 0.5 * punctuation_score  # Range: 0.5 to 1.0
+        overall_score = base_score * punctuation_penalty
 
         return TextQualityReport(
             diacritic_score=diacritic_score,

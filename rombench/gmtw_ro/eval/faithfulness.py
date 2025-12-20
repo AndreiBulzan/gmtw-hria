@@ -333,7 +333,15 @@ def compute_faithfulness_deterministic(
     plan: dict,
     explanation: str
 ) -> dict[str, Any]:
+    """
+    Compute faithfulness score with hallucination detection.
 
+    F measures:
+    1. Are all planned entities mentioned in the explanation? (missing = bad)
+    2. Are there entities mentioned that are NOT in the plan? (hallucination = bad)
+
+    Score = (mentioned/planned) * hallucination_penalty
+    """
     planned_refs = []
 
     for key, val in plan.items():
@@ -346,43 +354,70 @@ def compute_faithfulness_deterministic(
         return {
             "F": 1.0,
             "missing": [],
+            "hallucinated": [],
             "planned_entities": [],
             "all_mentioned": True,
             "note": "Empty plan"
         }
 
+    # Get planned entities
     planned_entities = []
-    planned_ids = []
+    planned_ids = set()
 
     for ref in planned_refs:
         entity_id = _resolve_entity_id(world, ref)
         if entity_id and entity_id in world.canonical_entities:
             ent = world.canonical_entities[entity_id]
             planned_entities.append(ent)
-            planned_ids.append(entity_id)
+            planned_ids.add(entity_id)
 
+    # Check for missing entities (in plan but not mentioned)
     missing = []
-    for eid, ent in zip(planned_ids, planned_entities):
+    for ent in planned_entities:
         if not is_entity_mentioned(ent, explanation):
-            missing.append(eid)
+            missing.append(ent.id)
+
+    # Check for hallucinated entities (mentioned but not in plan)
+    hallucinated = []
+    for eid, ent in world.canonical_entities.items():
+        if eid not in planned_ids:
+            if is_entity_mentioned(ent, explanation):
+                hallucinated.append(eid)
 
     from .metrics import SEVERITY_EXPONENT
 
+    # Base score: proportion of planned entities mentioned
     if not planned_entities:
-        F_linear = 1.0
+        mention_score = 1.0
     else:
-        F_linear = (len(planned_entities) - len(missing)) / len(planned_entities)
+        mention_score = (len(planned_entities) - len(missing)) / len(planned_entities)
 
+    # Hallucination penalty: each hallucinated entity reduces score
+    # Penalty = 0.9^(num_hallucinated) - so 1 hallucination = 0.9, 2 = 0.81, etc.
+    if hallucinated:
+        hallucination_penalty = 0.9 ** len(hallucinated)
+    else:
+        hallucination_penalty = 1.0
+
+    # Combined linear score
+    F_linear = mention_score * hallucination_penalty
+
+    # Apply severity exponent
     F = F_linear ** SEVERITY_EXPONENT
 
     return {
         "F": F,
         "F_linear": F_linear,
+        "F_mention": mention_score,
+        "F_hallucination_penalty": hallucination_penalty,
         "missing": missing,
-        "planned_entities": planned_ids,
+        "hallucinated": hallucinated,
+        "planned_entities": list(planned_ids),
         "all_mentioned": len(missing) == 0,
+        "no_hallucinations": len(hallucinated) == 0,
         "mentioned_count": len(planned_entities) - len(missing),
         "total_count": len(planned_entities),
+        "hallucinated_count": len(hallucinated),
     }
 
 

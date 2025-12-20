@@ -79,24 +79,7 @@ class GMTWEvaluator:
         # Parse the output
         parse_result = parse_dual_channel_output(output)
 
-        # If parsing failed completely, return zero scores
-        if parse_result.plan is None:
-            return EvaluationResult(
-                instance_id=instance.instance_id,
-                U=0.0,
-                R=0.0,
-                G=0.0,
-                F=0.0,
-                format_ok=False,
-                repaired=False,
-                parse_error=parse_result.error_message,
-                U_details={"U": 0.0, "satisfied": 0, "total": 0, "constraints": []},
-                R_details={"R": 0.0, "satisfied": 0, "total": 0, "goals": []},
-                G_details={"G": 0.0, "note": "No valid output"},
-                F_details={"F": 0.0, "missing": [], "extra": []},
-            )
-
-        # Compute all metrics
+        # Compute all metrics (handles None plan gracefully now)
         try:
             metrics = compute_all_metrics(
                 world=world,
@@ -105,6 +88,8 @@ class GMTWEvaluator:
                 nlp_tools=self.nlp_tools,
                 use_languagetool=self.use_languagetool,
                 use_stanza=self.use_stanza,
+                format_ok=parse_result.format_ok,
+                repaired=parse_result.repaired,
             )
 
             return EvaluationResult(
@@ -115,7 +100,7 @@ class GMTWEvaluator:
                 F=metrics.F,
                 format_ok=parse_result.format_ok,
                 repaired=parse_result.repaired,
-                parse_error=None,
+                parse_error=parse_result.error_message if parse_result.error_message else None,
                 U_details=metrics.U_details,
                 R_details=metrics.R_details,
                 G_details=metrics.G_details,

@@ -78,11 +78,14 @@ def generate_schedule_prompt(world: World) -> str:
     slots_ro = payload["slots_ro"]
     appointments = payload["appointments"]
 
+    # Priority translation to Romanian
+    priority_ro = {"high": "înaltă", "medium": "medie", "low": "scăzută"}
+
     # Build appointment list
     apt_list = []
     for apt in appointments:
         apt_list.append(
-            f"  • {apt['name_ro']} (prioritate: {apt['priority']}, programat: {apt['day_ro']} {apt['slot_ro']})"
+            f"  • {apt['name_ro']} (prioritate: {priority_ro.get(apt['priority'], apt['priority'])}, programat: {apt['day_ro']} {apt['slot_ro']})"
         )
 
     apt_list_str = "\n".join(apt_list)

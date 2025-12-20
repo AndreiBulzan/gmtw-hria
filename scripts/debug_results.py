@@ -192,6 +192,9 @@ def debug_results(
 
             # Show component scores
             score_parts = f"G_dia={g.get('G_dia', 0):.2f}, G_cs={g.get('G_cs', 0):.2f}, G_len={g.get('G_len', 0):.2f}"
+            punct_score = g.get('G_punct', 1.0)
+            if punct_score < 1.0:
+                score_parts += f", G_punct={punct_score:.2f}"
             if g.get('grammar_available') and g.get('G_grammar') is not None:
                 score_parts += f", G_grammar={g.get('G_grammar', 0):.2f}"
             print(f"  G={result.G:.2f} ({score_parts})")
@@ -211,6 +214,20 @@ def debug_results(
                 examples = cs.get('examples', [])
                 if examples:
                     print(f"    Examples: {', '.join(examples[:5])}")
+
+            # Punctuation issues
+            punct = g.get('punctuation_details', {})
+            if punct.get('total_issues', 0) > 0:
+                print(f"  Punctuation issues: {punct.get('total_issues', 0)}")
+                if punct.get('space_before_punct', 0) > 0:
+                    print(f"    Space before punctuation: {punct.get('space_before_punct', 0)}")
+                if punct.get('missing_space_after', 0) > 0:
+                    print(f"    Missing space after punctuation: {punct.get('missing_space_after', 0)}")
+                if punct.get('double_spaces', 0) > 0:
+                    print(f"    Double spaces: {punct.get('double_spaces', 0)}")
+                examples = punct.get('examples', [])
+                if examples:
+                    print(f"    Examples: {examples[:3]}")
 
             # Grammar issues (only if LanguageTool was used)
             if g.get('grammar_available') and g.get('grammar_details'):

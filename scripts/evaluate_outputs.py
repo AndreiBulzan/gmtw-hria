@@ -67,9 +67,25 @@ def evaluate_batch(
 
     # Evaluate
     results = []
+    missing_count = 0
     for inst_id, instance in instances.items():
         if inst_id not in outputs:
-            print(f" Missing output for {inst_id}")
+            print(f"✗ {inst_id}: MISSING (model refused/failed) → U=0.00 G=0.00 F=0.00")
+            missing_count += 1
+            # Create a zero-score result for missing outputs
+            zero_result = {
+                'U': 0.0, 'R': 0.0, 'G': 0.0, 'F': 0.0,
+                'U_details': {'U_constraints': 0.0, 'U_format': 0.0},
+                'instance_id': inst_id,
+                'missing': True
+            }
+            # Wrap in simple object for attribute access
+            class ZeroResult:
+                def __init__(self, d):
+                    self.__dict__.update(d)
+                def to_dict(self):
+                    return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+            results.append(ZeroResult(zero_result))
             continue
 
         result = evaluate_instance(
@@ -87,25 +103,42 @@ def evaluate_batch(
     # Compute averages
     if results:
         avg_U = sum(r.U for r in results) / len(results)
-        avg_R = sum(r.R for r in results) / len(results)
         avg_G = sum(r.G for r in results) / len(results)
         avg_F = sum(r.F for r in results) / len(results)
 
+        # Also compute U sub-components for detailed analysis
+        avg_U_constraints = sum(r.U_details.get("U_constraints", r.U) for r in results) / len(results)
+        avg_U_format = sum(r.U_details.get("U_format", 1.0) for r in results) / len(results)
+
         # Compute final score (weighted average)
-        # U and R are task performance, G and F are language quality
-        # Weights: U=30%, R=30%, G=20%, F=20%
-        final_score = (0.30 * avg_U + 0.30 * avg_R + 0.20 * avg_G + 0.20 * avg_F)
+        # U=50% (main discriminator), G=25%, F=25%
+        # R is deprecated (integrated into U)
+        final_score = (0.50 * avg_U + 0.25 * avg_G + 0.25 * avg_F)
 
         print("\n" + "="*60)
         print(f"AVERAGE SCORES ({len(results)} instances)")
         print("="*60)
-        print(f"  U (Understanding): {avg_U:.3f}")
-        print(f"  R (Reasoning):     {avg_R:.3f}")
-        print(f"  G (Generation):    {avg_G:.3f}")
-        print(f"  F (Faithfulness):  {avg_F:.3f}")
+        if missing_count > 0:
+            print(f"  ⚠ MISSING OUTPUTS:      {missing_count} (scored as 0)")
+        print(f"  U (Understanding):      {avg_U:.3f}")
+        print(f"    - U_constraints:      {avg_U_constraints:.3f}  (85% of U)")
+        print(f"    - U_format:           {avg_U_format:.3f}  (15% of U)")
+        print(f"  G (Generation):         {avg_G:.3f}")
+        print(f"  F (Faithfulness):       {avg_F:.3f}")
         print("="*60)
-        print(f"  FINAL SCORE:       {final_score:.1%}")
+        print(f"  FINAL SCORE:            {final_score:.1%}")
+        print(f"  (= 50%×U + 25%×G + 25%×F)")
         print("="*60)
+
+        # If there were missing outputs, also show score excluding them
+        if missing_count > 0:
+            answered_results = [r for r in results if not getattr(r, 'missing', False)]
+            if answered_results:
+                ans_U = sum(r.U for r in answered_results) / len(answered_results)
+                ans_G = sum(r.G for r in answered_results) / len(answered_results)
+                ans_F = sum(r.F for r in answered_results) / len(answered_results)
+                ans_score = (0.50 * ans_U + 0.25 * ans_G + 0.25 * ans_F)
+                print(f"\n  (If ignoring {missing_count} missing: {ans_score:.1%} on {len(answered_results)} answered)")
 
         # Save detailed metrics if requested
         if output_metrics:

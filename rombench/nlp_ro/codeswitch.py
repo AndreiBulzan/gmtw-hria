@@ -183,6 +183,122 @@ HIGH_CONFIDENCE_ENGLISH: set[str] = {
     "indeed", "instead", "besides", "meanwhile", "therefore", "thus",
     "forward", "backward", "upward", "downward", "inward", "outward",
     "tonight", "nowadays", "forever", "ago",
+
+    # ==========================================================================
+    # LLM-specific: Words models commonly use in generated text
+    # ==========================================================================
+
+    # Discourse markers LLMs love
+    "overall", "basically", "essentially", "additionally", "specifically",
+    "generally", "regarding", "considering", "assuming", "accordingly",
+    "hence", "thereby", "whereas", "unless", "until", "upon",
+    "though", "despite", "except", "furthermore", "moreover",
+
+    # Ordinals and sequencing
+    "second", "third", "fourth", "fifth", "sixth", "seventh",
+    "firstly", "secondly", "thirdly", "lastly",
+
+    # Quantifiers
+    "several", "various", "multiple", "both", "each", "every",
+    "neither", "either", "none", "any", "most", "least", "fewer",
+    "less", "another", "such",
+
+    # Travel/scheduling context (relevant to benchmark)
+    "visit", "visiting", "visited", "visits",
+    "explore", "exploring", "explored",
+    "enjoy", "enjoying", "enjoyed", "enjoys",
+    "experience", "experiencing", "experienced",
+    "recommend", "recommended", "recommending", "recommends",
+    "schedule", "scheduled", "scheduling", "schedules",
+    "indoor", "outdoor",  # Benchmark uses these - Romanian: interior/exterior
+    "suitable", "appropriate", "convenient",
+    "flexible", "flexibility",
+    "weather", "rainy", "sunny", "cloudy",
+
+    # Common verbs LLMs use
+    "allow", "allows", "allowed", "allowing",
+    "ensure", "ensures", "ensured", "ensuring",
+    "include", "includes", "included", "including",
+    "require", "requires", "required", "requiring",
+    "provide", "provides", "provided", "providing",
+    "consider", "considers", "considered",
+    "prefer", "prefers", "preferred", "preferring",
+    "avoid", "avoids", "avoided", "avoiding",
+    "choose", "chooses", "chose", "chosen", "choosing",
+    "decide", "decides", "decided", "deciding",
+    "arrange", "arranges", "arranged", "arranging",
+    "fit", "fits", "fitted", "fitting",
+    "suit", "suits", "suited", "suiting",
+    "match", "matches", "matched", "matching",
+
+    # Priority-related (now that prompts use Romanian)
+    "high", "medium", "low", "priority", "priorities",
+
+    # Additional common words that slip through
+    # Short common words
+    "yet", "once", "twice", "since",
+
+    # LLM explanation/reasoning words
+    "example", "examples", "instance", "instances",
+    "addition", "terms", "order", "orders",
+    "consequently", "outcome", "outcomes",
+    "benefit", "benefits", "advantage", "advantages", "disadvantage", "disadvantages",
+
+    # Common verbs LLMs use in explanations
+    "explain", "explains", "explained", "explaining",
+    "suggest", "suggests", "suggested", "suggesting",
+    "indicate", "indicates", "indicated", "indicating",
+    "offer", "offers", "offered", "offering",
+    "create", "creates", "created", "creating",
+    "begin", "begins", "began", "begun", "beginning",
+    "complete", "completes", "completed", "completing",
+    "finish", "finishes", "finished", "finishing",
+    "achieve", "achieves", "achieved", "achieving",
+    "reach", "reaches", "reached", "reaching",
+
+    # Time frequency words
+    "daily", "weekly", "monthly", "yearly", "hourly",
+
+    # Degree modifiers
+    "fairly", "extremely", "highly", "slightly", "totally", "completely",
+
+    # Common nouns in LLM output
+    "option", "options", "goal", "goals", "task", "tasks",
+    "item", "items", "detail", "details", "feature", "features",
+
+    # Family/people related (for benchmark context)
+    "kids", "friendly", "unable",
+
+    # Travel/tourism nouns (Romanian uses different words)
+    "attraction", "attractions",  # RO: atracție
+    "itinerary", "itineraries",   # RO: itinerar (but often just "traseu")
+    "destination", "destinations", # RO: destinație
+    "museum", "museums",          # RO: muzeu
+    "castle", "castles",          # RO: castel
+    "park", "parks",              # RO: parc
+    "budget", "budgets",          # RO: buget
+    "spending",                   # RO: cheltuieli
+
+    # More LLM discourse words
+    "alternatively", "note", "notes",
+    "section", "sections",
+    "list", "lists", "listed", "listing",
+
+    # Planning/organization verbs
+    "organize", "organizes", "organized", "organizing",  # RO: a organiza
+    "maintain", "maintains", "maintained", "maintaining",
+    "follow", "follows", "followed",  # RO: a urma
+    "keep", "keeps", "kept", "keeping",  # RO: a păstra
+    "add", "adds", "added", "adding",  # RO: a adăuga
+    "remove", "removes", "removed", "removing",  # RO: a elimina
+    "assign", "assigns", "assigned", "assigning",
+    "allocate", "allocates", "allocated", "allocating",
+
+    # Quantitative adjectives (Romanian uses different forms)
+    "optimal",   # RO: optim
+    "maximum",   # RO: maxim
+    "minimum",   # RO: minim
+    "worst",     # RO: cel mai rău
 }
 
 # Romanian words that look like English (false positives to avoid)
@@ -266,6 +382,9 @@ ROMANIAN_LOOKALIKES: set[str] = {
     "ani",      # "years"
     "mod",      # "mode/way"
     "tip",      # "type"
+    "fire",     # "nature/temper" or plural of "fir" (thread)
+    "include",  # "vom include" = we will include (a include = to include)
+    "peste",    # "over/above" (prep) or "fish" (pește without diacritic)
 
     # ==========================================================================
     # Romanian words identical to English (cognates/loanwords - valid Romanian)
@@ -277,6 +396,7 @@ ROMANIAN_LOOKALIKES: set[str] = {
     "important",    # RO: important (same meaning)
     "special",      # RO: special (same meaning)
     "normal",       # RO: normal
+    "perfect",      # RO: perfect (same meaning and spelling)
     "modern",       # RO: modern
     "original",     # RO: original
     "natural",      # RO: natural

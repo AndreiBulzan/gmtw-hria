@@ -21,14 +21,15 @@ except ImportError:
     sys.exit(1)
 
 
-def call_groq(prompt: str, api_key: str, model: str = "llama-3.3-70b-versatile") -> str:
+def call_groq_with_retry(prompt: str, api_key: str, model: str = "llama-3.3-70b-versatile", max_retries: int = 5) -> str:
     """
-    Call Groq API with a prompt
+    Call Groq API with a prompt, with retry logic and exponential backoff.
 
     Args:
         prompt: The prompt to send
         api_key: Groq API key
-        model: Model name (default: llama-3.1-70b-versatile for Romanian)
+        model: Model name
+        max_retries: Maximum number of retry attempts
 
     Returns:
         Model response text
@@ -52,19 +53,50 @@ def call_groq(prompt: str, api_key: str, model: str = "llama-3.3-70b-versatile")
         "max_tokens": 2048,
     }
 
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=90)
 
-        if not response.ok:
-            error_detail = response.text
-            print(f"❌ Groq API error ({response.status_code}): {error_detail[:200]}")
+            if response.ok:
+                data = response.json()
+                content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                if content:
+                    return content.strip()
+                # Empty response - log what we got for debugging
+                finish_reason = data.get("choices", [{}])[0].get("finish_reason", "unknown")
+                print(f"⚠ Empty (finish_reason={finish_reason})", end=" ")
+                return ""
+
+            # Handle rate limiting (429) or server errors (5xx) - retry
+            if response.status_code == 429 or response.status_code >= 500:
+                wait_time = (2 ** attempt) * 2
+                print(f"⏳ Error {response.status_code}, waiting {wait_time}s...", end=" ", flush=True)
+                time.sleep(wait_time)
+                last_error = f"HTTP {response.status_code}"
+                continue
+
+            # Other 4xx errors - don't retry (model issue, not transient)
+            error_detail = response.text[:50] if response.text else "No details"
+            print(f"❌ Error {response.status_code}", end=" ")
             return ""
 
-        data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return ""
+        except requests.exceptions.Timeout:
+            wait_time = (2 ** attempt) * 2
+            print(f"⏳ Timeout, waiting {wait_time}s...", end=" ", flush=True)
+            time.sleep(wait_time)
+            last_error = "Timeout"
+            continue
+
+        except Exception as e:
+            wait_time = (2 ** attempt) * 2
+            print(f"⏳ {type(e).__name__}: {str(e)[:30]}, waiting {wait_time}s...", end=" ", flush=True)
+            time.sleep(wait_time)
+            last_error = str(e)[:50]
+            continue
+
+    print(f"❌ {last_error}", end=" ")
+    return ""
 
 
 def run_batch(
@@ -104,6 +136,7 @@ def run_batch(
 
     # Process each instance
     outputs = []
+    failed = []
 
     for i, instance in enumerate(instances, 1):
         print(f"[{i}/{len(instances)}] Processing {instance.instance_id}...", end=" ")
@@ -111,9 +144,9 @@ def run_batch(
         # Get the appropriate prompt
         prompt = instance.prompt_ro if language == "ro" else instance.prompt_en
 
-        # Call Groq
+        # Call Groq with retry logic
         start_time = time.time()
-        response = call_groq(prompt, api_key, model)
+        response = call_groq_with_retry(prompt, api_key, model)
         latency = time.time() - start_time
 
         if response:
@@ -126,7 +159,8 @@ def run_batch(
                 "latency": latency,
             })
         else:
-            print(f"✗ Failed")
+            print(f"✗ Failed permanently")
+            failed.append(instance.instance_id)
 
         # Delay to avoid rate limits
         time.sleep(delay)
@@ -136,7 +170,21 @@ def run_batch(
         for output in outputs:
             f.write(json.dumps(output, ensure_ascii=False) + '\n')
 
-    print(f"\n✓ Saved {len(outputs)} outputs to {output_file}")
+    print(f"\n✓ Saved {len(outputs)}/{len(instances)} outputs to {output_file}")
+
+    if failed:
+        print(f"\n⚠ {len(failed)} instances failed (model returned empty):")
+        for fid in failed[:10]:
+            print(f"  - {fid}")
+        if len(failed) > 10:
+            print(f"  ... and {len(failed) - 10} more")
+
+        # Save failed list
+        failed_file = output_file.replace('.jsonl', '_failed.txt')
+        with open(failed_file, 'w') as f:
+            f.write('\n'.join(failed))
+        print(f"  Failed list saved to: {failed_file}")
+
     print(f"\nNext step: Evaluate with:")
     print(f"  python scripts/evaluate_outputs.py {instances_file} {output_file}")
 

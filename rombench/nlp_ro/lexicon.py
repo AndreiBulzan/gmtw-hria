@@ -32,7 +32,7 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
     "dimineata": {"dimineața", "dimineață"},
     "doua": {"două", "doua"},  # "două" = cardinal (two), "doua" = ordinal (a doua = the second)
     "fara": {"fără"},
-    "fata": {"fata", "fată"},  # Can be "the face" or "girl"
+    "fata": {"fata", "fată", "față"},  # "fata"=the girl/face, "fată"=girl, "față"=face
     "grădina": {"grădina"},
     "gradina": {"grădina"},
     "inapoi": {"înapoi"},
@@ -135,7 +135,7 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
     "inteles": {"înțeles"},
     "intotdeauna": {"întotdeauna"},
     "intr": {"într"},
-    "intra": {"intră"},  # verb "enters"
+    # NOTE: "intra" already defined above as {"intra", "intră"} - both present and imperfect
     "intreaba": {"întreabă"},
     "intrebare": {"întrebare"},
     "intreg": {"întreg"},
@@ -173,30 +173,26 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
     "sosea": {"șosea"},
     "soseaua": {"șoseaua"},
 
-    # ț words
-    "aceasta": {"această"},
+    # ț words (only unique entries - many already defined in ă/â sections above)
     "aceștia": {"aceștia"},
     "atata": {"atâta"},
     "atatia": {"atâția"},
     "atatea": {"atâtea"},
-    "cativa": {"câțiva"},
-    "cateva": {"câteva"},
-    "cati": {"câți"},
-    "cate": {"câte"},
+    # NOTE: cativa, cateva, cati, cate already defined above
     "cunostinta": {"cunoștință"},
-    "dimineata": {"dimineața"},
-    "fata": {"față"},  # "face" meaning
+    # NOTE: "dimineata" already defined above with both forms {"dimineața", "dimineață"}
+    # NOTE: "fata" already defined above as {"fata", "fată"} - includes both meanings
     "functioneaza": {"funcționează"},
     "imediat": {"imediat"},
     "intelege": {"înțelege"},
     "inteles": {"înțeles"},
-    "invatamant": {"învățământ"},
+    # NOTE: "invatamant" already defined above
     "intelepciune": {"înțelepciune"},
     "natiune": {"națiune"},
     "natie": {"nație"},
     "participanti": {"participanți"},
     "situatie": {"situație"},
-    "tara": {"țară"},
+    # NOTE: "tara" already defined above as {"țara", "țară"} with both forms
     "tarile": {"țările"},
     "tarii": {"țării"},
     "taran": {"țăran"},
@@ -207,12 +203,12 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
     "tine": {"ține"},
     "tinta": {"țintă"},
     "tot": {"tot"},  # No diacritic needed
-    "viata": {"viața", "viață"},
+    # NOTE: "viata" already defined above as {"viața", "viață"}
 
-    # Common function words
+    # Common function words (only unique entries)
     "acestia": {"aceștia"},
     "acestea": {"acestea"},
-    "aceasta": {"aceasta", "această"},
+    # NOTE: "aceasta" already defined above as {"aceasta", "această"}
     "acela": {"acela"},
     "aceea": {"aceea"},
 }
@@ -414,9 +410,8 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
 
     # Compound words
     "bineinteles": "bineînțeles",     # of course
-    "niciodata": "niciodată",         # never (already present)
-    "totdeauna": "totdeauna",         # always (no diacritic needed)
-    "oriunde": "oriunde",             # anywhere
+    "niciodata": "niciodată",         # never
+    # NOTE: "totdeauna" and "oriunde" removed - they're valid without diacritics
 
     # Nouns with diacritics
     "intelegere": "înțelegere",       # understanding
@@ -428,25 +423,29 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "insoti": "însoți",         # to accompany
     "indruma": "îndruma",       # to guide
     "ingriji": "îngriji",       # to care for
-    "invata": "învăța",         # to learn (already present)
+    "invata": "învăța",         # to learn
 
     # Reflexives and pronouns
     "insusi": "însuși",         # himself
     "insasi": "însăși",         # herself
     "insesi": "înseși",         # themselves (fem)
     "insisi": "înșiși",         # themselves (masc)
+    "isi": "își",               # reflexive "își" - very common!
 
     # Common adjectives
     "insarcinat": "însărcinat",       # pregnant/charged
     "insarcinata": "însărcinată",     # pregnant (fem)
     "intelept": "înțelept",           # wise
     "inteleapta": "înțeleaptă",       # wise (fem)
-    "intreaga": "întreagă",           # whole (already in DIACRITIC_WORDS)
+    "intreaga": "întreagă",           # whole
+    "gresit": "greșit",               # wrong
+    "romanesc": "românesc",           # Romanian (adj masc)
+    "romaneasca": "românească",       # Romanian (adj fem)
 
     # Days and time
-    "duminica": "duminică",     # Sunday (when without article)
-    "dimineata": "dimineața",   # morning (already present)
-    "seara": "seară",           # evening (without article)
+    "duminica": "duminică",     # Sunday
+    "dimineata": "dimineața",   # morning - ASCII never valid (needs ț)
+    "aseara": "aseară",         # last night
 
     # More verb forms
     "incearca": "încearcă",     # tries
@@ -454,6 +453,98 @@ MUST_HAVE_DIACRITICS: dict[str, str] = {
     "incercati": "încercați",   # you try (plural)
     "intelegem": "înțelegem",   # we understand
     "intelegeti": "înțelegeți", # you understand (plural)
+    "gresesc": "greșesc",       # I'm wrong
+    "greseste": "greșește",     # is wrong
+    # NOTE: "exista" removed - can be valid past tense "existed"
+    "prezinta": "prezintă",     # presents
+    "pastreaza": "păstrează",   # keeps/preserves
+    "hotaraste": "hotărăște",   # decides
+
+    # =========================================================================
+    # GERUNDS (-ând/-ind forms) - ASCII never valid
+    # =========================================================================
+    "facand": "făcând",         # doing
+    "stiind": "știind",         # knowing
+    "gandind": "gândind",       # thinking
+    "ramanand": "rămânând",     # remaining
+    "cantand": "cântând",       # singing
+    "parand": "părând",         # seeming
+    "avand": "având",           # having
+    "vazand": "văzând",         # seeing
+    "cautand": "căutând",       # searching
+    "incepand": "începând",     # beginning
+    "incercand": "încercând",   # trying
+    "intelegand": "înțelegând", # understanding
+    "asteptand": "așteptând",   # waiting
+
+    # =========================================================================
+    # NOUNS WITH -ție/-țiune (very common, ASCII never valid)
+    # =========================================================================
+    "functie": "funcție",       # function
+    "conditie": "condiție",     # condition
+    "atentie": "atenție",       # attention
+    "traditie": "tradiție",     # tradition
+    "pozitie": "poziție",       # position
+    "sectie": "secție",         # section
+    "directie": "direcție",     # direction
+    "actiune": "acțiune",       # action
+    "mentiune": "mențiune",     # mention
+    "exceptie": "excepție",     # exception
+    "propozitie": "propoziție", # sentence/proposition
+    "emotie": "emoție",         # emotion
+    "promotie": "promoție",     # promotion
+    "relatia": "relația",       # the relationship
+    "relatie": "relație",       # relationship
+    "statia": "stația",         # the station
+    "statie": "stație",         # station
+    "operatie": "operație",     # operation
+    "situatia": "situația",     # the situation
+    "informatia": "informația", # the information
+    "informatie": "informație", # information
+
+    # =========================================================================
+    # MORE COMMON NOUNS (ASCII never valid)
+    # =========================================================================
+    "cuvant": "cuvânt",         # word
+    "cuvantul": "cuvântul",     # the word
+    "masina": "mașină",         # car
+    "masinile": "mașinile",     # the cars
+    "greseala": "greșeală",     # mistake
+    "incercare": "încercare",   # attempt
+    "intamplare": "întâmplare", # happening/event
+    "stiinta": "știință",       # science (already present but ensuring)
+    "cunostinta": "cunoștință", # knowledge/acquaintance
+    "fiinta": "ființă",         # being/creature
+    "privinta": "privință",     # regard (în privința = regarding)
+    "tacere": "tăcere",         # silence
+    "razboi": "război",         # war
+    "cantec": "cântec",         # song
+    "cantece": "cântece",       # songs
+
+    # =========================================================================
+    # NATIONALITIES AND LANGUAGES
+    # =========================================================================
+    "romani": "români",         # Romanians
+    "romanca": "româncă",       # Romanian woman
+    "romana": "română",         # Romanian (language/adj fem)
+    "franceza": "franceză",     # French (language/adj fem)
+    "engleza": "engleză",       # English (language/adj fem)
+    "germana": "germană",       # German (language/adj fem)
+
+    # =========================================================================
+    # DETERMINERS AND PRONOUNS
+    # =========================================================================
+    "niste": "niște",           # some (very common!)
+    "acestia": "aceștia",       # these (masc)
+    "carui": "cărui",           # whose (masc gen)
+    "carei": "cărei",           # whose (fem gen)
+    "carora": "cărora",         # whose (plural gen)
+
+    # =========================================================================
+    # AUXILIARY/MODAL VERBS
+    # =========================================================================
+    "as": "aș",                 # conditional 1st person (I would)
+    "ati": "ați",               # 2nd person plural auxiliary (you have)
 }
 
 # Common English words that indicate code-switching (should not appear in Romanian)
@@ -496,6 +587,6 @@ ENGLISH_WHITELIST: set[str] = {
     # JSON format tokens (expected in structured output)
     "day", "day1", "day2", "day3", "day4", "day5",
     "null", "true", "false",  # JSON literals
-    # Priority levels used in schedule world prompts
-    "high", "medium", "low",
+    # NOTE: "high", "medium", "low" removed - prompts now use Romanian
+    # priority names (înaltă, medie, scăzută). If model outputs English, penalize.
 }

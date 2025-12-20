@@ -227,6 +227,218 @@ def check_must_exclude_type(world: World, plan: dict, params: dict) -> bool:
     return True
 
 
+def check_exact_type_count(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if plan includes EXACTLY count entities of specified type
+
+    Params:
+        type_required: str - the type to count
+        exact_count: int - exact number required
+    """
+    type_required = params.get("type_required")
+    exact_count = params.get("exact_count", 1)
+
+    if not type_required:
+        return True
+
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+    count = 0
+
+    for entity_ref in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_ref)
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            if entity.attributes.get("type") == type_required:
+                count += 1
+
+    return count == exact_count
+
+
+def check_budget_per_day(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if each day's activities are within the per-day budget
+
+    Params:
+        max_budget_per_day: int - maximum budget per day in lei
+    """
+    max_budget = params.get("max_budget_per_day", 50)
+
+    for day_key, entity_ids in plan.items():
+        if not day_key.startswith("day"):
+            continue
+
+        day_cost = 0
+        for entity_id in entity_ids:
+            actual_id = _resolve_entity_id(world, entity_id)
+            if actual_id and actual_id in world.canonical_entities:
+                entity = world.canonical_entities[actual_id]
+                day_cost += entity.attributes.get("cost_lei", 0)
+
+        if day_cost > max_budget:
+            return False
+
+    return True
+
+
+def check_must_include_specific(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if plan includes a specific named entity
+
+    Params:
+        entity_name: str - the exact name of entity that must be included
+    """
+    entity_name = params.get("entity_name", "")
+    if not entity_name:
+        return True
+
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+
+    for entity_ref in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_ref)
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            if entity.name.lower() == entity_name.lower():
+                return True
+            if entity_name.lower() in [a.lower() for a in entity.aliases]:
+                return True
+
+    return False
+
+
+def check_first_day_constraint(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check constraint specifically for day 1
+
+    Params:
+        indoor_only: bool - if True, all day1 activities must be indoor
+        outdoor_only: bool - if True, all day1 activities must be outdoor
+        max_activities: int - max activities on day 1
+    """
+    indoor_only = params.get("indoor_only", False)
+    outdoor_only = params.get("outdoor_only", False)
+    max_activities = params.get("max_activities")
+
+    day1_entities = plan.get("day1", [])
+
+    if max_activities is not None and len(day1_entities) > max_activities:
+        return False
+
+    for entity_id in day1_entities:
+        actual_id = _resolve_entity_id(world, entity_id)
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            is_indoor = entity.attributes.get("indoor", True)
+
+            if indoor_only and not is_indoor:
+                return False
+            if outdoor_only and is_indoor:
+                return False
+
+    return True
+
+
+def check_last_day_constraint(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check constraint specifically for the last day
+
+    Params:
+        num_days: int - total number of days
+        must_have_outdoor: bool - must have at least one outdoor activity
+        max_cost: int - max cost on last day
+    """
+    num_days = params.get("num_days", 2)
+    must_have_outdoor = params.get("must_have_outdoor", False)
+    max_cost = params.get("max_cost")
+
+    last_day_key = f"day{num_days}"
+    last_day_entities = plan.get(last_day_key, [])
+
+    has_outdoor = False
+    total_cost = 0
+
+    for entity_id in last_day_entities:
+        actual_id = _resolve_entity_id(world, entity_id)
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            if not entity.attributes.get("indoor", True):
+                has_outdoor = True
+            total_cost += entity.attributes.get("cost_lei", 0)
+
+    if must_have_outdoor and not has_outdoor:
+        return False
+
+    if max_cost is not None and total_cost > max_cost:
+        return False
+
+    return True
+
+
+def check_min_total_activities(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if total activities across all days meets minimum
+
+    Params:
+        min_total: int - minimum total activities required
+    """
+    min_total = params.get("min_total", 1)
+
+    total = 0
+    for day_key, entity_ids in plan.items():
+        if day_key.startswith("day"):
+            total += len(entity_ids)
+
+    return total >= min_total
+
+
+def check_max_total_cost(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if total cost is within absolute maximum
+
+    Params:
+        max_cost: int - absolute maximum cost
+    """
+    max_cost = params.get("max_cost", 1000)
+
+    total = 0
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+
+    for entity_id in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_id)
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            total += entity.attributes.get("cost_lei", 0)
+
+    return total <= max_cost
+
+
+def check_no_consecutive_same_type(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that no two consecutive days have the same activity type pattern
+
+    This forces variety in the plan.
+    """
+    prev_types = None
+
+    for day_num in range(1, 10):  # Support up to 9 days
+        day_key = f"day{day_num}"
+        if day_key not in plan:
+            break
+
+        day_types = set()
+        for entity_id in plan[day_key]:
+            actual_id = _resolve_entity_id(world, entity_id)
+            if actual_id and actual_id in world.canonical_entities:
+                entity = world.canonical_entities[actual_id]
+                day_types.add(entity.attributes.get("type"))
+
+        if prev_types is not None and day_types == prev_types and len(day_types) > 0:
+            return False
+
+        prev_types = day_types
+
+    return True
+
+
 # ============================================================================
 # Schedule World Constraints
 # ============================================================================
@@ -394,6 +606,127 @@ def check_priority_day_restriction(world: World, plan: dict, params: dict) -> bo
                     return False
 
     return True
+
+
+def check_slot_type_restriction(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that certain appointment types are only in allowed slots
+
+    Params:
+        type_keyword: str - keyword in appointment name (e.g., "medical", "Control")
+        allowed_slots: list[str] - slots where this type can be scheduled
+    """
+    type_keyword = params.get("type_keyword", "").lower()
+    allowed_slots = [s.lower() for s in params.get("allowed_slots", [])]
+
+    if not type_keyword or not allowed_slots:
+        return True
+
+    for slot_key, appointment in plan.items():
+        if not appointment or appointment == "null":
+            continue
+
+        # Check if this appointment matches the type keyword
+        actual_id = _resolve_entity_id(world, appointment)
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            apt_name = entity.name.lower()
+
+            if type_keyword in apt_name:
+                # Extract slot from slot_key
+                parts = slot_key.split("_", 1)
+                if len(parts) < 2:
+                    continue
+
+                slot = parts[1].lower()
+
+                # Normalize slot names
+                slot_normalized = slot
+                if "dimineata" in slot or "dimineață" in slot:
+                    slot_normalized = "morning"
+                elif "amiaza" in slot or "după-amiază" in slot:
+                    slot_normalized = "afternoon"
+
+                if slot_normalized not in allowed_slots and slot not in allowed_slots:
+                    return False
+
+    return True
+
+
+def check_min_total_appointments(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if total appointments meets minimum
+
+    Params:
+        min_total: int - minimum total appointments required
+    """
+    min_total = params.get("min_total", 1)
+
+    count = 0
+    for slot_key, appointment in plan.items():
+        if appointment and appointment != "null":
+            count += 1
+
+    return count >= min_total
+
+
+def check_must_drop_lowest_priority(world: World, plan: dict, params: dict) -> bool:
+    """
+    If not all appointments fit, ensure lowest priority ones are dropped first
+
+    Checks that all high > medium > low priority ordering is respected.
+    """
+    # Get all appointments from world
+    all_by_priority = {"high": [], "medium": [], "low": []}
+    for entity in world.canonical_entities.values():
+        priority = entity.attributes.get("priority", "low")
+        if priority in all_by_priority:
+            all_by_priority[priority].append(entity.name)
+
+    # Get planned appointments
+    planned = set()
+    for slot_key, appointment in plan.items():
+        if appointment and appointment != "null":
+            planned.add(appointment)
+
+    # Check: if a low priority is kept, all high and medium must be kept
+    for low_apt in all_by_priority["low"]:
+        if low_apt in planned:
+            # This low priority is kept, check that higher priorities are too
+            for high_apt in all_by_priority["high"]:
+                if high_apt not in planned:
+                    return False
+            for med_apt in all_by_priority["medium"]:
+                if med_apt not in planned:
+                    return False
+
+    # Check: if a medium priority is kept, all high must be kept
+    for med_apt in all_by_priority["medium"]:
+        if med_apt in planned:
+            for high_apt in all_by_priority["high"]:
+                if high_apt not in planned:
+                    return False
+
+    return True
+
+
+def check_spread_across_days(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that appointments are spread across multiple days
+
+    Params:
+        min_days_with_appointments: int - minimum days that must have appointments
+    """
+    min_days = params.get("min_days_with_appointments", 2)
+
+    days_with_appointments = set()
+    for slot_key, appointment in plan.items():
+        if appointment and appointment != "null":
+            parts = slot_key.split("_", 1)
+            if parts:
+                days_with_appointments.add(parts[0])
+
+    return len(days_with_appointments) >= min_days
 
 
 # ============================================================================
@@ -661,6 +994,186 @@ def check_all_vegan(world: World, plan: dict, params: dict) -> bool:
     return True
 
 
+def check_min_daily_calories(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if daily calorie total meets minimum
+
+    Params:
+        min_calories: int - minimum calories per day
+    """
+    min_calories = params.get("min_calories", 1200)
+
+    # Group dishes by day
+    daily_calories = {}
+
+    for key, value in plan.items():
+        parts = key.split("_", 1)
+        if len(parts) < 2 or not parts[0].startswith("day"):
+            continue
+
+        day = parts[0]
+        dish_ref = value
+
+        if not dish_ref:
+            continue
+
+        actual_id = _resolve_entity_id(world, dish_ref)
+
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            calories = entity.attributes.get("calories", 0)
+
+            if day not in daily_calories:
+                daily_calories[day] = 0
+            daily_calories[day] += calories
+
+    # Check each day
+    for day, total in daily_calories.items():
+        if total < min_calories:
+            return False
+
+    return True
+
+
+def check_dinner_lightest(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that dinner has fewer calories than both breakfast and lunch each day
+    """
+    num_days = params.get("num_days", 2)
+
+    meal_types = {
+        "breakfast": ["mic_dejun", "breakfast"],
+        "lunch": ["pranz", "lunch"],
+        "dinner": ["cina", "dinner"],
+    }
+
+    for day_num in range(1, num_days + 1):
+        day_prefix = f"day{day_num}"
+
+        calories = {"breakfast": 0, "lunch": 0, "dinner": 0}
+
+        for meal_name, meal_keys in meal_types.items():
+            for meal_key in meal_keys:
+                key = f"{day_prefix}_{meal_key}"
+                if key in plan and plan[key]:
+                    actual_id = _resolve_entity_id(world, plan[key])
+                    if actual_id and actual_id in world.canonical_entities:
+                        entity = world.canonical_entities[actual_id]
+                        calories[meal_name] = entity.attributes.get("calories", 0)
+                        break
+
+        # Dinner must be strictly less than both breakfast and lunch
+        if calories["dinner"] >= calories["breakfast"]:
+            return False
+        if calories["dinner"] >= calories["lunch"]:
+            return False
+
+    return True
+
+
+def check_calorie_range(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check if daily calories fall within a specific range
+
+    Params:
+        min_calories: int - minimum calories per day
+        max_calories: int - maximum calories per day
+    """
+    min_cal = params.get("min_calories", 1200)
+    max_cal = params.get("max_calories", 2000)
+
+    daily_calories = {}
+
+    for key, value in plan.items():
+        parts = key.split("_", 1)
+        if len(parts) < 2 or not parts[0].startswith("day"):
+            continue
+
+        day = parts[0]
+        dish_ref = value
+
+        if not dish_ref:
+            continue
+
+        actual_id = _resolve_entity_id(world, dish_ref)
+
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            calories = entity.attributes.get("calories", 0)
+
+            if day not in daily_calories:
+                daily_calories[day] = 0
+            daily_calories[day] += calories
+
+    for day, total in daily_calories.items():
+        if total < min_cal or total > max_cal:
+            return False
+
+    return True
+
+
+def check_breakfast_variety(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that no breakfast dish is repeated across days
+    """
+    breakfast_dishes = []
+
+    for key, value in plan.items():
+        if "_mic_dejun" in key or "_breakfast" in key:
+            if value:
+                actual_id = _resolve_entity_id(world, value)
+                if actual_id in breakfast_dishes:
+                    return False
+                breakfast_dishes.append(actual_id)
+
+    return True
+
+
+def check_max_high_calorie_meals(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that at most N meals exceed a calorie threshold
+
+    Params:
+        calorie_threshold: int - what counts as high calorie
+        max_high_calorie: int - maximum number of high calorie meals allowed
+    """
+    threshold = params.get("calorie_threshold", 400)
+    max_allowed = params.get("max_high_calorie", 2)
+
+    count = 0
+    plan_entity_ids = _extract_plan_entity_ids(plan)
+
+    for entity_id in plan_entity_ids:
+        actual_id = _resolve_entity_id(world, entity_id)
+        if actual_id and actual_id in world.canonical_entities:
+            entity = world.canonical_entities[actual_id]
+            if entity.attributes.get("calories", 0) > threshold:
+                count += 1
+
+    return count <= max_allowed
+
+
+def check_quick_breakfast(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that all breakfast dishes have prep time under threshold
+
+    Params:
+        max_prep_time: int - maximum prep time in minutes for breakfast
+    """
+    max_prep = params.get("max_prep_time", 20)
+
+    for key, value in plan.items():
+        if "_mic_dejun" in key or "_breakfast" in key:
+            if value:
+                actual_id = _resolve_entity_id(world, value)
+                if actual_id and actual_id in world.canonical_entities:
+                    entity = world.canonical_entities[actual_id]
+                    if entity.attributes.get("prep_time_min", 0) > max_prep:
+                        return False
+
+    return True
+
+
 # ============================================================================
 # General Goals (Structural Constraints)
 # ============================================================================
@@ -806,7 +1319,7 @@ def _resolve_entity_id(world: World, entity_ref: str) -> str:
 # ============================================================================
 
 CONSTRAINT_FUNCTIONS: dict[str, Callable[[World, dict, dict], bool]] = {
-    # Travel
+    # Travel - Basic
     "check_must_include_type": check_must_include_type,
     "check_max_outdoor_per_day": check_max_outdoor_per_day,
     "check_all_family_friendly": check_all_family_friendly,
@@ -816,18 +1329,32 @@ CONSTRAINT_FUNCTIONS: dict[str, Callable[[World, dict, dict], bool]] = {
     "check_max_duration_per_day": check_max_duration_per_day,
     "check_type_diversity": check_type_diversity,
     "check_must_exclude_type": check_must_exclude_type,
+    # Travel - Extreme
+    "check_exact_type_count": check_exact_type_count,
+    "check_budget_per_day": check_budget_per_day,
+    "check_must_include_specific": check_must_include_specific,
+    "check_first_day_constraint": check_first_day_constraint,
+    "check_last_day_constraint": check_last_day_constraint,
+    "check_min_total_activities": check_min_total_activities,
+    "check_max_total_cost": check_max_total_cost,
+    "check_no_consecutive_same_type": check_no_consecutive_same_type,
 
-    # Schedule
+    # Schedule - Basic
     "check_max_appointments_per_day": check_max_appointments_per_day,
     "check_keep_high_priority": check_keep_high_priority,
     "check_no_back_to_back": check_no_back_to_back,
     "check_max_total_appointments": check_max_total_appointments,
     "check_priority_day_restriction": check_priority_day_restriction,
+    # Schedule - Extreme
+    "check_slot_type_restriction": check_slot_type_restriction,
+    "check_min_total_appointments": check_min_total_appointments,
+    "check_must_drop_lowest_priority": check_must_drop_lowest_priority,
+    "check_spread_across_days": check_spread_across_days,
 
     # Fact
     "check_answer_matches_context": check_answer_matches_context,
 
-    # Recipe
+    # Recipe - Basic
     "check_all_vegetarian": check_all_vegetarian,
     "check_all_vegan": check_all_vegan,
     "check_no_gluten": check_no_gluten,
@@ -836,6 +1363,13 @@ CONSTRAINT_FUNCTIONS: dict[str, Callable[[World, dict, dict], bool]] = {
     "check_all_meals_filled": check_all_meals_filled,
     "check_max_prep_time_per_day": check_max_prep_time_per_day,
     "check_lunch_heaviest_meal": check_lunch_heaviest_meal,
+    # Recipe - Extreme
+    "check_min_daily_calories": check_min_daily_calories,
+    "check_dinner_lightest": check_dinner_lightest,
+    "check_calorie_range": check_calorie_range,
+    "check_breakfast_variety": check_breakfast_variety,
+    "check_max_high_calorie_meals": check_max_high_calorie_meals,
+    "check_quick_breakfast": check_quick_breakfast,
 
     # General goals
     "check_days_non_empty": check_days_non_empty,

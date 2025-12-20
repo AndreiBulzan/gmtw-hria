@@ -1,87 +1,95 @@
-# ============================================
-# SETUP (run once per session)
-# ============================================
+=== GMTW-Ro Commands ===
 
-# Set OpenRouter API key (get free key at https://openrouter.ai/keys)
-set OPENROUTER_API_KEY=your_key_here
+=== 1. GENERATE DATASETS ===
 
-# Or set Groq API key
+python scripts/generate_gmtw_v0.py --num-travel 150 --num-schedule 150 --num-fact 100 --num-recipe 100 --output data/gmtw_ro_v0.jsonl
+
+python scripts/generate_gmtw_hard.py --num-travel 100 --num-schedule 75 --num-fact 50 --num-recipe 75 --output data/gmtw_ro_hard.jsonl
+
+
+=== 2. RUN MODELS ON BASE DATASET (500) ===
+
+python scripts/run_groq_batch.py data/gmtw_ro_v0.jsonl --model openai/gpt-oss-20b --output data/outputs_base_gpt-oss-20b.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_v0.jsonl --model meta-llama/llama-4-scout-17b-16e-instruct --output data/outputs_base_llama4-scout.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_v0.jsonl --model meta-llama/llama-guard-4-12b --output data/outputs_base_llama-guard.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_v0.jsonl --model qwen/qwen3-32b --output data/outputs_base_qwen3-32b.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_v0.jsonl --model llama-3.3-70b-versatile --output data/outputs_base_llama33-70b.jsonl --delay 2.0
+
+
+=== 3. RUN MODELS ON HARD DATASET (300) ===
+
+python scripts/run_groq_batch.py data/gmtw_ro_hard.jsonl --model openai/gpt-oss-20b --output data/outputs_hard_gpt-oss-20b.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_hard.jsonl --model meta-llama/llama-4-scout-17b-16e-instruct --output data/outputs_hard_llama4-scout.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_hard.jsonl --model meta-llama/llama-guard-4-12b --output data/outputs_hard_llama-guard.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_hard.jsonl --model qwen/qwen3-32b --output data/outputs_hard_qwen3-32b.jsonl --delay 2.0
+
+python scripts/run_groq_batch.py data/gmtw_ro_hard.jsonl --model llama-3.3-70b-versatile --output data/outputs_hard_llama33-70b.jsonl --delay 2.0
+
+
+=== 4. EVALUATE BASE DATASET RESULTS ===
+
+python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_gpt-oss-20b.jsonl --save-metrics data/metrics_base_gpt-oss-20b.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_llama4-scout.jsonl --save-metrics data/metrics_base_llama4-scout.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_llama-guard.jsonl --save-metrics data/metrics_base_llama-guard.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_qwen3-32b.jsonl --save-metrics data/metrics_base_qwen3-32b.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_llama33-70b.jsonl --save-metrics data/metrics_base_llama33-70b.jsonl
+
+
+=== 5. EVALUATE HARD DATASET RESULTS ===
+
+python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_gpt-oss-20b.jsonl --save-metrics data/metrics_hard_gpt-oss-20b.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_llama4-scout.jsonl --save-metrics data/metrics_hard_llama4-scout.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_llama-guard.jsonl --save-metrics data/metrics_hard_llama-guard.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_qwen3-32b.jsonl --save-metrics data/metrics_hard_qwen3-32b.jsonl
+
+python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_llama33-70b.jsonl --save-metrics data/metrics_hard_llama33-70b.jsonl
+
+
+=== 6. DEBUG BASE DATASET RESULTS (show only failures) ===
+
+python scripts/debug_results.py data/gmtw_ro_v0.jsonl data/outputs_base_gpt-oss-20b.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_v0.jsonl data/outputs_base_llama4-scout.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_v0.jsonl data/outputs_base_llama-guard.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_v0.jsonl data/outputs_base_qwen3-32b.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_v0.jsonl data/outputs_base_llama33-70b.jsonl --filter failed
+
+
+=== 7. DEBUG HARD DATASET RESULTS (show only failures) ===
+
+python scripts/debug_results.py data/gmtw_ro_hard.jsonl data/outputs_hard_gpt-oss-20b.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_hard.jsonl data/outputs_hard_llama4-scout.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_hard.jsonl data/outputs_hard_llama-guard.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_hard.jsonl data/outputs_hard_qwen3-32b.jsonl --filter failed
+
+python scripts/debug_results.py data/gmtw_ro_hard.jsonl data/outputs_hard_llama33-70b.jsonl --filter failed
+
+
+=== NOTES ===
+# Set your Groq API key first (Windows):
 set GROQ_API_KEY=your_key_here
 
-# ============================================
-# STEP 1: Generate instances
-# ============================================
+# Or on Linux/Mac:
+export GROQ_API_KEY=your_key_here
 
-# Mixed difficulty (40% easy, 40% medium, 20% hard) - default
-python scripts/generate_gmtw_v0.py --output data/instances_v0.jsonl
-
-# Hard mode only - more constraints, most challenging
-python scripts/generate_gmtw_v0.py --difficulty hard --output data/instances_hard.jsonl
-
-# Custom counts with specific difficulty
-python scripts/generate_gmtw_v0.py --num-travel 150 --num-schedule 150 --num-fact 100 --num-recipe 100 --difficulty medium --output data/instances_medium.jsonl
-
-# ============================================
-# STEP 2: Run models (OpenRouter - FREE)
-# ============================================
-
-# Grok 4.1 Fast (free, fast - RECOMMENDED)
-python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model x-ai/grok-4.1-fast:free --output data/outputs_grok.jsonl --delay 1.0
-
-# Gemma 3 12B (free, good quality but slower)
-python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model google/gemma-3-12b-it:free --output data/outputs_gemma12b.jsonl --delay 1.0
-
-# Llama 3.1 8B (free)
-python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model meta-llama/llama-3.1-8b-instruct:free --output data/outputs_llama8b.jsonl --delay 1.0
-
-# DeepSeek R1 (free, reasoning model)
-python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model deepseek/deepseek-r1:free --output data/outputs_deepseek.jsonl --delay 1.0
-
-# List all suggested models
-python scripts/run_openrouter_batch.py --list-models
-
-# ============================================
-# STEP 2 ALT: Run models (Groq - requires paid key)
-# ============================================
-
-python scripts/run_groq_batch.py data/instances_v0.jsonl --model llama-3.1-8b-instant --output data/outputs_groq8b.jsonl --delay 2.0
-
-python scripts/run_groq_batch.py data/instances_v0.jsonl --model llama-3.3-70b-versatile --output data/outputs_groq70b.jsonl --delay 2.0
-
-# ============================================
-# STEP 3: Evaluate outputs
-# ============================================
-
-python scripts/evaluate_outputs.py data/instances_v0.jsonl data/outputs_grok.jsonl --save-metrics data/metrics_grok.jsonl
-
-python scripts/evaluate_outputs.py data/instances_v0.jsonl data/outputs_gemma12b.jsonl --save-metrics data/metrics_gemma12b.jsonl
-
-python scripts/evaluate_outputs.py data/instances_v0.jsonl data/outputs_llama8b.jsonl --save-metrics data/metrics_llama8b.jsonl
-
-# ============================================
-# STEP 4: Debug and compare
-# ============================================
-
-# View failures for a specific model
-python scripts/debug_results.py data/instances_v0.jsonl data/outputs_grok.jsonl --filter failed
-
-# Compare multiple models side-by-side
-python scripts/compare_models.py data/instances_v0.jsonl data/outputs_grok.jsonl data/outputs_gemma12b.jsonl data/outputs_llama8b.jsonl
-
-# ============================================
-# DELTA: Cross-lingual comparison (EN vs RO)
-# ============================================
-
-# Run same model on English prompts
-python scripts/run_openrouter_batch.py data/instances_v0.jsonl --model x-ai/grok-4.1-fast:free --language en --output data/outputs_grok_en.jsonl --delay 1.0
-
-# Compute delta (foreign language penalty)
-python scripts/compute_delta.py data/instances_v0.jsonl data/outputs_grok.jsonl data/outputs_grok_en.jsonl
-
-# ============================================
-# QUICK TEST (5 instances only)
-# ============================================
-
-python scripts/run_openrouter_batch.py data/instances_v0.jsonl --output data/test_out.jsonl --max 5
-
-python scripts/evaluate_outputs.py data/instances_v0.jsonl data/test_out.jsonl
+# If you get rate limited, increase --delay (e.g., --delay 5.0)
