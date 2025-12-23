@@ -40,8 +40,10 @@ def call_openrouter(
     prompt: str,
     api_key: str,
     model: str = "x-ai/grok-4.1-fast:free",
+    provider: str = None,
     site_url: str = None,
     site_name: str = None,
+    max_retries: int = 5,
 ) -> str:
     """
     Call OpenRouter API with a prompt
@@ -50,8 +52,10 @@ def call_openrouter(
         prompt: The prompt to send
         api_key: OpenRouter API key
         model: Model name (default: google/gemma-3-4b-it:free)
+        provider: Provider routing (e.g., "novita" or "novita/bf16")
         site_url: Optional site URL for OpenRouter rankings
         site_name: Optional site name for OpenRouter rankings
+        max_retries: Maximum retry attempts for transient errors
 
     Returns:
         Model response text
@@ -81,28 +85,65 @@ def call_openrouter(
         "max_tokens": 2048,
     }
 
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=120)
+    # Add provider routing if specified
+    if provider:
+        # Parse provider format: "novita" or "novita/bf16"
+        parts = provider.split("/")
+        provider_name = parts[0]
+        quantization = parts[1] if len(parts) > 1 else None
 
-        if not response.ok:
-            error_detail = response.text
-            print(f"\n  OpenRouter API error ({response.status_code}): {error_detail[:300]}")
+        provider_config = {"order": [provider_name]}
+        if quantization:
+            provider_config["quantizations"] = [quantization]
+
+        payload["provider"] = provider_config
+
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=120)
+
+            if response.ok:
+                data = response.json()
+                if "error" in data:
+                    print(f"\n  OpenRouter error: {data['error']}")
+                    return ""
+                content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                if content:
+                    return content.strip()
+                finish_reason = data.get("choices", [{}])[0].get("finish_reason", "unknown")
+                print(f"⚠ Empty (finish_reason={finish_reason})", end=" ")
+                return ""
+
+            # Handle rate limiting (429) or server errors (5xx) - retry
+            if response.status_code == 429 or response.status_code >= 500:
+                wait_time = (2 ** attempt) * 2
+                print(f"⏳ Error {response.status_code}, waiting {wait_time}s...", end=" ", flush=True)
+                time.sleep(wait_time)
+                last_error = f"HTTP {response.status_code}"
+                continue
+
+            # Other errors - don't retry
+            error_detail = response.text[:200] if response.text else "No details"
+            print(f"❌ Error {response.status_code}: {error_detail}", end=" ")
             return ""
 
-        data = response.json()
+        except requests.exceptions.Timeout:
+            wait_time = (2 ** attempt) * 2
+            print(f"⏳ Timeout, waiting {wait_time}s...", end=" ", flush=True)
+            time.sleep(wait_time)
+            last_error = "Timeout"
+            continue
 
-        # Check for error in response
-        if "error" in data:
-            print(f"\n  OpenRouter error: {data['error']}")
-            return ""
+        except Exception as e:
+            wait_time = (2 ** attempt) * 2
+            print(f"⏳ {type(e).__name__}: {str(e)[:30]}, waiting {wait_time}s...", end=" ", flush=True)
+            time.sleep(wait_time)
+            last_error = str(e)[:50]
+            continue
 
-        return data["choices"][0]["message"]["content"].strip()
-    except requests.exceptions.Timeout:
-        print(f"\n  Timeout after 120s")
-        return ""
-    except Exception as e:
-        print(f"\n  Error: {e}")
-        return ""
+    print(f"❌ {last_error}", end=" ")
+    return ""
 
 
 def run_batch(
@@ -110,6 +151,7 @@ def run_batch(
     output_file: str,
     api_key: str,
     model: str = "x-ai/grok-4.1-fast:free",
+    provider: str = None,
     language: str = "ro",
     max_instances: int = None,
     delay: float = 1.0,
@@ -124,6 +166,7 @@ def run_batch(
         output_file: Output file for model responses
         api_key: OpenRouter API key
         model: OpenRouter model name
+        provider: Provider routing (e.g., "novita/bf16")
         language: 'ro' for Romanian, 'en' for English
         max_instances: Max instances to process (None = all)
         delay: Delay in seconds between API calls (default: 1.0)
@@ -141,13 +184,15 @@ def run_batch(
 
     print(f"Loaded {len(instances)} instances")
     print(f"Model: {model}")
+    if provider:
+        print(f"Provider: {provider}")
     print(f"Language: {language}")
     print(f"Output: {output_file}")
     print(f"Delay: {delay}s between calls\n")
 
     # Process each instance
     outputs = []
-    failed = 0
+    failed = []
 
     for i, instance in enumerate(instances, 1):
         print(f"[{i}/{len(instances)}] {instance.instance_id}...", end=" ", flush=True)
@@ -157,21 +202,22 @@ def run_batch(
 
         # Call OpenRouter
         start_time = time.time()
-        response = call_openrouter(prompt, api_key, model, site_url, site_name)
+        response = call_openrouter(prompt, api_key, model, provider, site_url, site_name)
         latency = time.time() - start_time
 
         if response:
-            print(f"OK ({latency:.1f}s)")
+            print(f"✓ ({latency:.1f}s)")
             outputs.append({
                 "instance_id": instance.instance_id,
                 "output": response,
                 "model": model,
+                "provider": provider,
                 "language": language,
                 "latency": latency,
             })
         else:
-            print(f"FAILED")
-            failed += 1
+            print(f"✗ FAILED")
+            failed.append(instance.instance_id)
 
         # Delay to avoid rate limits
         if i < len(instances):
@@ -182,9 +228,20 @@ def run_batch(
         for output in outputs:
             f.write(json.dumps(output, ensure_ascii=False) + '\n')
 
-    print(f"\nDone! Saved {len(outputs)} outputs to {output_file}")
-    if failed > 0:
-        print(f"Failed: {failed} instances")
+    print(f"\n✓ Saved {len(outputs)}/{len(instances)} outputs to {output_file}")
+
+    if failed:
+        print(f"\n⚠ {len(failed)} instances failed:")
+        for fid in failed[:10]:
+            print(f"  - {fid}")
+        if len(failed) > 10:
+            print(f"  ... and {len(failed) - 10} more")
+
+        # Save failed list
+        failed_file = output_file.replace('.jsonl', '_failed.txt')
+        with open(failed_file, 'w') as f:
+            f.write('\n'.join(failed))
+        print(f"  Failed list saved to: {failed_file}")
 
     print(f"\nNext step: Evaluate with:")
     print(f"  python scripts/evaluate_outputs.py {instances_file} {output_file}")
@@ -208,8 +265,11 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run with free Gemma 3 4B
-  python scripts/run_openrouter_batch.py data/instances.jsonl --output gemma_out.jsonl
+  # Run with Llama 3.2 3B on novita provider with bf16 quantization
+  python scripts/run_openrouter_batch.py data/gmtw_ro_hard.jsonl \\
+    --model meta-llama/llama-3.2-3b-instruct \\
+    --provider novita/bf16 \\
+    --output llama32_3b_outputs.jsonl
 
   # Run with free Llama 3.1 8B
   python scripts/run_openrouter_batch.py data/instances.jsonl --model llama-3.1-8b --output llama_out.jsonl
@@ -219,12 +279,18 @@ Examples:
 
   # List suggested models
   python scripts/run_openrouter_batch.py --list-models
+
+Provider routing:
+  --provider novita        # Use novita provider
+  --provider novita/bf16   # Use novita with bf16 quantization
+  --provider novita/fp16   # Use novita with fp16 quantization
         """
     )
     parser.add_argument("instances", nargs="?", help="JSONL file with instances")
     parser.add_argument("--output", default="openrouter_outputs.jsonl", help="Output file")
     parser.add_argument("--api-key", help="OpenRouter API key (or set OPENROUTER_API_KEY env var)")
     parser.add_argument("--model", default="x-ai/grok-4.1-fast:free", help="OpenRouter model (default: grok-4.1-fast:free)")
+    parser.add_argument("--provider", help="Provider routing (e.g., 'novita' or 'novita/bf16')")
     parser.add_argument("--language", choices=["ro", "en"], default="ro", help="Prompt language")
     parser.add_argument("--max", type=int, help="Max instances to process")
     parser.add_argument("--delay", type=float, default=1.0, help="Delay in seconds between API calls (default: 1.0)")
@@ -270,6 +336,7 @@ Examples:
         args.output,
         api_key,
         model,
+        args.provider,
         args.language,
         args.max,
         args.delay,

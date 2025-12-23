@@ -11,18 +11,20 @@ All instances are verified solvable at generation time using backtracking solver
 import argparse
 import json
 import sys
-from itertools import combinations, permutations, product
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Import proper constraint solvers
+from rombench.gmtw_ro.solvers import solve_schedule, solve_travel, solve_recipe
+
 
 # =============================================================================
-# SOLVABILITY VERIFICATION (Actual constraint solvers)
+# SOLVABILITY VERIFICATION (Legacy - kept for reference)
 # =============================================================================
 
-def solve_travel(world) -> bool:
+def _legacy_solve_travel(world) -> bool:
     """Try to find a valid travel plan using brute force backtracking."""
     attrs = world.payload.get("attractions", [])
     num_days = world.payload.get("num_days", 2)
@@ -94,8 +96,8 @@ def solve_travel(world) -> bool:
     return False
 
 
-def solve_schedule(world) -> bool:
-    """Try to find a valid schedule using brute force."""
+def _legacy_solve_schedule(world) -> bool:
+    """Try to find a valid schedule using brute force (LEGACY - incomplete)."""
     appointments = world.payload.get("appointments", [])
     num_days = world.payload.get("num_days", 5)
     constraints = world.constraints
@@ -147,8 +149,8 @@ def solve_schedule(world) -> bool:
     return False
 
 
-def solve_recipe(world) -> bool:
-    """Try to find a valid meal plan using brute force backtracking."""
+def _legacy_solve_recipe(world) -> bool:
+    """Try to find a valid meal plan using brute force backtracking (LEGACY)."""
     dishes = world.payload.get("dishes", [])
     num_days = world.payload.get("num_days", 3)
     constraints = world.constraints

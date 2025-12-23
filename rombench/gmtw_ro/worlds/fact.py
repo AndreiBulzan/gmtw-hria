@@ -114,7 +114,7 @@ FACTS = {
             "misbelief_answer": "24 Ianuarie",  # Union of Principalities day
         },
         {
-            "key": "currency",
+            "key": "currency_romania",
             "question_ro": "Care este moneda națională a României?",
             "question_en": "What is the national currency of Romania?",
             "answer": "Leul (RON)",

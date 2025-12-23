@@ -1270,6 +1270,30 @@ def check_no_hallucinated_facts(world: World, plan: dict, params: dict) -> bool:
     return False
 
 
+def check_exact_answer_value(world: World, plan: dict, params: dict) -> bool:
+    """
+    Check that the model's answer contains the exact expected value.
+
+    Params:
+        expected: str - the expected answer value
+    """
+    expected = params.get("expected", "")
+    if not expected:
+        return True  # No expected value specified
+
+    answer = plan.get("answer", "")
+    if not answer:
+        return False
+
+    # Normalize both for comparison
+    answer_normalized = answer.lower().strip()
+    expected_normalized = expected.lower().strip()
+
+    # Check if expected value is contained in the answer
+    # This allows for slight variations like "Euro" vs "euro" or "Euro." vs "Euro"
+    return expected_normalized in answer_normalized or answer_normalized in expected_normalized
+
+
 # ============================================================================
 # Helper Functions
 # ============================================================================
@@ -1353,6 +1377,7 @@ CONSTRAINT_FUNCTIONS: dict[str, Callable[[World, dict, dict], bool]] = {
 
     # Fact
     "check_answer_matches_context": check_answer_matches_context,
+    "check_exact_answer_value": check_exact_answer_value,
 
     # Recipe - Basic
     "check_all_vegetarian": check_all_vegetarian,

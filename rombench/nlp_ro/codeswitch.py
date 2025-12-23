@@ -131,7 +131,7 @@ HIGH_CONFIDENCE_ENGLISH: set[str] = {
     "city", "cities", "town", "towns", "street", "streets",
     "door", "doors", "window", "windows", "floor", "floors",
     "side", "sides", "top", "bottom", "front", "middle",
-    "end", "ends", "beginning", "start",
+    "end", "ends", "beginning",  # "start" removed - valid Romanian loanword
     "kind", "kinds", "type", "types", "sort", "sorts",
     "set", "sets", "piece", "pieces", "bit", "bits",
     "lot", "lots", "deal", "deals",
@@ -385,6 +385,16 @@ ROMANIAN_LOOKALIKES: set[str] = {
     "fire",     # "nature/temper" or plural of "fir" (thread)
     "include",  # "vom include" = we will include (a include = to include)
     "peste",    # "over/above" (prep) or "fish" (pește without diacritic)
+    "start",    # RO: start (common loanword, e.g., "punct de start")
+    "stop",     # RO: stop (common loanword)
+    "simple",   # RO: feminine plural of "simplu" (e.g., "soluții simple")
+    "continue", # RO: "a continua" conjugated (eu continu, el continuă, etc.)
+    "complete", # RO: feminine plural of "complet" (e.g., "informații complete")
+    "public",   # RO: public (same meaning)
+    "rapid",    # RO: rapid (same meaning)
+    "direct",   # RO: direct (same meaning)
+    "exact",    # RO: exact (same meaning)
+    "recent",   # RO: recent (same meaning)
 
     # ==========================================================================
     # Romanian words identical to English (cognates/loanwords - valid Romanian)

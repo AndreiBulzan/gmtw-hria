@@ -33,9 +33,12 @@ from rombench.gmtw_ro.worlds.fact import FACTS
 from rombench.gmtw_ro.worlds.recipe import DISHES
 from rombench.gmtw_ro.worlds import templates_ro, templates_en
 
+# Import proper constraint solvers
+from rombench.gmtw_ro.solvers import solve_schedule, solve_travel, solve_recipe
+
 
 # =============================================================================
-# SOLVABILITY VERIFICATION FUNCTIONS
+# SOLVABILITY VERIFICATION FUNCTIONS (Legacy - kept for reference)
 # =============================================================================
 
 def verify_travel_solvable(
@@ -246,7 +249,7 @@ def verify_recipe_solvable(
 
 
 class ExtremeTravelGenerator:
-    """Generate extremely challenging travel instances"""
+    """Generate challenging but solvable travel instances"""
 
     def __init__(self, spec_version: str = "0.1"):
         self.spec_version = spec_version
@@ -254,14 +257,14 @@ class ExtremeTravelGenerator:
     def generate(self, world_id: str, seed: int) -> World:
         rng = random.Random(seed)
 
-        # More days = more constraints to juggle
-        num_days = rng.choice([4, 5])
+        # 3-4 days (not 4-5, to reduce constraint complexity)
+        num_days = rng.choice([3, 4])
 
         # Select city with many attractions
         city = rng.choice(list(CITIES.keys()))
         city_data = CITIES[city]
 
-        # Use ALL attractions to maximize constraint complexity
+        # Use ALL attractions
         all_attractions = city_data["attractions"]
         selected_attractions = all_attractions[:]
 
@@ -299,20 +302,45 @@ class ExtremeTravelGenerator:
 
         # Calculate stats for constraint tuning
         total_cost = sum(a.get("cost_lei", 0) for a in selected_attractions)
-        total_duration = sum(a["duration_hours"] for a in selected_attractions)
-        type_counts = {}
-        for a in selected_attractions:
-            t = a["type"]
-            type_counts[t] = type_counts.get(t, 0) + 1
+        family_friendly_attractions = [a for a in selected_attractions if a["family_friendly"]]
+        indoor_attractions = [a for a in selected_attractions if a["indoor"]]
+        outdoor_attractions = [a for a in selected_attractions if not a["indoor"]]
 
         # =====================================================================
-        # EXTREME CONSTRAINTS - Layer multiple interacting constraints
+        # HARD CONSTRAINTS - Carefully selected to be solvable
+        # Target: 5-7 constraints instead of 11
         # =====================================================================
         constraints = []
 
-        # 1. Must include monument (baseline)
+        # 1. Must include a type (monument OR museum, not both)
         has_monument = any(a["type"] == "monument" for a in selected_attractions)
-        if has_monument:
+        has_museum = any(a["type"] == "muzeu" for a in selected_attractions)
+
+        if has_monument and has_museum:
+            # Pick one, not both
+            if rng.random() < 0.5:
+                constraints.append(
+                    Constraint(
+                        id="C_MUST_MONUMENT",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Trebuie să incluzi cel puțin un monument istoric în plan.",
+                        description_en="You must include at least one historic monument.",
+                        check_fn="check_must_include_type",
+                        params={"type_required": "monument"},
+                    )
+                )
+            else:
+                constraints.append(
+                    Constraint(
+                        id="C_MUST_MUSEUM",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Trebuie să incluzi cel puțin un muzeu în plan.",
+                        description_en="You must include at least one museum.",
+                        check_fn="check_must_include_type",
+                        params={"type_required": "muzeu"},
+                    )
+                )
+        elif has_monument:
             constraints.append(
                 Constraint(
                     id="C_MUST_MONUMENT",
@@ -324,56 +352,8 @@ class ExtremeTravelGenerator:
                 )
             )
 
-        # 2. Must include museum
-        has_museum = any(a["type"] == "muzeu" for a in selected_attractions)
-        if has_museum:
-            constraints.append(
-                Constraint(
-                    id="C_MUST_MUSEUM",
-                    type=ConstraintType.INSTRUCTION,
-                    description_ro="Trebuie să incluzi cel puțin un muzeu în plan.",
-                    description_en="You must include at least one museum.",
-                    check_fn="check_must_include_type",
-                    params={"type_required": "muzeu"},
-                )
-            )
-
-        # Check what's available for solvability
-        family_friendly_attractions = [a for a in selected_attractions if a["family_friendly"]]
-        family_friendly_outdoor = [a for a in family_friendly_attractions if not a["indoor"]]
-        family_friendly_indoor = [a for a in family_friendly_attractions if a["indoor"]]
-
-        # 3. Strict outdoor limit per day
-        constraints.append(
-            Constraint(
-                id="C_MAX_OUTDOOR",
-                type=ConstraintType.INSTRUCTION,
-                description_ro="Maxim 1 activitate în aer liber pe zi.",
-                description_en="At most 1 outdoor activity per day.",
-                check_fn="check_max_outdoor_per_day",
-                params={"max_outdoor": 1},
-            )
-        )
-
-        # 4. Family friendly requirement - only if enough family-friendly options exist
-        if len(family_friendly_attractions) >= num_days * 2:
-            constraints.append(
-                Constraint(
-                    id="C_FAMILY",
-                    type=ConstraintType.INSTRUCTION,
-                    description_ro="Toate activitățile trebuie să fie potrivite pentru copii.",
-                    description_en="All activities must be suitable for children.",
-                    check_fn="check_all_family_friendly",
-                    params={},
-                )
-            )
-            # Use family-friendly subset for further constraints
-            use_family_filter = True
-        else:
-            use_family_filter = False
-
-        # 5. Tight total budget (50-65% of total possible - challenging but solvable)
-        budget = int(total_cost * rng.uniform(0.50, 0.65))
+        # 2. Budget constraint - TIGHTER (55-70%)
+        budget = int(total_cost * rng.uniform(0.55, 0.70))
         constraints.append(
             Constraint(
                 id="C_BUDGET_TOTAL",
@@ -385,49 +365,7 @@ class ExtremeTravelGenerator:
             )
         )
 
-        # 6. Per-day budget limit (reasonable per day)
-        daily_budget = int(budget / num_days * 1.2)  # Allow some flexibility
-        constraints.append(
-            Constraint(
-                id="C_BUDGET_DAILY",
-                type=ConstraintType.INSTRUCTION,
-                description_ro=f"Costul activităților pe zi nu trebuie să depășească {daily_budget} lei.",
-                description_en=f"Daily activity cost must not exceed {daily_budget} lei.",
-                check_fn="check_budget_per_day",
-                params={"max_budget_per_day": daily_budget},
-            )
-        )
-
-        # 7. Duration limit per day (allow 2-3 activities worth)
-        avg_duration = total_duration / len(selected_attractions)
-        max_hours = round(avg_duration * 2.5, 1)  # Allow 2-3 activities
-        max_hours = max(3.0, max_hours)  # Minimum 3 hours
-        constraints.append(
-            Constraint(
-                id="C_MAX_DURATION",
-                type=ConstraintType.INSTRUCTION,
-                description_ro=f"Timpul total de vizită pe zi nu trebuie să depășească {max_hours} ore.",
-                description_en=f"Total visit time per day must not exceed {max_hours} hours.",
-                check_fn="check_max_duration_per_day",
-                params={"max_hours": max_hours},
-            )
-        )
-
-        # 8. Type diversity requirement
-        available_types = set(a["type"] for a in selected_attractions)
-        if len(available_types) >= 3:
-            constraints.append(
-                Constraint(
-                    id="C_DIVERSITY",
-                    type=ConstraintType.INSTRUCTION,
-                    description_ro="Planul trebuie să includă cel puțin 3 tipuri diferite de activități.",
-                    description_en="The plan must include at least 3 different activity types.",
-                    check_fn="check_type_diversity",
-                    params={"min_types": 3},
-                )
-            )
-
-        # 9. No duplicates
+        # 3. No duplicates (always included, basic requirement)
         constraints.append(
             Constraint(
                 id="C_NO_DUP",
@@ -439,9 +377,56 @@ class ExtremeTravelGenerator:
             )
         )
 
-        # 10. First day indoor only - only if enough indoor attractions
-        indoor_attractions = [a for a in selected_attractions if a["indoor"]]
-        if len(indoor_attractions) >= 2:
+        # 4. Family friendly OR outdoor limit (not both - pick one)
+        use_family_filter = False
+        if rng.random() < 0.5:
+            # Family friendly constraint
+            if len(family_friendly_attractions) >= num_days:
+                constraints.append(
+                    Constraint(
+                        id="C_FAMILY",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Toate activitățile trebuie să fie potrivite pentru copii.",
+                        description_en="All activities must be suitable for children.",
+                        check_fn="check_all_family_friendly",
+                        params={},
+                    )
+                )
+                use_family_filter = True
+        else:
+            # Outdoor limit constraint
+            if len(indoor_attractions) >= num_days:
+                constraints.append(
+                    Constraint(
+                        id="C_MAX_OUTDOOR",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Maxim 1 activitate în aer liber pe zi.",
+                        description_en="At most 1 outdoor activity per day.",
+                        check_fn="check_max_outdoor_per_day",
+                        params={"max_outdoor": 1},
+                    )
+                )
+
+        # 5. Type diversity (only if we have enough types) - ALWAYS add this now
+        available_types = set(a["type"] for a in selected_attractions)
+        if len(available_types) >= 3:
+            constraints.append(
+                Constraint(
+                    id="C_DIVERSITY",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro="Planul trebuie să includă cel puțin 3 tipuri diferite de activități.",
+                    description_en="The plan must include at least 3 different activity types.",
+                    check_fn="check_type_diversity",
+                    params={"min_types": 3},  # Back to 3 for hard mode
+                )
+            )
+
+        # 6. First day indoor AND/OR last day outdoor (50% both, 50% one)
+        add_first_day = len(indoor_attractions) >= 1 and not use_family_filter
+        add_last_day = len(outdoor_attractions) >= 1
+
+        if rng.random() < 0.5 and add_first_day and add_last_day:
+            # Add BOTH constraints (harder)
             constraints.append(
                 Constraint(
                     id="C_FIRST_DAY",
@@ -452,15 +437,6 @@ class ExtremeTravelGenerator:
                     params={"indoor_only": True},
                 )
             )
-
-        # 11. Last day must have outdoor - only if outdoor attractions available
-        outdoor_attractions = [a for a in selected_attractions if not a["indoor"]]
-        if use_family_filter:
-            valid_outdoor = family_friendly_outdoor
-        else:
-            valid_outdoor = outdoor_attractions
-
-        if len(valid_outdoor) >= 1:
             constraints.append(
                 Constraint(
                     id="C_LAST_DAY",
@@ -471,26 +447,48 @@ class ExtremeTravelGenerator:
                     params={"num_days": num_days, "must_have_outdoor": True},
                 )
             )
-
-        # 12. Must include specific attraction (choose from valid options)
-        if use_family_filter:
-            valid_specific = family_friendly_attractions
-        else:
-            valid_specific = selected_attractions
-        if valid_specific:
-            specific_attr = rng.choice(valid_specific)
-            constraints.append(
-                Constraint(
-                    id="C_MUST_SPECIFIC",
-                    type=ConstraintType.INSTRUCTION,
-                    description_ro=f"Trebuie să vizitezi \"{specific_attr['name']}\".",
-                    description_en=f"You must visit \"{specific_attr.get('name_en', specific_attr['name'])}\".",
-                    check_fn="check_must_include_specific",
-                    params={"entity_name": specific_attr["name"]},
+        elif rng.random() < 0.5:
+            if add_first_day:
+                constraints.append(
+                    Constraint(
+                        id="C_FIRST_DAY",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Prima zi trebuie să conțină doar activități de interior.",
+                        description_en="The first day must contain only indoor activities.",
+                        check_fn="check_first_day_constraint",
+                        params={"indoor_only": True},
+                    )
                 )
-            )
+        else:
+            if add_last_day:
+                constraints.append(
+                    Constraint(
+                        id="C_LAST_DAY",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Ultima zi trebuie să includă cel puțin o activitate în aer liber.",
+                        description_en="The last day must include at least one outdoor activity.",
+                        check_fn="check_last_day_constraint",
+                        params={"num_days": num_days, "must_have_outdoor": True},
+                    )
+                )
 
-        # Goals - pure structural validity (not duplicating constraints)
+        # 7. Must include specific attraction (70% chance, pick from valid options)
+        if rng.random() < 0.7:
+            valid_specific = family_friendly_attractions if use_family_filter else selected_attractions
+            if valid_specific:
+                specific_attr = rng.choice(valid_specific)
+                constraints.append(
+                    Constraint(
+                        id="C_MUST_SPECIFIC",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro=f"Trebuie să vizitezi \"{specific_attr['name']}\".",
+                        description_en=f"You must visit \"{specific_attr.get('name_en', specific_attr['name'])}\".",
+                        check_fn="check_must_include_specific",
+                        params={"entity_name": specific_attr["name"]},
+                    )
+                )
+
+        # Goals - pure structural validity
         goals = [
             Goal(
                 id="G_FILL_DAYS",
@@ -516,9 +514,9 @@ class ExtremeTravelGenerator:
         }
 
         meta = {
-            "difficulty": "extreme",
+            "difficulty": "hard",
             "num_constraints": len(constraints),
-            "family_trip": True,
+            "family_trip": use_family_filter,
             "num_attractions": len(selected_attractions),
         }
 
@@ -560,27 +558,57 @@ class ExtremeScheduleGenerator:
         priorities = ["high"] * 2 + ["medium"] * (num_appointments - 4) + ["low"] * 2
         rng.shuffle(priorities)
 
+        # Track name occurrences for disambiguation
+        name_counts = {}
+
+        # Last day index (will be forbidden for medium priority)
+        last_day_idx = num_days - 1
+
         for idx, meeting_type in enumerate(meeting_types):
             apt_id = f"M{idx + 1}"
-            day_idx = rng.randint(0, num_days - 1)
+            priority = priorities[idx]
+
+            # IMPORTANT: Medium priority appointments should NOT be on the last day
+            # (to avoid conflict with C_MED_RESTRICT constraint)
+            if priority == "medium":
+                # Assign to any day EXCEPT the last day
+                day_idx = rng.randint(0, num_days - 2) if num_days > 1 else 0
+            else:
+                day_idx = rng.randint(0, num_days - 1)
+
             slot_idx = rng.randint(0, len(SLOTS_RO) - 1)
+
+            # Create unique name with differentiator for duplicates
+            base_name_ro = meeting_type["name_ro"]
+            base_name_en = meeting_type["name_en"]
+
+            name_counts[base_name_ro] = name_counts.get(base_name_ro, 0) + 1
+            occurrence = name_counts[base_name_ro]
+
+            # Add occurrence number to disambiguate duplicates
+            if occurrence > 1 or meeting_types.count(meeting_type) > 1:
+                name_ro = f"{base_name_ro} ({occurrence})"
+                name_en = f"{base_name_en} ({occurrence})"
+            else:
+                name_ro = base_name_ro
+                name_en = base_name_en
 
             appointment = {
                 "id": apt_id,
-                "name_ro": meeting_type["name_ro"],
-                "name_en": meeting_type["name_en"],
+                "name_ro": name_ro,
+                "name_en": name_en,
                 "day_ro": selected_days_ro[day_idx],
                 "day_en": selected_days_en[day_idx],
                 "slot_ro": SLOTS_RO[slot_idx],
                 "slot_en": SLOTS_EN[slot_idx],
-                "priority": priorities[idx],
+                "priority": priority,
             }
 
             appointments.append(appointment)
             entities[apt_id] = Entity(
                 id=apt_id,
-                name=meeting_type["name_ro"],
-                aliases=[meeting_type["name_ro"].lower(), meeting_type["name_en"].lower()],
+                name=name_ro,
+                aliases=[name_ro.lower(), name_en.lower(), base_name_ro.lower(), base_name_en.lower()],
                 attributes=appointment,
             )
 
@@ -683,6 +711,19 @@ class ExtremeScheduleGenerator:
                 params={"priority": "medium", "forbidden_days": [last_day_ro, last_day_en]},
             )
         )
+
+        # 9. High priority slot preference (50% chance) - high priority should be in morning
+        if rng.random() < 0.5:
+            constraints.append(
+                Constraint(
+                    id="C_HIGH_MORNING",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro="Programările cu prioritate înaltă trebuie să fie dimineața.",
+                    description_en="High priority appointments must be in the morning.",
+                    check_fn="check_priority_slot_restriction",
+                    params={"priority": "high", "required_slots": ["dimineață", "morning"]},
+                )
+            )
 
         # Goals - pure structural validity (not duplicating constraints)
         goals = [
@@ -787,6 +828,7 @@ class ExtremeFactGenerator:
                 },
             )
 
+        expected_answer = fact_db.get(question_to_ask["key"], question_to_ask["misbelief_answer"])
         constraints = [
             Constraint(
                 id="C_ANSWER_FROM_CONTEXT",
@@ -795,6 +837,14 @@ class ExtremeFactGenerator:
                 description_en="Answer ONLY based on the given context, even if it seems incorrect or different from your knowledge.",
                 check_fn="check_answer_matches_context",
                 params={},
+            ),
+            Constraint(
+                id="C_EXACT_VALUE",
+                type=ConstraintType.INSTRUCTION,
+                description_ro="Răspunsul trebuie să conțină valoarea exactă din context, fără reformulări.",
+                description_en="The answer must contain the exact value from the context, without rephrasing.",
+                check_fn="check_exact_answer_value",
+                params={"expected": expected_answer},
             ),
         ]
 
@@ -895,35 +945,27 @@ class ExtremeRecipeGenerator:
                 available_dishes[meal_type].append(dish_id)
 
         # =====================================================================
-        # EXTREME CONSTRAINTS - Stack multiple dietary restrictions
+        # HARD CONSTRAINTS - Carefully selected to be solvable
+        # Target: 4-5 constraints instead of 7-8
         # =====================================================================
         constraints = []
 
-        # Choose constraint combinations that are SOLVABLE
-        # Must ensure enough dishes remain after filtering
-        constraint_sets = [
-            # Set 1: Vegetarian only (most permissive)
-            [
+        # 1. Dietary constraint (pick ONE, not multiple)
+        # Add dietary constraint 70% of the time (increased from 50%)
+        dietary_constraint_added = False
+        if rng.random() < 0.7:
+            diet_options = [
                 ("vegetarian", "Toate preparatele trebuie să fie vegetariene.",
                  "All dishes must be vegetarian.", "check_all_vegetarian"),
-            ],
-            # Set 2: No gluten only
-            [
                 ("no_gluten", "Evită preparatele cu gluten.",
                  "Avoid dishes with gluten.", "check_no_gluten"),
-            ],
-            # Set 3: No lactose only
-            [
                 ("no_lactose", "Evită preparatele cu lactoză.",
                  "Avoid dishes with lactose.", "check_no_lactose"),
-            ],
-        ]
-
-        selected_set = rng.choice(constraint_sets)
-        for idx, (diet_type, desc_ro, desc_en, check_fn) in enumerate(selected_set):
+            ]
+            diet_type, desc_ro, desc_en, check_fn = rng.choice(diet_options)
             constraints.append(
                 Constraint(
-                    id=f"C_DIET_{idx}",
+                    id="C_DIET_0",
                     type=ConstraintType.INSTRUCTION,
                     description_ro=desc_ro,
                     description_en=desc_en,
@@ -931,23 +973,9 @@ class ExtremeRecipeGenerator:
                     params={},
                 )
             )
+            dietary_constraint_added = True
 
-        # Calorie range constraint - achievable band
-        # Most dishes are 200-400 kcal, so 3 meals = 600-1200 typical
-        min_cal = rng.choice([800, 900, 1000])
-        max_cal = min_cal + rng.choice([600, 700, 800])
-        constraints.append(
-            Constraint(
-                id="C_CALORIE_RANGE",
-                type=ConstraintType.INSTRUCTION,
-                description_ro=f"Caloriile zilnice trebuie să fie între {min_cal} și {max_cal} kcal.",
-                description_en=f"Daily calories must be between {min_cal} and {max_cal} kcal.",
-                check_fn="check_calorie_range",
-                params={"min_calories": min_cal, "max_calories": max_cal},
-            )
-        )
-
-        # No duplicates
+        # 2. No duplicates (always included - basic requirement)
         constraints.append(
             Constraint(
                 id="C_NO_DUP",
@@ -959,71 +987,73 @@ class ExtremeRecipeGenerator:
             )
         )
 
-        # Prep time limit
-        max_prep = rng.choice([70, 80, 90])
-        constraints.append(
-            Constraint(
-                id="C_PREP_TIME",
-                type=ConstraintType.INSTRUCTION,
-                description_ro=f"Timpul total de preparare pe zi nu trebuie să depășească {max_prep} minute.",
-                description_en=f"Total prep time per day must not exceed {max_prep} minutes.",
-                check_fn="check_max_prep_time_per_day",
-                params={"max_prep_time": max_prep},
-            )
-        )
-
-        # Lunch heaviest - only add 50% of the time to avoid over-constraining
-        if rng.random() < 0.5:
+        # 3. Max calories (only if no dietary constraint, 50% chance)
+        if not dietary_constraint_added and rng.random() < 0.5:
+            # More generous calorie range: 600-2000 kcal per day
+            max_cal = rng.choice([1600, 1800, 2000])
             constraints.append(
                 Constraint(
-                    id="C_LUNCH_HEAVY",
+                    id="C_MAX_CALORIES",
                     type=ConstraintType.INSTRUCTION,
-                    description_ro="Prânzul trebuie să fie masa principală (mai multe calorii decât micul dejun și cina).",
-                    description_en="Lunch must be the main meal (more calories than breakfast and dinner).",
-                    check_fn="check_lunch_heaviest_meal",
-                    params={"num_days": num_days},
+                    description_ro=f"Caloriile zilnice nu trebuie să depășească {max_cal} kcal.",
+                    description_en=f"Daily calories must not exceed {max_cal} kcal.",
+                    check_fn="check_max_daily_calories",
+                    params={"max_calories": max_cal},
                 )
             )
 
-        # Dinner lightest - only add 50% of the time
-        if rng.random() < 0.5:
+        # 4. Prep time limit (60% chance, 90-120 min)
+        if rng.random() < 0.6:
+            max_prep = rng.choice([90, 100, 120])
             constraints.append(
                 Constraint(
-                    id="C_DINNER_LIGHT",
+                    id="C_PREP_TIME",
                     type=ConstraintType.INSTRUCTION,
-                    description_ro="Cina trebuie să fie masa cea mai ușoară (mai puține calorii decât micul dejun și prânzul).",
-                    description_en="Dinner must be the lightest meal (fewer calories than breakfast and lunch).",
-                    check_fn="check_dinner_lightest",
-                    params={"num_days": num_days},
+                    description_ro=f"Timpul total de preparare pe zi nu trebuie să depășească {max_prep} minute.",
+                    description_en=f"Total prep time per day must not exceed {max_prep} minutes.",
+                    check_fn="check_max_prep_time_per_day",
+                    params={"max_prep_time": max_prep},
                 )
             )
 
-        # Quick breakfast
-        constraints.append(
-            Constraint(
-                id="C_QUICK_BREAKFAST",
-                type=ConstraintType.INSTRUCTION,
-                description_ro="Micul dejun trebuie să poată fi preparat în maxim 15 minute.",
-                description_en="Breakfast must be preparable in at most 15 minutes.",
-                check_fn="check_quick_breakfast",
-                params={"max_prep_time": 15},
-            )
-        )
+        # 5. EITHER lunch heaviest OR dinner lightest (not both, 50% chance)
+        if rng.random() < 0.5:
+            if rng.random() < 0.5:
+                constraints.append(
+                    Constraint(
+                        id="C_LUNCH_HEAVY",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Prânzul trebuie să fie masa principală (mai multe calorii decât micul dejun și cina).",
+                        description_en="Lunch must be the main meal (more calories than breakfast and dinner).",
+                        check_fn="check_lunch_heaviest_meal",
+                        params={"num_days": num_days},
+                    )
+                )
+            else:
+                constraints.append(
+                    Constraint(
+                        id="C_DINNER_LIGHT",
+                        type=ConstraintType.INSTRUCTION,
+                        description_ro="Cina trebuie să fie masa cea mai ușoară (mai puține calorii decât micul dejun și prânzul).",
+                        description_en="Dinner must be the lightest meal (fewer calories than breakfast and lunch).",
+                        check_fn="check_dinner_lightest",
+                        params={"num_days": num_days},
+                    )
+                )
 
-        # Breakfast variety - REMOVED: hard to guarantee solvability with dietary restrictions
-        # The no_duplicates constraint already prevents repeating any dish
-
-        # Max high calorie meals
-        constraints.append(
-            Constraint(
-                id="C_HIGH_CAL_LIMIT",
-                type=ConstraintType.INSTRUCTION,
-                description_ro="Maximum 2 preparate pot avea peste 350 de calorii.",
-                description_en="At most 2 dishes can have over 350 calories.",
-                check_fn="check_max_high_calorie_meals",
-                params={"calorie_threshold": 350, "max_high_calorie": 2},
+        # 6. Quick breakfast (15-20 min, 30% chance)
+        if rng.random() < 0.3:
+            max_breakfast_time = rng.choice([15, 20])
+            constraints.append(
+                Constraint(
+                    id="C_QUICK_BREAKFAST",
+                    type=ConstraintType.INSTRUCTION,
+                    description_ro=f"Micul dejun trebuie să poată fi preparat în maxim {max_breakfast_time} minute.",
+                    description_en=f"Breakfast must be preparable in at most {max_breakfast_time} minutes.",
+                    check_fn="check_quick_breakfast",
+                    params={"max_prep_time": max_breakfast_time},
+                )
             )
-        )
 
         # Goals - pure structural validity (not duplicating constraints)
         goals = [
@@ -1054,10 +1084,10 @@ class ExtremeRecipeGenerator:
         }
 
         meta = {
-            "difficulty": "extreme",
+            "difficulty": "hard",
             "num_constraints": len(constraints),
             "num_dishes": len(dishes_list),
-            "dietary_constraints": [c[0] for c in selected_set],
+            "has_dietary_constraint": dietary_constraint_added,
         }
 
         return World(
@@ -1075,90 +1105,23 @@ class ExtremeRecipeGenerator:
 
 def verify_world_solvable(world: World) -> bool:
     """
-    Verify that a world instance is solvable.
+    Verify that a world instance is solvable using proper constraint solvers.
+
+    Uses comprehensive backtracking solvers that check ALL constraint interactions,
+    including priority-day restrictions, drop ordering, slot restrictions, etc.
 
     Returns True if at least one valid solution exists.
     """
     world_type = world.world_type
 
     if world_type == "travel":
-        # Extract constraint params
-        constraints_dict = {}
-        for c in world.constraints:
-            if c.id == "C_FAMILY":
-                constraints_dict["family_friendly"] = True
-            elif c.id == "C_MUST_MONUMENT":
-                constraints_dict["must_include_type"] = "monument"
-            elif c.id == "C_MUST_MUSEUM":
-                constraints_dict["must_include_type"] = "muzeu"
-            elif c.id == "C_FIRST_DAY":
-                constraints_dict["first_day_indoor"] = True
-            elif c.id == "C_LAST_DAY":
-                constraints_dict["last_day_outdoor"] = True
-            elif c.id == "C_DIVERSITY":
-                constraints_dict["min_types"] = c.params.get("min_types", 3)
-            elif c.id == "C_BUDGET_TOTAL":
-                constraints_dict["max_budget"] = c.params.get("max_budget", float("inf"))
-            elif c.id == "C_MAX_DURATION":
-                constraints_dict["max_duration_per_day"] = c.params.get("max_hours", float("inf"))
-            elif c.id == "C_MUST_SPECIFIC":
-                constraints_dict["must_include_specific"] = c.params.get("entity_name")
-
-        return verify_travel_solvable(
-            world.payload["attractions"],
-            world.payload["num_days"],
-            constraints_dict
-        )
+        return solve_travel(world)
 
     elif world_type == "schedule":
-        constraints_dict = {
-            "max_per_day": 2,
-            "keep_high_priority": True,
-            "min_spread": 2,
-        }
-        for c in world.constraints:
-            if c.id == "C_MAX_TOTAL":
-                constraints_dict["max_total"] = c.params.get("max_total", 100)
-            elif c.id == "C_SPREAD":
-                constraints_dict["min_spread"] = c.params.get("min_days_with_appointments", 1)
-
-        return verify_schedule_solvable(
-            world.payload["appointments"],
-            len(world.payload["days_ro"]),
-            constraints_dict
-        )
+        return solve_schedule(world)
 
     elif world_type == "recipe":
-        constraints_dict = {}
-        for c in world.constraints:
-            if "vegetarian" in c.check_fn:
-                constraints_dict["vegetarian"] = True
-            elif "vegan" in c.check_fn:
-                constraints_dict["vegan"] = True
-            elif "gluten" in c.check_fn:
-                constraints_dict["no_gluten"] = True
-            elif "lactose" in c.check_fn:
-                constraints_dict["no_lactose"] = True
-            elif c.id == "C_CALORIE_RANGE":
-                constraints_dict["min_calories"] = c.params.get("min_calories", 0)
-                constraints_dict["max_calories"] = c.params.get("max_calories", float("inf"))
-            elif c.id == "C_LUNCH_HEAVY":
-                constraints_dict["lunch_heaviest"] = True
-            elif c.id == "C_DINNER_LIGHT":
-                constraints_dict["dinner_lightest"] = True
-
-        # Build dishes by type from DISHES constant
-        dishes_by_type = {
-            "mic_dejun": DISHES["mic_dejun"],
-            "pranz": DISHES["pranz"],
-            "cina": DISHES["cina"],
-        }
-
-        return verify_recipe_solvable(
-            dishes_by_type,
-            world.payload["num_days"],
-            constraints_dict
-        )
+        return solve_recipe(world)
 
     elif world_type == "fact":
         # Fact instances are always solvable (just return context answer)

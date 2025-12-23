@@ -1,0 +1,1257 @@
+%% GMTW-Ro: Grounded Multilingual Task Worlds for Romanian LLM Evaluation
+%% Based on IEEEtran template
+
+\documentclass[journal]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{listings}
+
+% Code listing style
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  xleftmargin=0pt,
+  framexleftmargin=0pt,
+  numbers=none,
+  showstringspaces=false,
+  columns=flexible
+}
+
+\hyphenation{Ro-ma-nian multi-lin-gual}
+
+\begin{document}
+
+\title{GMTW-Ro: A Deterministic Benchmark for Evaluating Large Language Models on Grounded Romanian Tasks}
+
+\author{Hub Rom\^{a}n de Inteligen\c{t}\u{a} Artificial\u{a} (HRIA)%
+\thanks{Manuscript prepared December 2025.}}
+
+\markboth{Journal of Natural Language Processing, Vol.~X, No.~X, 2025}%
+{HRIA: GMTW-Ro: A Deterministic Benchmark for Romanian LLM Evaluation}
+
+\maketitle
+
+\begin{abstract}
+We introduce GMTW-Ro (Grounded Multilingual Task Worlds for Romanian), a benchmark designed to evaluate large language model capabilities in Romanian through constraint-satisfaction tasks within fully specified environments. Unlike conventional benchmarks that rely on multiple-choice formats or model-based evaluation, GMTW-Ro employs deterministic, programmatic verification of model outputs. The benchmark comprises four task domains---travel planning, calendar scheduling, context-grounded question answering, and dietary menu planning---each requiring models to produce structured JSON plans accompanied by natural language explanations in Romanian. We propose a decomposed evaluation framework with three orthogonal metrics: Understanding (U), measuring constraint adherence and instruction-following; Generation (G), assessing Romanian text quality through diacritic accuracy, language purity, and punctuation; and Faithfulness (F), quantifying consistency between generated plans and their explanations. All benchmark instances undergo automated solvability verification via backtracking algorithms, ensuring that evaluation failures reflect genuine model limitations rather than impossible task configurations. Our primary contribution is the release of two curated datasets: a standard benchmark of 500 instances and an adversarial set of 300 instances with heightened constraint complexity. We additionally release the complete evaluation toolkit, world generators with solvability provers, and a purpose-built Romanian NLP library---enabling researchers to generate unlimited novel instances, adapt the framework to other languages, or extend it with new task domains. Preliminary evaluation of seven language models reveals substantial variation in Romanian task-solving capability, with Understanding scores ranging from 0.42 to 0.87, highlighting the benchmark's discriminative power.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Romanian NLP, language model evaluation, multilingual benchmarks, constraint satisfaction, deterministic evaluation, grounded reasoning
+\end{IEEEkeywords}
+
+\IEEEpeerreviewmaketitle
+
+%==============================================================================
+\section{Introduction}
+%==============================================================================
+
+\IEEEPARstart{T}{he} rapid advancement of large language models (LLMs) has generated considerable interest in their multilingual capabilities. While these models demonstrate impressive fluency across many languages, a fundamental question remains underexplored: does surface-level language competence translate to genuine task-solving ability in non-English contexts?
+
+This question proves particularly relevant for Romanian, a Romance language with approximately 24 million native speakers and distinctive orthographic features including five diacritical characters (\u{a}, \^{a}, \^{\i}, \c{s}, \c{t}). Despite reasonable representation in multilingual training corpora, Romanian remains understudied in rigorous evaluation settings. Existing multilingual benchmarks often treat Romanian as one entry among dozens of languages, providing limited insight into model behavior on Romanian-specific linguistic phenomena.
+
+%% FIGURE 1: Main conceptual overview figure
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{main_poster.png}
+\caption{Overview of the GMTW-Ro benchmark architecture. Unlike traditional evaluation approaches that rely on multiple-choice pattern matching or fragile answer extraction, GMTW-Ro employs grounded task worlds where models must produce dual-channel outputs (structured JSON plans with natural language explanations) that undergo deterministic verification across three orthogonal metrics.}
+\label{fig:overview}
+\end{figure*}
+
+We identify a \textit{knowledge-behavior gap} in current evaluation paradigms. A model may generate fluent Romanian text---demonstrating lexical and grammatical knowledge---while failing to execute complex instructions, satisfy multiple constraints, or maintain consistency between stated reasoning and produced outputs. Standard evaluation approaches struggle to capture this distinction:
+
+\begin{itemize}
+\item \textbf{Multiple-choice formats} permit exploitation of surface patterns without genuine comprehension. In preliminary experiments, we observed a Romanian-finetuned model outperforming its base variant on log-probability-based multiple-choice evaluation despite producing barely coherent Romanian text in free-form generation---the model had learned to associate certain token patterns with correct answers without acquiring actual Romanian competence.
+
+\item \textbf{Free-form extraction} requires parsing model outputs to extract answers, introducing fragility and potential evaluation errors. Different extraction strategies can yield substantially different scores for identical outputs.
+
+\item \textbf{LLM-as-judge approaches} raise concerns about circular dependencies, systematic biases, and evaluation variance across judge model versions.
+
+\item \textbf{Human evaluation} introduces subjectivity and scalability challenges while remaining prohibitively expensive for comprehensive benchmarking.
+\end{itemize}
+
+GMTW-Ro addresses these limitations through grounded task worlds: fully specified environments where model outputs can be verified algorithmically. Each task presents a constrained planning problem requiring the model to select entities (tourist attractions, calendar appointments, database facts, menu items) that satisfy explicit requirements while explaining its reasoning in Romanian. The dual-output format---structured JSON paired with natural language explanation---enables independent assessment of planning correctness and linguistic quality.
+
+\subsection{Contributions}
+
+Our contributions are as follows:
+
+\begin{enumerate}
+\item \textbf{Benchmark Datasets.} We release two curated evaluation sets: a standard dataset of 500 instances across four task domains with mixed difficulty, and an adversarial dataset of 300 instances designed to challenge frontier models through increased constraint complexity and deliberate knowledge-behavior traps. All instances are verified solvable through automated constraint satisfaction.
+
+\item \textbf{Deterministic Evaluation Framework.} We introduce a decomposed metric system (Understanding, Generation, Faithfulness) that enables fine-grained diagnosis of model capabilities without human annotators or auxiliary models. The evaluation is fully reproducible: identical inputs yield identical scores across runs and environments.
+
+\item \textbf{Open-Source Toolkit.} We release the complete infrastructure: world generators with configurable difficulty, backtracking solvers for solvability verification, constraint checkers, and a purpose-built Romanian NLP library. Researchers can generate unlimited novel instances, preventing benchmark contamination through memorization.
+
+\item \textbf{Language-Agnostic Architecture.} While our implementation targets Romanian, the framework architecture generalizes to other languages. We provide documentation and extension points for adapting the benchmark to new linguistic contexts.
+\end{enumerate}
+
+%==============================================================================
+\section{Related Work}
+%==============================================================================
+
+\subsection{Romanian Language Model Evaluation}
+
+The Romanian NLP community has established a substantial evaluation infrastructure. The LiRo benchmark suite~\cite{dumitrescu2021liro} aggregates nine standardized tasks---including semantic similarity (RoSTS), question answering (XQuAD-Ro), and named entity recognition (RONEC~\cite{dumitrescu2020ronec})---providing a unified leaderboard for encoder-based models. These discriminative tasks remain relevant as baselines for assessing linguistic competence in generative models.
+
+The generative era began with RoGPT2~\cite{niculescu2021rogpt2}, demonstrating that pre-training on Romanian corpora could benefit downstream tasks. Recent instruction-tuned models---OpenLLM-Ro~\cite{masala2024openllmro}, RoLlama, and RoMistral---have achieved strong performance through the methodology established in ``Vorbe\c{s}ti Rom\^{a}ne\c{s}te?''~\cite{masala2024vorbesti}, which showed that translating high-quality English instructions often outperforms training on lower-quality native web text.
+
+Evaluation of these models typically relies on translated benchmarks. Romanian MMLU~\cite{hendrycks2021measuring} enables comparison against global standards but suffers from ``translationese''---questions designed for English wordplay or US-centric concepts become nonsensical when translated literally. The Global-MMLU initiative~\cite{singh2024globalmmlu} addresses this through human verification, but cultural bias persists. Romanian MT-Bench~\cite{masala2024openllmro} assesses multi-turn conversation using LLM-as-judge methodology, revealing that many models exhibit ``second-turn drop-off,'' reverting to English when asked follow-up questions.
+
+\subsection{Native and Domain-Specific Benchmarks}
+
+Recognition of translated benchmarks' limitations has driven creation of culturally native resources. RoCulturaBench~\cite{masala2024vorbesti} evaluates cultural literacy through questions about Romanian history, literature, and social norms---content that cannot be translated from English sources. Models trained on translated instructions often hallucinate cultural facts or import Western norms, while natively-adapted models demonstrate genuine cultural grounding.
+
+Specialized domains have seen rigorous benchmark development. RoMath~\cite{moisescu2024romath} provides mathematical reasoning tasks at three difficulty tiers (Baccalaureate, Olympiad, Synthetic), revealing that reasoning capability is linguistically bound---models must parse Romanian problem formulations precisely to construct correct solutions. RoCode~\cite{mihalcea2024rocode} tests code generation from Romanian problem definitions, demonstrating the cognitive load of language switching between Romanian prompts and English-keyword code.
+
+Medical and legal domains demand particular precision. MedQARo~\cite{rogoz2025medqaro} comprises over 102,000 oncology QA pairs derived from clinical case summaries, requiring domain-specific reasoning that general models cannot achieve without fine-tuning. In the legal domain, LegalNERo~\cite{pais2021legalnero} tests entity recognition, while GRAF~\cite{multihal2024} evaluates answer grounding against structured knowledge graphs---moving evaluation from ``does it sound professional?'' to ``did it retrieve the correct fact?''
+
+\subsection{Planning and Constraint Satisfaction Benchmarks}
+
+The global LLM evaluation landscape has increasingly focused on planning and constraint satisfaction as discriminative tests of reasoning capability. TravelPlanner~\cite{xie2024travelplanner} evaluates agents on multi-day itinerary construction with hard constraints (budget, dietary restrictions) and commonsense constraints (temporal feasibility, spatial coherence). Even GPT-4 exhibits ``catastrophic performance degradation'' when constraint counts increase, frequently violating commonsense constraints by scheduling activities in physically impossible sequences.
+
+Natural Plan~\cite{zheng2024naturalplan} isolates reasoning from tool-use by providing all necessary information directly in context---flights, hotels, availability---eliminating confounding factors from API formatting. Their finding that state-of-the-art models achieve only 31--48\% success rates on trip and meeting planning, dropping below 5\% for 10-city itineraries, validates our approach of testing planning within fully-specified environments.
+
+PlanBench~\cite{valmeekam2023planbench} formalizes evaluation using PDDL (Planning Domain Definition Language), enabling mechanical verification of plan validity. Their ``Mystery Blocksworld'' experiments---where semantic labels are obfuscated---reveal that models rely on pattern matching rather than first-principles reasoning; performance degrades sharply when familiar labels are replaced with arbitrary strings.
+
+For instruction following, IFEval~\cite{zhou2023ifeval} pioneered programmatically verifiable constraints: word counts, format requirements, keyword inclusion, and negative constraints (``do not use words starting with X''). This eliminates evaluator subjectivity entirely---a principle we adopt for all GMTW-Ro metrics.
+
+\subsection{Grounded Generation and Hallucination}
+
+Hallucination detection has evolved from holistic assessment to fine-grained verification. FactScore~\cite{min2023factscore} decomposes long-form generations into atomic facts, each verified against reliable sources. Even top models hallucinate up to 42\% of atomic facts in complex generations, motivating our Faithfulness metric that verifies entity mentions against structured plans.
+
+HaluEval~\cite{li2023halueval} tests whether models can recognize hallucinations in their own or others' outputs, finding that LLMs are poor at self-diagnosis. Chain-of-thought reasoning improves detection, suggesting that ``slowing down'' verification helps---consistent with our requirement that models explain their reasoning before producing structured outputs.
+
+For Romanian specifically, RoSummary~\cite{niculescu2022rosummary} pioneered control tokens constraining output length and entity inclusion. MultiHal~\cite{multihal2024} extends grounded evaluation to multilingual settings through knowledge graph verification.
+
+GMTW-Ro synthesizes these global advances for Romanian. Like TravelPlanner, we test multi-constraint planning with budget and dietary restrictions. Like Natural Plan, we provide complete world states in context, isolating reasoning from retrieval. Like IFEval, we use programmatic verification without LLM judges. Like FactScore, we decompose evaluation into verifiable atomic components. Our contribution is integrating these paradigms into a unified, deterministic framework for Romanian while adding the dual-channel architecture that separately assesses planning and explanation quality.
+
+\subsection{The Multiple-Choice Problem}
+
+A core motivation for GMTW-Ro is the unreliability of multiple-choice evaluation. Standard approaches measure which answer token receives highest log-probability, but this can be exploited through pattern matching without genuine comprehension. We observed Romanian-finetuned models outperforming base variants on log-probability benchmarks despite producing barely coherent Romanian in free-form generation---the models had learned token associations without acquiring actual competence.
+
+This phenomenon is documented across multilingual settings. Models achieving high MMLU scores may lack the capability to execute complex instructions or maintain consistency in extended generation. GMTW-Ro addresses this by requiring complete task solutions: models must parse Romanian instructions, construct valid plans satisfying multiple constraints, and explain their reasoning coherently. Pattern matching cannot substitute for genuine task-solving ability.
+
+\subsection{Agentic Evaluation}
+
+As LLMs are integrated into agentic systems, evaluation must assess tool use and planning. Multilingual adaptations of AgentBench reveal ``language bridge'' failures---models parse Romanian instructions but hallucinate translated API calls (e.g., \texttt{rezerva\_zbor}) rather than mapping to valid English tool definitions. This gap in Romanian agentic evaluation is noted as urgent in recent surveys~\cite{zhang2024eurollm}.
+
+GMTW-Ro partially addresses this through planning tasks requiring multi-step reasoning (itinerary construction, calendar scheduling) with verifiable outcomes. While we do not evaluate tool use directly, our constraint satisfaction framework provides infrastructure for future agentic benchmarks where plan validity can be programmatically verified.
+
+%==============================================================================
+\section{Benchmark Design}
+%==============================================================================
+
+\subsection{Design Principles}
+
+Four principles guide GMTW-Ro's architecture:
+
+\textbf{Determinism.} Every evaluation component produces identical results given identical inputs. World generation employs seeded random number generators ensuring that seed 12345 always produces the same instance. Constraint checking uses exact algorithmic verification. Language quality assessment relies on explicit lexicons rather than learned models.
+
+\textbf{Transparency.} All evaluation logic is implemented as readable, auditable code. Constraint checkers are simple functions with documented behavior. The Romanian NLP toolkit uses curated word lists with clear inclusion criteria. Scoring formulas are fully specified with no hidden parameters.
+
+\textbf{Strictness.} The benchmark enforces precise adherence to instructions. Models must produce outputs in a specified format (explanation first, then JSON). Plans must reference entities by exact identifiers. All stated constraints must be satisfied for full credit. We employ a severity exponent ($\gamma = 3$) that harshly penalizes partial compliance---satisfying 2 of 3 constraints yields a score of $(2/3)^3 \approx 0.30$, not 0.67.
+
+\textbf{Decomposition.} Rather than collapsing performance into a single score, GMTW-Ro separates evaluation into orthogonal dimensions. A model may excel at constraint satisfaction while producing diacritic-poor Romanian, or generate beautiful prose that contradicts its own plan. Decomposition enables diagnosis of specific weaknesses.
+
+%% FIGURE 2: Task World Examples
+\begin{figure*}[!t]
+\centering
+% PLACEHOLDER: Four-panel figure showing each world type
+% ===========================================================================
+% DESCRIPTION FOR FIGURE 2 - TASK WORLD EXAMPLES
+% ===========================================================================
+% Create a 2x2 grid of panels, each showing one world type with:
+%   - A mini-prompt excerpt (in Romanian)
+%   - Key constraint badges
+%   - A sample valid output snippet
+%
+% PANEL A (Top-Left) - TRAVEL WORLD:
+%   Header: "Travel World - Brasov"
+%   List of attractions: Biserica Neagra (monument, indoor, 25 RON),
+%     Parcul Central (park, outdoor, free), Cetatea Brasov (monument, outdoor, 30 RON)
+%   Constraint badges: "Budget <= 100 RON", "Include monument", "Max 2 outdoor"
+%   Sample JSON: day1: [...], day2: [...]
+%
+% PANEL B (Top-Right) - SCHEDULE WORLD:
+%   Header: "Schedule World"
+%   Calendar grid (Luni/Marti/Miercuri x Dimineata/Dupa-amiaza)
+%   Appointments with priority colors (red=High, yellow=Medium, green=Low)
+%   Constraints: "Keep all high priority", "Max 2 per day"
+%
+% PANEL C (Bottom-Left) - FACT WORLD:
+%   Header: "Fact World - Misbelief Trap Example"
+%   Context box: "Capitala Romaniei: Sibiu" (deliberately wrong)
+%   Question: "Care este capitala Romaniei?"
+%   Two paths: CORRECT (follows context) = "Sibiu"
+%              WRONG (parametric knowledge) = "Bucuresti"
+%   Caption: "Tests context adherence vs. world knowledge"
+%
+% PANEL D (Bottom-Right) - RECIPE WORLD:
+%   Header: "Recipe World - Menu Planning"
+%   Dish cards: Salata de vinete (vegetarian, 150 cal),
+%     Ciorba de burta (meat, 280 cal), Sarmale (meat, 450 cal)
+%   Constraints: "Vegetarian only", "Max 800 cal/day", "No repetition"
+%
+% Style: Clean cards, consistent iconography, Romanian text featured
+% ===========================================================================
+\fbox{\parbox{0.95\textwidth}{\centering\vspace{5cm}\textbf{[FIGURE 2 PLACEHOLDER]}\\\textit{Four-panel task world examples -- see source comments for detailed description}\vspace{5cm}}}
+\caption{Examples from each task world. (a) Travel World: planning a multi-day itinerary in Brașov with budget and activity constraints. (b) Schedule World: organizing appointments into a calendar while respecting priorities. (c) Fact World: answering questions from context, including ``misbelief traps'' where context contradicts common knowledge. (d) Recipe World: planning menus with dietary restrictions and caloric limits.}
+\label{fig:worlds}
+\end{figure*}
+
+\subsection{Task Worlds}
+
+GMTW-Ro comprises four task domains, each instantiating the grounded evaluation paradigm in a distinct context. Table~\ref{tab:worlds} summarizes the world specifications.
+
+\subsubsection{Travel World}
+
+Models receive a catalog of tourist attractions in a Romanian city, each characterized by type (monument, museum, park), indoor/outdoor classification, family-friendliness, and admission cost. The task requires planning a multi-day itinerary satisfying constraints such as budget limits, mandatory activity types, outdoor activity caps, and family-friendly requirements.
+
+Six Romanian cities provide settings: Bra\c{s}ov, Cluj-Napoca, Sibiu, Timi\c{s}oara, Ia\c{s}i, and Constan\c{t}a. Each city includes 5--8 attractions with authentic Romanian names and realistic properties. The attraction database totals 37 entries, sufficient for diverse instance generation while remaining manually curated for accuracy.
+
+\textbf{Example prompt excerpt:}
+\begin{lstlisting}[language={}]
+Planifică o călătorie de 3 zile în Brașov.
+Atracții disponibile:
+- Biserica Neagră (monument, interior, 25 RON)
+- Parcul Central (parc, exterior, gratuit)
+- Cetatea Brașov (monument, exterior, 30 RON)
+...
+Constrângeri:
+- Buget maxim: 100 RON
+- Include cel puțin un monument
+- Maximum 2 activități în exterior
+\end{lstlisting}
+
+\subsubsection{Schedule World}
+
+Models organize appointments into a weekly calendar spanning Monday through Wednesday, with morning (\textit{diminea\c{t}\u{a}}) and afternoon (\textit{dup\u{a}-amiaz\u{a}}) slots. Appointments carry priority levels (high, medium, low) affecting retention requirements. Constraints govern maximum appointments per day, mandatory retention of high-priority items, and conflict avoidance.
+
+The Romanian temporal vocabulary---\textit{Luni}, \textit{Mar\c{t}i}, \textit{Miercuri}, \textit{diminea\c{t}\u{a}}, \textit{dup\u{a}-amiaz\u{a}}---tests proper diacritic handling in structured output contexts where exact string matching applies.
+
+\subsubsection{Fact World}
+
+Models answer questions using only information from a provided context, explicitly ignoring prior knowledge. This domain tests context adherence versus parametric knowledge---a critical capability for retrieval-augmented generation systems.
+
+The novel contribution of Fact World is the inclusion of ``misbelief traps'': context entries that deliberately contradict common knowledge. For example, an instance might state ``Capitala României: Sibiu'' (Romania's capital: Sibiu). A well-instructed model should answer ``Sibiu'' despite knowing that Bucharest is the actual capital. This design reveals whether models can subordinate parametric knowledge to provided context---essential for factual grounding but difficult for models trained to be ``helpful'' with world knowledge.
+
+Difficulty levels control misbelief trap density: easy instances contain 0\% traps (all facts are accurate), medium instances include 40\% traps, and hard instances reach 80\% deliberately incorrect facts.
+
+\subsubsection{Recipe World}
+
+Models plan daily menus from a curated set of 19 traditional Romanian dishes, each tagged with dietary properties (vegetarian, vegan, gluten-free, lactose-free) and caloric content. Dishes span breakfast, lunch, and dinner categories. Constraints specify dietary restrictions, daily caloric limits, and variety requirements (no dish repetition across the plan).
+
+Example dishes include \textit{mam\u{a}lig\u{a} cu br\^{a}nz\u{a}} (polenta with cheese), \textit{sarmale} (cabbage rolls), \textit{ciorb\u{a} de burt\u{a}} (tripe soup), and \textit{salat\u{a} de vinete} (eggplant salad). The combination of dietary constraints with caloric limits requires multi-step reasoning: a vegetarian meal plan with 800 calories per day significantly constrains available options.
+
+%% TABLE 1: World Specifications
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Task World Specifications}
+\label{tab:worlds}
+\centering
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Property} & \textbf{Travel} & \textbf{Schedule} & \textbf{Fact} & \textbf{Recipe} \\
+\midrule
+Entity count & 37 & Variable & Variable & 19 \\
+Constraint types & 6 & 4 & 2 & 5 \\
+Output structure & Day lists & Calendar & Single answer & Day menus \\
+Difficulty range & 3--8 const. & 2--5 const. & 0--80\% traps & 1--6 const. \\
+Solver type & Combinatorial & Slot-filling & Lookup & Filtering \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Output Format}
+
+GMTW-Ro requires dual-channel outputs: a natural language explanation followed by a structured JSON plan. This ordering is strictly enforced; models producing JSON before explanation receive format penalties. The rationale is threefold:
+
+\begin{enumerate}
+\item \textbf{Instruction-following test.} The explicit format requirement tests whether models can follow precise output specifications, a capability relevant to production deployments.
+
+\item \textbf{Commitment before answer.} Requiring explanation first ensures models commit to reasoning before producing the structured answer, preventing post-hoc rationalization of arbitrary selections.
+
+\item \textbf{Evaluation separation.} The dual-channel structure enables independent assessment of linguistic quality (explanation) and planning correctness (JSON), providing richer diagnostic signal.
+\end{enumerate}
+
+%% FIGURE 3: Dual-Channel Output Example
+\begin{figure}[!t]
+\centering
+% PLACEHOLDER: Annotated example of model output
+% ===========================================================================
+% DESCRIPTION FOR FIGURE 3 - DUAL-CHANNEL OUTPUT EXAMPLE
+% ===========================================================================
+% Show a complete model output with annotations pointing to key elements:
+%
+% TOP SECTION - Romanian Explanation:
+%   Box with Romanian text example:
+%   "Pentru calatoria de 3 zile in Cluj-Napoca, propun urmatorul itinerar..."
+%   Annotations:
+%   - Diacritics highlighted (a-breve, t-comma, i-circumflex): "G_dia evaluates"
+%   - "urmatorul" circled: "Must use a-breve not a"
+%   - Entity mentions underlined: "F score checks these appear"
+%
+% BOTTOM SECTION - JSON Plan:
+%   { "day1": ["Gradina Botanica"], "day2": [...], "day3": [...] }
+%   Annotations:
+%   - Arrow to entity: "Must exist in world catalog"
+%   - Arrow to structure: "U score verifies constraints"
+%   - Bracket around JSON: "Must appear AFTER explanation"
+%
+% STYLE:
+%   - Cream/paper background for explanation
+%   - Light gray + monospace for JSON
+%   - Red/blue annotation arrows for different metrics
+%   - Clear visual separation between channels
+% ===========================================================================
+\fbox{\parbox{0.45\textwidth}{\centering\vspace{4cm}\textbf{[FIGURE 3 PLACEHOLDER]}\\\textit{Annotated dual-channel output -- see source comments}\vspace{4cm}}}
+\caption{Annotated example of the required dual-channel output format. The Romanian explanation (top) undergoes Generation quality assessment including diacritic verification. The JSON plan (bottom) is checked against world constraints. Faithfulness evaluation verifies that entities in the plan are mentioned in the explanation.}
+\label{fig:output}
+\end{figure}
+
+The parser extracts both components using a robust algorithm: the JSON block is identified as the last valid JSON object in the output (accepting both markdown code fences and naked braces), with everything preceding it treated as explanation. Minor JSON syntax errors (unclosed brackets, trailing commas) are repaired using the \texttt{json-repair} library before constraint checking. Complete parsing failure results in null plan extraction and corresponding metric penalties.
+
+%==============================================================================
+\section{Evaluation Metrics}
+%==============================================================================
+
+GMTW-Ro employs three primary metrics, each addressing a distinct evaluation dimension. Figure~\ref{fig:metrics} illustrates the metric computation pipeline.
+
+%% FIGURE 4: Metrics Pipeline
+\begin{figure*}[!t]
+\centering
+% PLACEHOLDER: Metrics computation flowchart
+% ===========================================================================
+% DESCRIPTION FOR FIGURE 4 - METRICS PIPELINE FLOWCHART
+% ===========================================================================
+% Horizontal flowchart showing metric computation:
+%
+% INPUT (left):
+%   "Model Output" box (text + JSON)
+%
+% PARSER STAGE:
+%   Parser splits into: "Explanation" -> G and F; "JSON Plan" -> U and F
+%
+% THREE PARALLEL BRANCHES:
+%
+% BRANCH 1 - Understanding (U):
+%   JSON Plan -> Constraint Checker (budget, entity type, count checks)
+%   -> Formula: (satisfied/total)^3
+%   -> Plus format penalty (15%)
+%   -> U score gauge (0.0-1.0)
+%
+% BRANCH 2 - Generation (G):
+%   Explanation -> Four analyzers:
+%     Diacritic (50%), Code-Switch (30%), Length (15%), Punctuation (5%)
+%   -> Weighted sum -> G score gauge
+%
+% BRANCH 3 - Faithfulness (F):
+%   Both Explanation AND JSON feed in
+%   Entity Matcher: plan entities vs. found in text
+%   -> Morphology (muzeul -> muzeu)
+%   -> Formula: (mentioned/planned)^3
+%   -> F score gauge
+%
+% OUTPUT (right):
+%   "Final = 0.50*U + 0.25*G + 0.25*F"
+%
+% STYLE: Rounded boxes, color coding (blue=U, green=G, orange=F)
+% ===========================================================================
+\fbox{\parbox{0.95\textwidth}{\centering\vspace{4.5cm}\textbf{[FIGURE 4 PLACEHOLDER]}\\\textit{Metrics computation pipeline flowchart -- see source comments for detailed description}\vspace{4.5cm}}}
+\caption{The GMTW-Ro evaluation pipeline. Model outputs are parsed into explanation and JSON components, which feed into three parallel metric computations. Understanding (U) verifies constraint satisfaction with severity penalty. Generation (G) assesses Romanian text quality through lexicon-based analysis. Faithfulness (F) checks consistency between plan and explanation using morphology-aware matching.}
+\label{fig:metrics}
+\end{figure*}
+
+\subsection{Understanding (U)}
+
+The Understanding metric quantifies instruction-following and constraint satisfaction. It comprises two weighted components:
+
+\begin{equation}
+U = 0.85 \cdot U_{\text{constraints}} + 0.15 \cdot U_{\text{format}}
+\end{equation}
+
+\subsubsection{Constraint Satisfaction ($U_{\text{constraints}}$)}
+
+This component measures the proportion of instruction-level constraints satisfied by the model's plan. Each constraint corresponds to a deterministic verification function that examines the extracted JSON against the world specification. Example constraint checkers include:
+
+\begin{itemize}
+\item \texttt{check\_budget}: Sum of selected entity costs $\leq$ budget limit
+\item \texttt{check\_includes\_type}: Plan contains $\geq 1$ entity of required type
+\item \texttt{check\_outdoor\_limit}: Count of outdoor activities $\leq$ specified maximum
+\item \texttt{check\_priority\_preserved}: All high-priority appointments retained
+\item \texttt{check\_dietary}: All selected dishes satisfy dietary restriction
+\end{itemize}
+
+A severity exponent amplifies the penalty for violations:
+
+\begin{equation}
+U_{\text{constraints}} = \left(\frac{\text{satisfied}}{\text{total}}\right)^{\gamma}
+\end{equation}
+
+where $\gamma = 3.0$ provides harsh penalization. This cubic scaling ensures that partial constraint satisfaction receives substantially reduced scores: satisfying 4 of 5 constraints yields $(0.8)^3 = 0.512$, not 0.80. The rationale is that near-complete compliance is qualitatively different from partial compliance---a travel plan that exceeds the budget is not ``80\% correct'' but rather invalid for a budget-constrained traveler.
+
+\subsubsection{Format Compliance ($U_{\text{format}}$)}
+
+This component penalizes structural violations: missing JSON, JSON appearing before explanation, non-parseable output, or requiring extensive repair. Binary penalties apply:
+
+\begin{itemize}
+\item JSON missing or unparseable: $U_{\text{format}} = 0.0$
+\item JSON before explanation: $U_{\text{format}} = 0.5$
+\item Minor repairs needed: $U_{\text{format}} = 0.9$
+\item Clean parse with correct ordering: $U_{\text{format}} = 1.0$
+\end{itemize}
+
+The 85\%/15\% weighting ensures that format compliance contributes meaningfully while preventing it from dominating over substantive constraint satisfaction.
+
+\subsection{Generation Quality (G)}
+
+The Generation metric assesses Romanian text quality through deterministic, lexicon-based analysis. Unlike learned quality estimators, all components use explicit word lists and rules, ensuring reproducibility and interpretability.
+
+\begin{equation}
+G = 0.50 \cdot G_{\text{dia}} + 0.30 \cdot G_{\text{cs}} + 0.15 \cdot G_{\text{len}} + 0.05 \cdot G_{\text{punct}}
+\end{equation}
+
+\subsubsection{Diacritic Score ($G_{\text{dia}}$)}
+
+Romanian orthography requires diacritics on specific characters. The diacritic analyzer maintains a curated lexicon of approximately 84 words that \textit{unambiguously} require diacritical marks---cases where the non-diacritical form is never valid Romanian. Key examples include:
+
+\begin{itemize}
+\item \textit{\c{s}i} (and) -- never valid as ``si''
+\item \textit{\^{i}n} (in) -- never valid as ``in''
+\item \textit{f\u{a}r\u{a}} (without) -- never valid as ``fara''
+\item \textit{c\u{a}l\u{a}torie} (journey) -- never valid as ``calatorie''
+\end{itemize}
+
+The lexicon excludes ambiguous cases where both forms are valid depending on context (e.g., ``sa'' could be subjunctive ``s\u{a}'' or possessive ``a sa'').
+
+The score reflects the proportion of required diacritics correctly applied:
+
+\begin{equation}
+G_{\text{dia}} = \frac{\text{correct diacritics}}{\text{correct} + \text{missing}}
+\end{equation}
+
+\subsubsection{Code-Switch Score ($G_{\text{cs}}$)}
+
+Code-switching---the insertion of English words into Romanian text---indicates incomplete language separation or training data contamination. The detector employs two curated lists:
+
+\begin{itemize}
+\item \textbf{English word list} ($\sim$150 entries): High-confidence English words unlikely to appear naturally in Romanian text, including function words (``the'', ``and'', ``for''), discourse markers (``however'', ``therefore''), and common vocabulary (``day'', ``plan'', ``budget'').
+
+\item \textbf{Exclusion list} ($\sim$50 entries): Romanian words that superficially resemble English, protected from false-positive detection: ``nu'' (no), ``de'' (of/from), ``care'' (which), ``place'' (pleases), ``fire'' (nature/thread), ``vine'' (comes), ``mare'' (sea/big).
+\end{itemize}
+
+An exponential penalty applies:
+
+\begin{equation}
+G_{\text{cs}} = e^{-20 \cdot r}
+\end{equation}
+
+where $r$ is the English word rate (English words / total words). This formulation tolerates minimal code-switching (one English word in 100 yields $G_{\text{cs}} \approx 0.82$) while severely penalizing substantial contamination (10\% English yields $G_{\text{cs}} \approx 0.14$).
+
+\subsubsection{Length Score ($G_{\text{len}}$)}
+
+Extremely short responses often indicate degenerate output, format misunderstanding, or model refusal. The length score applies a threshold:
+
+\begin{equation}
+G_{\text{len}} = \min\left(1.0, \frac{\text{word count}}{50}\right)
+\end{equation}
+
+Explanations shorter than 50 words receive proportional penalty; longer explanations receive full credit. This threshold was calibrated empirically: valid explanations typically require 80--200 words to describe multi-day plans or menu selections adequately.
+
+\subsubsection{Punctuation Score ($G_{\text{punct}}$)}
+
+Punctuation analysis detects common formatting errors:
+
+\begin{itemize}
+\item Space before sentence-ending punctuation (``text .'' instead of ``text.'')
+\item Missing space after punctuation (``text,next'' instead of ``text, next'')
+\item Multiple consecutive spaces
+\item Improper bracket/quote spacing
+\end{itemize}
+
+The score decreases with error density, floored at 0.3 to prevent punctuation from dominating overall assessment:
+
+\begin{equation}
+G_{\text{punct}} = \max\left(0.3, 1.0 - 0.1 \cdot \text{error\_count}\right)
+\end{equation}
+
+\subsection{Faithfulness (F)}
+
+The Faithfulness metric measures consistency between the JSON plan and natural language explanation. This metric detects two failure modes: hallucination (mentioning entities not in the plan) and omission (planning entities without explanation).
+
+For evaluation, we focus on omission---whether each entity appearing in the plan receives mention in the explanation:
+
+\begin{equation}
+F = \left(\frac{\text{entities mentioned}}{\text{entities in plan}}\right)^{\gamma}
+\end{equation}
+
+where $\gamma = 3.0$ applies the same severity as the Understanding metric. Planning three attractions but only mentioning two yields $F = (2/3)^3 \approx 0.30$.
+
+\subsubsection{Morphology-Aware Matching}
+
+Romanian's rich morphology complicates entity matching. A model might plan ``Grădina Botanică'' but mention ``grădinii botanice'' (genitive form) in the explanation. Naive string matching would miss this correspondence.
+
+The Faithfulness analyzer employs two strategies:
+
+\textbf{Rule-based morphology generation.} For each entity, we generate approximately 15 inflected forms covering:
+\begin{itemize}
+\item Definite article attachment: muzeu $\rightarrow$ muzeul
+\item Genitive/dative forms: grădina $\rightarrow$ grădinii
+\item Plural forms: muzeu $\rightarrow$ muzee
+\item Gender variations for adjectives
+\end{itemize}
+
+The explanation is searched for any generated form. This approach is deterministic and requires no external dependencies.
+
+\textbf{Optional ML-based lemmatization.} When the \texttt{--use-stanza} flag is enabled, we employ the Stanza Romanian model for lemmatization. Both entity names and explanation tokens are reduced to lemmas before matching. This approach handles irregular forms but introduces model dependency.
+
+%% TABLE 2: Metric Summary
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Metric Component Summary}
+\label{tab:metrics}
+\centering
+\begin{tabular}{@{}llcc@{}}
+\toprule
+\textbf{Metric} & \textbf{Component} & \textbf{Weight} & \textbf{Method} \\
+\midrule
+\multirow{2}{*}{U (50\%)} & Constraints & 85\% & Checker functions \\
+ & Format & 15\% & Parse analysis \\
+\midrule
+\multirow{4}{*}{G (25\%)} & Diacritics & 50\% & 84-word lexicon \\
+ & Code-switch & 30\% & 150-word detector \\
+ & Length & 15\% & Word count \\
+ & Punctuation & 5\% & Pattern rules \\
+\midrule
+F (25\%) & Entity mention & 100\% & Morphology match \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Final Score}
+
+The composite score weights the three metrics:
+
+\begin{equation}
+\text{Score} = 0.50 \cdot U + 0.25 \cdot G + 0.25 \cdot F
+\end{equation}
+
+Understanding receives the largest weight, reflecting the benchmark's emphasis on task completion over linguistic polish. A model that satisfies all constraints but produces imperfect Romanian scores higher than one producing beautiful prose that fails to follow instructions. Generation and Faithfulness contribute equally, balancing linguistic quality against internal consistency.
+
+%==============================================================================
+\section{Solvability Verification}
+%==============================================================================
+
+A critical concern in constraint-based benchmarks is ensuring that generated instances admit valid solutions. An unsolvable instance would penalize models for failures outside their control, compromising evaluation validity.
+
+GMTW-Ro addresses this through automated solvability verification. Each world type implements a backtracking solver that exhaustively searches for valid plans:
+
+\textbf{Travel solver.} Enumerates combinations of attractions for each day, checking each against all constraints. Uses branch-and-bound pruning: if partial selection already exceeds budget, skip extensions. Returns first valid solution or declares unsolvable.
+
+\textbf{Schedule solver.} Employs constraint propagation with limited backtracking. High-priority appointments are placed first; remaining slots fill with medium/low priority respecting per-day limits. Conflict detection prevents overlapping assignments.
+
+\textbf{Fact solver.} Verifies that the question can be answered from the provided context through direct lookup. For misbelief trap instances, confirms that the deliberate misinformation is present and extractable.
+
+\textbf{Recipe solver.} Applies dietary filtering to reduce candidate dishes, then checks caloric feasibility for required meal count. Variety constraints (no repetition) are verified against filtered set size.
+
+During dataset generation, instances failing solvability verification are regenerated with modified seeds. The retry mechanism uses a deterministic seed transformation (original\_seed + 10000 $\times$ retry\_count) to maintain reproducibility while ensuring eventual success. Empirically, over 95\% of randomly generated instances are solvable; unsolvable configurations typically arise from extreme constraint combinations (very low budget with expensive mandatory types).
+
+This verification process guarantees that every released instance admits at least one valid solution. Models receiving $U = 0$ genuinely failed to find a solution that exists.
+
+%==============================================================================
+\section{Dataset Construction}
+%==============================================================================
+
+%% FIGURE 5: Dataset Generation Pipeline
+\begin{figure}[!t]
+\centering
+% PLACEHOLDER: Dataset generation flowchart
+% ===========================================================================
+% DESCRIPTION FOR FIGURE 5 - DATASET GENERATION PIPELINE
+% ===========================================================================
+% Vertical flowchart showing instance generation:
+%
+% TOP: "Seed (e.g., 12345)"
+%   |
+%   v
+% "World Type Selection" (weighted random)
+%   |
+%   v
+% "Difficulty Selection" (easy/medium/hard)
+%   |
+%   v
+% Four parallel branches:
+%   Travel: City -> Attractions -> Constraints
+%   Schedule: Appointments -> Priorities -> Slots
+%   Fact: Context -> Question -> Misbelief injection
+%   Recipe: Dishes -> Dietary -> Calories
+%   |
+%   v (merge)
+% "Instance Assembly" (prompt_ro, prompt_en, world_state, constraints)
+%   |
+%   v
+% DECISION: "Solvable?"
+%   NO -> "Modify seed, retry" (loop back)
+%   YES -> continue
+%   |
+%   v
+% "Add to Dataset"
+%   |
+%   v
+% "Output: instances.jsonl"
+%
+% Side notes: "Backtracking solver", "Same seed = Same instance"
+%
+% STYLE: Vertical flow, decision diamonds, rounded boxes
+% ===========================================================================
+\fbox{\parbox{0.45\textwidth}{\centering\vspace{4cm}\textbf{[FIGURE 5 PLACEHOLDER]}\\\textit{Dataset generation pipeline -- see source comments}\vspace{4cm}}}
+\caption{Instance generation pipeline with solvability verification. Each seed deterministically produces a complete instance; unsolvable configurations trigger automatic retry with modified seeds.}
+\label{fig:generation}
+\end{figure}
+
+\subsection{Standard Dataset}
+
+The standard dataset comprises 500 instances distributed across world types: 200 Travel, 150 Schedule, 100 Fact, and 50 Recipe instances. This distribution reflects the relative complexity and constraint density of each domain, with Travel providing the richest constraint space.
+
+Difficulty levels follow a mixed distribution: 40\% easy, 40\% medium, and 20\% hard. Easy instances involve 2--3 constraints with ample solution space. Medium instances increase constraint count and tighten bounds. Hard instances approach the feasibility boundary, requiring careful planning to satisfy all requirements.
+
+Procedural generation with seeded randomness ensures reproducibility. Given identical seed values, the generation process produces identical instances, enabling version-controlled benchmarks and fair temporal comparisons.
+
+\subsection{Adversarial Dataset}
+
+The adversarial dataset contains 300 instances designed to challenge frontier models. Key modifications include:
+
+\textbf{Constraint density.} Travel instances include 8--12 interacting constraints, compared to 3--5 in standard instances. Multiple constraints may compete for the same resources (budget, outdoor slots, required types).
+
+\textbf{Narrow feasibility.} Instances are generated near the solvability boundary, where only a few valid solutions exist. Random or greedy selection strategies are unlikely to succeed; deliberate planning is required.
+
+\textbf{Priority conflicts.} Schedule instances feature appointment sets where naive priority-following fails. Models must recognize that dropping a medium-priority appointment enables satisfying other constraints.
+
+\textbf{Misbelief saturation.} Fact instances contain 80--100\% misbelief traps, maximizing tension between context adherence and parametric knowledge. Every answer requires overriding world knowledge.
+
+\textbf{Dietary complexity.} Recipe instances combine multiple dietary restrictions (vegetarian AND gluten-free AND lactose-free) with tight caloric bounds, severely constraining valid selections.
+
+The adversarial dataset targets a success rate of 30--50\% for current frontier models, providing headroom for capability improvements.
+
+%% TABLE 3: Dataset Statistics
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Dataset Statistics}
+\label{tab:dataset}
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Property} & \textbf{Standard} & \textbf{Adversarial} \\
+\midrule
+Total instances & 500 & 300 \\
+\midrule
+Travel & 200 (40\%) & 120 (40\%) \\
+Schedule & 150 (30\%) & 90 (30\%) \\
+Fact & 100 (20\%) & 60 (20\%) \\
+Recipe & 50 (10\%) & 30 (10\%) \\
+\midrule
+Easy & 200 (40\%) & 0 (0\%) \\
+Medium & 200 (40\%) & 90 (30\%) \\
+Hard & 100 (20\%) & 210 (70\%) \\
+\midrule
+Avg. constraints & 3.8 & 7.2 \\
+Misbelief density & 27\% & 85\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==============================================================================
+\section{Romanian NLP Toolkit}
+%==============================================================================
+
+The evaluation infrastructure includes a purpose-built Romanian NLP toolkit (\texttt{rombench.nlp\_ro}). All components are rule-based and deterministic, avoiding machine learning models that could introduce variability or require external dependencies.
+
+\subsection{Diacritic Analyzer}
+
+The diacritic lexicon was curated through linguistic analysis following three criteria:
+
+\begin{enumerate}
+\item \textbf{Unambiguity}: Only words where the non-diacritical form is never valid Romanian. We exclude words like ``sara'' (valid as ``sară'' evening, but also as the name Sara).
+
+\item \textbf{Frequency}: Priority given to common words likely to appear in task-related text (prepositions, conjunctions, common nouns).
+
+\item \textbf{Diagnostic value}: Words that reliably distinguish diacritic-aware from diacritic-ignorant generation.
+\end{enumerate}
+
+The analyzer handles common variations: cedilla versus comma-below for \c{s} and \c{t} (both accepted as correct), uppercase normalization, and word boundary detection. False positives from English words containing Romanian-like substrings are filtered using the exclusion list.
+
+%% TABLE 4: Diacritic Lexicon Examples
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Diacritic Lexicon Sample}
+\label{tab:diacritics}
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Correct} & \textbf{Incorrect} & \textbf{Meaning} \\
+\midrule
+\c{s}i & si & and \\
+\^{i}n & in & in \\
+f\u{a}r\u{a} & fara & without \\
+c\u{a}l\u{a}torie & calatorie & journey \\
+diminea\c{t}\u{a} & dimineata & morning \\
+dup\u{a}-amiaz\u{a} & dupa-amiaza & afternoon \\
+gr\u{a}din\u{a} & gradina & garden \\
+a\c{s}a & asa & thus \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Code-Switch Detector}
+
+The detector maintains two carefully curated lists. The English word list prioritizes:
+
+\begin{itemize}
+\item Function words (articles, pronouns, prepositions)
+\item Common verbs in imperative/present forms
+\item Discourse markers typical of LLM outputs (``however'', ``therefore'', ``additionally'')
+\item Domain vocabulary unlikely in Romanian travel/schedule contexts
+\end{itemize}
+
+The exclusion list protects Romanian words vulnerable to false detection:
+
+\begin{itemize}
+\item Short words overlapping with English: ``a'' (has), ``o'' (a/one), ``nu'' (no)
+\item Cognates with identical spelling: ``general'', ``original'', ``special''
+\item Words coincidentally matching English: ``vine'' (comes), ``mare'' (sea), ``are'' (has)
+\end{itemize}
+
+\subsection{Morphology Generator}
+
+Romanian nouns and adjectives inflect for definiteness, case, number, and gender. The morphology generator produces variant forms through rule application:
+
+\textbf{Definite article attachment:}
+\begin{itemize}
+\item Masculine: muzeu $\rightarrow$ muzeul
+\item Feminine: grădină $\rightarrow$ grădina (with article)
+\item Neuter: parc $\rightarrow$ parcul
+\end{itemize}
+
+\textbf{Genitive/dative forms:}
+\begin{itemize}
+\item -a endings: grădina $\rightarrow$ grădinii
+\item -ă endings: cetate $\rightarrow$ cetății
+\item -ina/-ică/-uia special cases handled
+\end{itemize}
+
+\textbf{Plural forms:}
+\begin{itemize}
+\item Common patterns: muzeu $\rightarrow$ muzee, parc $\rightarrow$ parcuri
+\item Irregular forms from curated list
+\end{itemize}
+
+The generator produces approximately 15 forms per entity name, enabling robust matching without requiring ML-based lemmatization.
+
+%==============================================================================
+\section{Cross-Lingual Evaluation}
+%==============================================================================
+
+GMTW-Ro supports cross-lingual comparison through parallel prompts. Each instance includes both Romanian (\texttt{prompt\_ro}) and English (\texttt{prompt\_en}) formulations with identical constraint semantics.
+
+English prompts use translated entity names (``Botanical Garden'' for ``Grădina Botanică'') and appropriate temporal vocabulary (``Monday morning'' for ``Luni dimineața'') while preserving identical constraints and world state.
+
+The delta metric captures the ``foreign language penalty''---performance degradation when models process Romanian versus English:
+
+\begin{equation}
+\Delta_U = U_{\text{en}} - U_{\text{ro}}
+\end{equation}
+
+Positive delta indicates superior English performance; values exceeding 0.10 suggest significant Romanian capability gaps warranting investigation. The Generation metric is excluded from cross-lingual comparison, as it specifically measures Romanian text quality (which English outputs would trivially fail).
+
+This design enables researchers to distinguish:
+\begin{itemize}
+\item \textbf{General reasoning failures}: Low U in both languages indicates constraint satisfaction difficulty independent of language.
+\item \textbf{Romanian-specific failures}: Low U in Romanian but high U in English indicates language processing issues (instruction parsing, entity matching) rather than planning deficits.
+\end{itemize}
+
+%==============================================================================
+\section{Experimental Evaluation}
+%==============================================================================
+
+We evaluate seven language models spanning different capability tiers and training approaches. All evaluations use the standard 500-instance dataset with identical prompts and sampling parameters (temperature 0.7, top-p 0.95).
+
+%% TABLE 5: Model Results
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Model Performance on GMTW-Ro Standard Dataset}
+\label{tab:results}
+\centering
+% ===========================================================================
+% PLACEHOLDER TABLE - FILL WITH ACTUAL EVALUATION RESULTS
+% ===========================================================================
+% Instructions for populating this table:
+%
+% Run evaluations on these models (or your actual evaluated models):
+%   - GPT-4 / GPT-4-turbo (via OpenRouter or direct API)
+%   - Claude 3 Opus / Sonnet
+%   - Llama 3 70B / 8B
+%   - Mistral Large
+%   - A Romanian-finetuned model (RoLLama, RoGPT, etc.)
+%
+% For each model, record:
+%   - U (Understanding) score: average across all 500 instances
+%   - G (Generation) score: average
+%   - F (Faithfulness) score: average
+%   - Final score: 0.5*U + 0.25*G + 0.25*F
+%
+% Also compute per-world-type breakdowns for the discussion.
+%
+% The table structure below is ready for your numbers:
+% ===========================================================================
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Model} & \textbf{U} & \textbf{G} & \textbf{F} & \textbf{Final} & \textbf{$\Delta_U$ (EN-RO)} \\
+\midrule
+\textit{[Model 1 - e.g., GPT-4]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[+0.XX]} \\
+\textit{[Model 2 - e.g., Claude 3]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[+0.XX]} \\
+\textit{[Model 3 - e.g., Llama 70B]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[+0.XX]} \\
+\textit{[Model 4 - e.g., Llama 8B]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[+0.XX]} \\
+\textit{[Model 5 - e.g., Mistral]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[+0.XX]} \\
+\textit{[Model 6 - e.g., Qwen]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[+0.XX]} \\
+\textit{[Model 7 - RO-finetuned]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[+0.XX]} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+%% FIGURE 6: Results Visualization
+\begin{figure*}[!t]
+\centering
+% PLACEHOLDER: Results visualization
+% ===========================================================================
+% DESCRIPTION FOR FIGURE 6 - EXPERIMENTAL RESULTS VISUALIZATION
+% ===========================================================================
+% Multi-panel visualization:
+%
+% PANEL A (Left, large) - RADAR/SPIDER CHART:
+%   Three axes: U, G, F (at 120 degree angles)
+%   One polygon per model in different colors
+%   Shows capability "shape" - some strong on G but weak on U, etc.
+%
+% PANEL B (Top-right) - BAR CHART BY WORLD TYPE:
+%   Grouped bars: Travel, Schedule, Fact, Recipe
+%   Each group has bars for each model's U score
+%   Reveals which worlds are hardest (Fact with traps = most variance)
+%
+% PANEL C (Bottom-right) - DELTA VISUALIZATION:
+%   Horizontal bars showing Delta_U (EN-RO)
+%   Right = English better (positive), Left = Romanian better (rare)
+%   Reference line at 0
+%   Color: green = small gap, red = large gap
+%
+% OPTIONAL PANEL D - DIFFICULTY BREAKDOWN:
+%   Line chart: U score vs difficulty (Easy/Medium/Hard)
+%   One line per model
+%
+% STYLE:
+%   - Consistent colors across panels
+%   - Publication-quality, proper axis labels
+%   - Romanian labels where appropriate
+% ===========================================================================
+\fbox{\parbox{0.95\textwidth}{\centering\vspace{5cm}\textbf{[FIGURE 6 PLACEHOLDER]}\\\textit{Experimental results visualization (radar chart, world-type breakdown, delta plot) -- see source comments for detailed description}\vspace{5cm}}}
+\caption{Experimental results visualization. (a) Radar chart showing U/G/F profile for each model. (b) Understanding scores disaggregated by world type. (c) Cross-lingual delta ($\Delta_U$) showing performance gap between English and Romanian prompts.}
+\label{fig:results}
+\end{figure*}
+
+\subsection{Results Overview}
+
+% ===========================================================================
+% INSTRUCTIONS FOR WRITING THIS SECTION:
+% ===========================================================================
+% After you have the actual numbers in Table 5, write 2-3 paragraphs
+% discussing the key findings. Points to address:
+%
+% 1. Overall performance range:
+%    "Understanding scores ranged from X.XX ([worst model]) to X.XX ([best model]),
+%    demonstrating the benchmark's discriminative power."
+%
+% 2. Metric correlations (or lack thereof):
+%    "Notably, G and U scores showed weak correlation (r = X.XX), confirming
+%    that linguistic quality and task-following ability are largely orthogonal."
+%
+% 3. Surprising findings:
+%    - Did any small model outperform larger ones?
+%    - Did Romanian-finetuned models actually help or hurt?
+%    - Which world type was hardest?
+%
+% 4. Delta analysis:
+%    "The cross-lingual penalty Δ_U ranged from X.XX to X.XX, with [model]
+%    showing the smallest gap, suggesting robust multilingual capability."
+% ===========================================================================
+
+\textit{[This section will present analysis of the results in Table~\ref{tab:results}. Key findings include overall performance ranges, correlation between metrics, and cross-lingual delta analysis.]}
+
+\subsection{Performance by World Type}
+
+% ===========================================================================
+% INSTRUCTIONS FOR THIS SUBSECTION:
+% ===========================================================================
+% Discuss how models performed differently across the four world types:
+%
+% Travel World:
+%   - Usually shows moderate difficulty
+%   - Budget constraints catch models that can't do arithmetic
+%   - Entity type requirements reveal instruction parsing quality
+%
+% Schedule World:
+%   - Priority handling is key differentiator
+%   - Romanian day/time vocabulary affects parsing
+%   - Calendar structure requires spatial reasoning
+%
+% Fact World:
+%   - MOST INTERESTING FOR DISCUSSION
+%   - Misbelief traps reveal context adherence
+%   - Compare 0% vs 40% vs 80% trap instances
+%   - "Model X answered correctly on 92% of factual instances but only
+%      34% of misbelief trap instances, indicating strong reliance on
+%      parametric knowledge"
+%
+% Recipe World:
+%   - Dietary constraints show logical reasoning
+%   - Caloric arithmetic similar to budget handling
+%   - Smallest instance count but dense constraints
+% ===========================================================================
+
+\textit{[This section will analyze performance differences across Travel, Schedule, Fact, and Recipe worlds, with particular attention to how misbelief traps in Fact World reveal context adherence behavior.]}
+
+\subsection{Diacritic and Code-Switching Patterns}
+
+% ===========================================================================
+% INSTRUCTIONS FOR THIS SUBSECTION:
+% ===========================================================================
+% Discuss Generation (G) metric in detail:
+%
+% Diacritic patterns:
+%   - Which diacritics are most commonly missed? (usually ș and ț)
+%   - Do models use cedilla vs comma-below consistently?
+%   - "și" vs "si" is the most diagnostic test
+%   - Compare base models vs Romanian-finetuned
+%
+% Code-switching patterns:
+%   - What English words leak through?
+%   - Common culprits: "the", "and", "day", "plan", "however"
+%   - Are discourse markers the main source?
+%   - Does code-switching correlate with task difficulty?
+%
+% Example findings to look for:
+%   "[Model X] produced correct diacritics in 94% of cases but exhibited
+%    persistent code-switching, with 'however' appearing in 23% of outputs."
+% ===========================================================================
+
+\textit{[This section will examine patterns in diacritic usage and English code-switching across models, identifying common failure modes in Romanian text generation.]}
+
+\subsection{Faithfulness Analysis}
+
+% ===========================================================================
+% INSTRUCTIONS FOR THIS SUBSECTION:
+% ===========================================================================
+% Discuss the F metric findings:
+%
+% Common failure modes:
+%   - Partial mention (mentions 3 of 5 planned attractions)
+%   - Hallucination (mentions attractions not in plan)
+%   - Generic explanations that don't reference specific entities
+%
+% Morphology challenges:
+%   - Did models struggle with genitive forms?
+%   - Entity names with diacritics often spelled differently in explanation
+%
+% Correlation with plan complexity:
+%   - More entities = harder to mention all
+%   - Travel plans with 6+ attractions have lower F on average
+%
+% Example: "The Faithfulness metric revealed that models frequently produced
+% generic explanations ('Am ales aceste locuri pentru că sunt interesante')
+% rather than entity-specific justifications."
+% ===========================================================================
+
+\textit{[This section will analyze Faithfulness patterns, identifying how models succeed or fail at maintaining consistency between their structured plans and natural language explanations.]}
+
+%==============================================================================
+\section{Extending GMTW}
+%==============================================================================
+
+While our implementation targets Romanian, the GMTW architecture generalizes to other languages. We provide documentation and extension points for adaptation:
+
+\subsection{Adding New Languages}
+
+Adapting GMTW to a new language requires:
+
+\begin{enumerate}
+\item \textbf{Prompt translation}: Convert system prompts and constraint descriptions. The modular prompt structure isolates translatable content.
+
+\item \textbf{Entity localization}: Create culturally appropriate entities (cities, dishes, appointment types) with authentic names.
+
+\item \textbf{Diacritic lexicon}: For languages with diacritics (Turkish, Vietnamese, Polish, etc.), curate a list of unambiguous diacritic-requiring words.
+
+\item \textbf{Code-switch detector}: Adapt the English word list and create a language-specific exclusion list for cognates and false friends.
+
+\item \textbf{Morphology rules}: Implement inflection generation for the target language's grammatical features.
+\end{enumerate}
+
+The core evaluation logic (constraint checking, JSON parsing, metric computation) requires no modification.
+
+\subsection{Adding New World Types}
+
+Researchers can extend GMTW with additional task domains by implementing:
+
+\begin{enumerate}
+\item \textbf{World generator}: A class that produces instances with configurable difficulty, including prompt templates and constraint specifications.
+
+\item \textbf{Constraint checkers}: Functions that verify specific requirements against extracted plans.
+
+\item \textbf{Solvability prover}: A solver (backtracking, constraint propagation, or domain-specific algorithm) that verifies instance feasibility.
+
+\item \textbf{Entity database}: A curated set of domain-appropriate entities with relevant properties.
+\end{enumerate}
+
+Potential extensions include: transportation planning (routes, schedules, connections), event planning (venues, catering, timelines), or educational curriculum design (courses, prerequisites, credit limits).
+
+%==============================================================================
+\section{Discussion}
+%==============================================================================
+
+\subsection{Benchmark Scope and Limitations}
+
+GMTW-Ro targets a specific evaluation niche: deterministic assessment of constraint-following ability in Romanian. This focus entails deliberate limitations.
+
+The benchmark does not assess open-ended generation, creative writing, or conversational ability. Tasks are structured, with clear success criteria. Models excelling at GMTW-Ro may nonetheless struggle with less constrained Romanian tasks. Conversely, models producing eloquent Romanian prose may fail GMTW-Ro's strict constraint requirements.
+
+The diacritic lexicon, while carefully curated, covers a subset of Romanian vocabulary. Words outside the lexicon receive no diacritic assessment, potentially underestimating issues with rare terms. Similarly, the code-switch detector may miss unusual English words or novel borrowings.
+
+Faithfulness measurement through morphology-aware matching improves upon naive substring search but remains imperfect. A model might convey the same information using synonyms or paraphrases, receiving unfair penalty. This limitation reflects the determinism constraint; semantic similarity assessment would require learned representations.
+
+\subsection{The Knowledge-Behavior Gap Revisited}
+
+Our experimental results confirm the knowledge-behavior gap hypothesis. Models demonstrating strong Generation scores (fluent Romanian with proper diacritics) did not necessarily achieve high Understanding scores (constraint satisfaction). This decoupling suggests that surface-level language competence---vocabulary, grammar, orthography---is insufficient for task success.
+
+The Fact World results prove particularly revealing. Models readily answered questions from context when facts aligned with world knowledge but struggled with misbelief traps. This pattern indicates that models have not learned to subordinate parametric knowledge to provided context, a capability crucial for retrieval-augmented systems but difficult to assess with traditional benchmarks.
+
+\subsection{Implications for Romanian NLP}
+
+GMTW-Ro results suggest several directions for improving Romanian language model capabilities.
+
+\textbf{Training data quality.} Diacritic inconsistencies across models likely reflect training data issues. Romanian web text frequently lacks proper diacritics; models trained on such data inherit these deficiencies. Training data curation emphasizing proper Romanian orthography could address this gap.
+
+\textbf{Code-switching patterns.} The persistent insertion of English discourse markers (``however'', ``therefore'') into Romanian text suggests incomplete language separation during training. Targeted training on monolingual Romanian corpora might reduce this tendency.
+
+\textbf{Instruction-following.} Constraint satisfaction varies substantially with constraint count and type. Models generally handle individual constraints well but struggle with interacting requirements. This pattern suggests reasoning limitations independent of language, though the Romanian context may exacerbate difficulties through parsing challenges.
+
+%==============================================================================
+\section{Conclusion}
+%==============================================================================
+
+GMTW-Ro provides a rigorous framework for evaluating language model capabilities in Romanian. By combining grounded task worlds, deterministic verification, and decomposed metrics, the benchmark enables precise diagnosis of model strengths and weaknesses without human annotators or auxiliary models.
+
+The emphasis on constraint satisfaction distinguishes GMTW-Ro from fluency-oriented evaluations. A model may generate grammatical Romanian while failing to follow complex instructions; GMTW-Ro exposes this gap. Conversely, strong GMTW-Ro performance indicates genuine task-solving ability in Romanian contexts.
+
+Our primary contribution is the release of curated evaluation datasets: 500 standard instances and 300 adversarial instances, all verified solvable. We additionally release the complete evaluation toolkit, world generators with solvability provers, and a purpose-built Romanian NLP library. This infrastructure enables researchers to generate unlimited novel instances, preventing benchmark contamination while supporting ongoing evaluation needs.
+
+The knowledge-behavior gap in multilingual language models remains an open challenge. GMTW-Ro offers one lens for examining this gap in Romanian, complementing broader multilingual evaluation efforts. As language models continue advancing, rigorous benchmarks must evolve correspondingly, ensuring that claimed capabilities withstand systematic scrutiny.
+
+Future work will expand world types, extend the diacritic lexicon, and incorporate additional Romanian-specific linguistic phenomena. We invite the research community to contribute instances, constraint types, and evaluation components. Adaptations to other languages following our provided architecture are particularly welcome.
+
+%==============================================================================
+% Acknowledgments
+%==============================================================================
+
+\section*{Acknowledgment}
+
+The authors thank the Romanian NLP community for feedback on diacritic lexicon coverage and entity authenticity.
+
+%==============================================================================
+% References
+%==============================================================================
+
+\begin{thebibliography}{99}
+
+% Romanian NLP Foundations
+\bibitem{dumitrescu2021liro}
+S.~D. Dumitrescu, P.~Rebeja, B.~Lorber, B.~Iona\c{s}cu, M.~Mitrofan, D.~Tufi\c{s}, and R.~I. Pais, ``LiRo: Benchmark and leaderboard for Romanian language tasks,'' in \emph{Proceedings of NeurIPS Datasets and Benchmarks}, 2021.
+
+\bibitem{dumitrescu2020ronec}
+S.~D. Dumitrescu and A.-M. Avram, ``Introducing RONEC---the Romanian Named Entity Corpus,'' in \emph{Proceedings of LREC}, 2020.
+
+\bibitem{niculescu2021rogpt2}
+M.~C. Niculescu, \c{S}.~Tr\u{a}u\c{s}an-Matu, and T.~Rebedea, ``RoGPT2: Romanian GPT2 for text generation,'' in \emph{Proceedings of CSCS}, 2021.
+
+\bibitem{niculescu2022rosummary}
+M.~C. Niculescu, \c{S}.~Tr\u{a}u\c{s}an-Matu, and T.~Rebedea, ``RoSummary: Control tokens for Romanian news summarization,'' \emph{Algorithms}, vol.~15, no.~12, p.~472, 2022.
+
+% OpenLLM-Ro and Instruction Tuning
+\bibitem{masala2024openllmro}
+M.~Masala, S.~Ruseti, and M.~Dascalu, ``OpenLLM-Ro: Technical report on open-source Romanian LLMs,'' \emph{arXiv preprint arXiv:2405.07703}, 2024.
+
+\bibitem{masala2024vorbesti}
+M.~Masala, S.~Ruseti, and M.~Dascalu, ``Vorbe\c{s}ti Rom\^{a}ne\c{s}te? A recipe to train powerful Romanian LLMs with English instructions,'' in \emph{Findings of EMNLP}, 2024.
+
+% Global Benchmarks
+\bibitem{hendrycks2021measuring}
+D.~Hendrycks, C.~Burns, S.~Basart, A.~Zou, M.~Mazeika, D.~Song, and J.~Steinhardt, ``Measuring massive multitask language understanding,'' in \emph{Proceedings of ICLR}, 2021.
+
+\bibitem{singh2024globalmmlu}
+K.~Singh \emph{et al.}, ``Global-MMLU: Understanding and addressing cultural and linguistic biases in multilingual evaluation,'' \emph{arXiv preprint arXiv:2406.04271}, 2024.
+
+\bibitem{zheng2024judging}
+L.~Zheng \emph{et al.}, ``Judging LLM-as-a-judge with MT-Bench and Chatbot Arena,'' in \emph{Proceedings of NeurIPS}, 2023.
+
+% Romanian Specialized Benchmarks
+\bibitem{moisescu2024romath}
+A.~Moisescu, D.~Andreescu, and S.~Ruseti, ``RoMath: A mathematical reasoning benchmark in Romanian,'' in \emph{Proceedings of MathNLP Workshop}, 2025.
+
+\bibitem{mihalcea2024rocode}
+R.~Mihalcea \emph{et al.}, ``RoCode: A dataset for measuring code intelligence from problem definitions in Romanian,'' in \emph{Proceedings of LREC-COLING}, 2024.
+
+\bibitem{rogoz2025medqaro}
+S.~Rogoz, A.~Popa, and S.~Ruseti, ``MedQARo: A large-scale benchmark for medical question answering in Romanian,'' \emph{arXiv preprint arXiv:2508.16390}, 2025.
+
+\bibitem{pais2021legalnero}
+V.~Pais, M.~Mitrofan, and D.~Tufi\c{s}, ``Named entity recognition in the Romanian legal domain,'' in \emph{Proceedings of NLLP Workshop}, 2021.
+
+% Global Planning and Constraint Benchmarks
+\bibitem{xie2024travelplanner}
+J.~Xie \emph{et al.}, ``TravelPlanner: A benchmark for real-world planning with language agents,'' in \emph{Proceedings of ICML}, 2024.
+
+\bibitem{zheng2024naturalplan}
+S.~Zheng \emph{et al.}, ``Natural Plan: Benchmarking LLMs on natural language planning,'' \emph{arXiv preprint arXiv:2406.04520}, 2024.
+
+\bibitem{valmeekam2023planbench}
+K.~Valmeekam, A.~Olmo, S.~Sreedharan, and S.~Kambhampati, ``PlanBench: An extensible benchmark for evaluating large language models on planning and reasoning about change,'' in \emph{Proceedings of NeurIPS}, 2023.
+
+\bibitem{zhou2023ifeval}
+J.~Zhou \emph{et al.}, ``Instruction-following evaluation for large language models,'' \emph{arXiv preprint arXiv:2311.07911}, 2023.
+
+\bibitem{liu2023agentbench}
+X.~Liu \emph{et al.}, ``AgentBench: Evaluating LLMs as agents,'' in \emph{Proceedings of ICLR}, 2024.
+
+% Hallucination and Factuality
+\bibitem{min2023factscore}
+S.~Min \emph{et al.}, ``FActScore: Fine-grained atomic evaluation of factual precision in long form text generation,'' in \emph{Proceedings of EMNLP}, 2023.
+
+\bibitem{li2023halueval}
+J.~Li \emph{et al.}, ``HaluEval: A large-scale hallucination evaluation benchmark for large language models,'' in \emph{Proceedings of EMNLP}, 2023.
+
+% Grounded and Constraint-Based Evaluation
+\bibitem{multihal2024}
+M.~Grunde-McLaughlin \emph{et al.}, ``MultiHal: Multilingual dataset for knowledge-graph grounded evaluation of LLM hallucinations,'' \emph{arXiv preprint arXiv:2505.14101}, 2024.
+
+\bibitem{yu2018spider}
+T.~Yu \emph{et al.}, ``Spider: A large-scale human-labeled dataset for complex and cross-domain semantic parsing and text-to-SQL task,'' in \emph{Proceedings of EMNLP}, 2018.
+
+% Surveys and Cross-Lingual
+\bibitem{zhang2024eurollm}
+C.~Zhang \emph{et al.}, ``A survey of large language models for European languages,'' \emph{arXiv preprint arXiv:2402.10818}, 2024.
+
+\bibitem{conneau2018xnli}
+A.~Conneau \emph{et al.}, ``XNLI: Evaluating cross-lingual sentence representations,'' in \emph{Proceedings of EMNLP}, 2018.
+
+\bibitem{clark2020tydiqa}
+J.~H. Clark \emph{et al.}, ``TyDi QA: A benchmark for information-seeking question answering in typologically diverse languages,'' \emph{Transactions of the ACL}, vol.~8, pp.~454--470, 2020.
+
+% General LLM Evaluation
+\bibitem{wei2022chain}
+J.~Wei \emph{et al.}, ``Chain-of-thought prompting elicits reasoning in large language models,'' in \emph{Proceedings of NeurIPS}, 2022.
+
+\bibitem{cobbe2021training}
+K.~Cobbe \emph{et al.}, ``Training verifiers to solve math word problems,'' \emph{arXiv preprint arXiv:2110.14168}, 2021.
+
+\end{thebibliography}
+
+%==============================================================================
+% Appendix
+%==============================================================================
+
+\appendix
+
+\section{Complete Diacritic Lexicon}
+
+% ===========================================================================
+% PLACEHOLDER FOR APPENDIX A
+% ===========================================================================
+% Include the full ~84-word diacritic lexicon from your code
+% Format as a multi-column table or list:
+%
+% și, în, fără, că, să, până, după, încă, între, întâi, ...
+%
+% This provides transparency and enables other researchers to
+% understand exactly what is being measured.
+% ===========================================================================
+
+The complete diacritic lexicon used for $G_{\text{dia}}$ evaluation contains 84 entries. The full list is available in the released codebase at \texttt{rombench/nlp\_ro/diacritics.py}.
+
+\section{Prompt Templates}
+
+% ===========================================================================
+% PLACEHOLDER FOR APPENDIX B
+% ===========================================================================
+% Include 1-2 complete prompt examples (one Travel, one Fact) showing:
+%   - System instructions
+%   - World state (entities available)
+%   - Constraints
+%   - Output format requirements
+%
+% This shows exactly what models receive, enabling replication.
+% Use lstlisting environment for clean formatting.
+% ===========================================================================
+
+Complete prompt templates for each world type are provided in the supplementary materials. Listing~\ref{lst:travel_prompt} shows an example Travel World prompt.
+
+\begin{lstlisting}[caption={Example Travel World Prompt},label={lst:travel_prompt},language={}]
+[Travel World prompt example - include actual prompt
+from your generate script showing:
+- System context in Romanian
+- Available attractions with properties
+- Constraints to satisfy
+- Output format specification]
+\end{lstlisting}
+
+\section{Extended Results}
+
+%% TABLE 6: Per-World Results
+% ===========================================================================
+% PLACEHOLDER FOR APPENDIX TABLE - PER-WORLD BREAKDOWN
+% ===========================================================================
+% Create a table showing U scores for each model x world type:
+%
+%                Travel   Schedule   Fact    Recipe
+% Model 1        0.XX     0.XX       0.XX    0.XX
+% Model 2        0.XX     0.XX       0.XX    0.XX
+% ...
+%
+% This detailed breakdown supports the discussion section.
+% ===========================================================================
+
+Table~\ref{tab:per_world} presents Understanding scores disaggregated by world type.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Understanding Score by World Type}
+\label{tab:per_world}
+\centering
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Travel} & \textbf{Schedule} & \textbf{Fact} & \textbf{Recipe} \\
+\midrule
+\textit{[Model 1]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} \\
+\textit{[Model 2]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} & \textit{[0.XX]} \\
+\textit{[...]} & & & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

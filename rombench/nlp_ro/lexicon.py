@@ -167,7 +167,8 @@ DIACRITIC_WORDS: dict[str, set[str]] = {
     "sapte": {"șapte"},
     "saptamana": {"săptămână"},
     "sarpe": {"șarpe"},
-    "sedinta": {"ședință"},
+    "sedinta": {"ședință", "ședința"},  # Both indefinite and articulated forms
+    "sedintei": {"ședinței"},  # Genitive: "a ședinței" (of the meeting)
     "sefa": {"șefa"},
     "sef": {"șef"},
     "sosea": {"șosea"},
