@@ -20,11 +20,29 @@ def load_model(model_path):
         use_fast=True
     )
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        torch_dtype=torch.float16,
-        device_map="auto"
-    )
+    # Try Flash Attention 2 for speed, fall back to default
+    try:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+            attn_implementation="flash_attention_2"
+        )
+        print("✓ Using Flash Attention 2")
+    except Exception as e:
+        print(f"⚠ Flash Attention not available ({e}), using default")
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.bfloat16,
+            device_map="auto"
+        )
+
+    # Compile for faster inference (PyTorch 2.0+)
+    try:
+        model = torch.compile(model, mode="reduce-overhead")
+        print("✓ Using torch.compile")
+    except Exception:
+        pass
 
     return model, tokenizer
 

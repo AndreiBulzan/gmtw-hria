@@ -38,6 +38,23 @@ env/
 .env
 .env.local
 
-# Model outputs (not the benchmark dataset)
+# Model outputs and metrics (keep only benchmark datasets)
 results/
 metrics/
+data/outputs_*.jsonl
+data/metrics_*.jsonl
+data/*_failed.txt
+
+# Old/temporary evaluation files
+groq_*.jsonl
+test*.jsonl
+dummy*.jsonl
+*_eval.jsonl
+detailed_metrics.jsonl
+
+# Keep these core datasets (override above patterns)
+!data/gmtw_ro_v0.jsonl
+!data/gmtw_ro_hard.jsonl
+
+# HuggingFace cache
+.cache/

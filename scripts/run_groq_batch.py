@@ -21,7 +21,7 @@ except ImportError:
     sys.exit(1)
 
 
-def call_groq_with_retry(prompt: str, api_key: str, model: str = "llama-3.3-70b-versatile", max_retries: int = 5) -> str:
+def call_groq_with_retry(prompt: str, api_key: str, model: str = "llama-3.3-70b-versatile", max_tokens: int = 2048, max_retries: int = 5) -> str:
     """
     Call Groq API with a prompt, with retry logic and exponential backoff.
 
@@ -29,6 +29,7 @@ def call_groq_with_retry(prompt: str, api_key: str, model: str = "llama-3.3-70b-
         prompt: The prompt to send
         api_key: Groq API key
         model: Model name
+        max_tokens: Maximum tokens in response (default: 2048)
         max_retries: Maximum number of retry attempts
 
     Returns:
@@ -50,7 +51,7 @@ def call_groq_with_retry(prompt: str, api_key: str, model: str = "llama-3.3-70b-
             }
         ],
         "temperature": 0.3,
-        "max_tokens": 2048,
+        "max_tokens": max_tokens,
     }
 
     last_error = None
@@ -107,6 +108,7 @@ def run_batch(
     language: str = "ro",
     max_instances: int = None,
     delay: float = 2.0,
+    max_tokens: int = 2048,
 ):
     """
     Run batch evaluation using Groq
@@ -119,6 +121,7 @@ def run_batch(
         language: 'ro' for Romanian, 'en' for English
         max_instances: Max instances to process (None = all)
         delay: Delay in seconds between API calls (default: 2.0)
+        max_tokens: Maximum tokens in response (default: 2048)
     """
     # Load instances
     instances = []
@@ -146,7 +149,7 @@ def run_batch(
 
         # Call Groq with retry logic
         start_time = time.time()
-        response = call_groq_with_retry(prompt, api_key, model)
+        response = call_groq_with_retry(prompt, api_key, model, max_tokens)
         latency = time.time() - start_time
 
         if response:
@@ -200,6 +203,7 @@ if __name__ == "__main__":
     parser.add_argument("--language", choices=["ro", "en"], default="ro", help="Prompt language")
     parser.add_argument("--max", type=int, help="Max instances to process")
     parser.add_argument("--delay", type=float, default=2.0, help="Delay in seconds between API calls (default: 2.0)")
+    parser.add_argument("--max-tokens", type=int, default=2048, help="Max tokens in response (default: 2048, try 4096 if getting length errors)")
 
     args = parser.parse_args()
 
@@ -224,4 +228,5 @@ if __name__ == "__main__":
         args.language,
         args.max,
         args.delay,
+        args.max_tokens,
     )

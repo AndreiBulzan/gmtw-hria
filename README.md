@@ -73,8 +73,11 @@ export GROQ_API_KEY=your_key_here
 # Test on 5 instances first
 python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --output data/outputs.jsonl --max 5
 
-# Full dataset (500 instances)
+# Full base dataset (500 instances)
 python scripts/run_openrouter_batch.py data/gmtw_ro_v0.jsonl --output data/outputs.jsonl
+
+# Hard dataset (300 instances, more constraints)
+python scripts/run_openrouter_batch.py data/gmtw_ro_hard.jsonl --output data/outputs_hard.jsonl
 ```
 
 ### 3. Evaluate
@@ -208,6 +211,49 @@ python scripts/check_grammar.py data/outputs.jsonl --verbose --min-errors 5
 
 ---
 
+## Datasets
+
+Two pre-generated datasets are included:
+
+| Dataset | Instances | Description |
+|---------|-----------|-------------|
+| `data/gmtw_ro_v0.jsonl` | 500 | Base dataset with mixed difficulty |
+| `data/gmtw_ro_hard.jsonl` | 300 | Hard dataset with more constraints per task |
+
+---
+
+## Running Local Models
+
+### Using Transformers (Windows/Linux)
+
+```bash
+# Run with any HuggingFace model
+python scripts/run_local_batch.py data/gmtw_ro_v0.jsonl \
+    --model-path OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO \
+    --output data/outputs_rollama.jsonl
+```
+
+### Using vLLM (Linux only, faster)
+
+```bash
+pip install vllm
+
+python scripts/run_vllm_batch.py data/gmtw_ro_v0.jsonl \
+    --model-path OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO \
+    --output data/outputs_rollama.jsonl \
+    --batch-size 16
+```
+
+### Recommended Romanian Models
+
+| Model | Size | HuggingFace ID |
+|-------|------|----------------|
+| RoLlama3.1-8b | 8B | `OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO` |
+| RoMistral-7b | 7B | `OpenLLM-Ro/RoMistral-7b-Instruct-DPO` |
+| RoGemma2-9b | 9B | `OpenLLM-Ro/RoGemma2-9b-Instruct-DPO` |
+
+---
+
 ## Detailed Workflows
 
 ### Generate Custom Dataset
@@ -282,7 +328,8 @@ Am ales să vizităm Grădina Botanică în prima zi deoarece...
 ```
 rombench/
 ├── data/
-│   └── gmtw_ro_v0.jsonl          # Pre-generated 500-instance dataset
+│   ├── gmtw_ro_v0.jsonl          # Base dataset (500 instances)
+│   └── gmtw_ro_hard.jsonl        # Hard dataset (300 instances)
 ├── rombench/
 │   ├── gmtw_ro/
 │   │   ├── worlds/               # World generators (travel, schedule, fact, recipe)
@@ -290,10 +337,14 @@ rombench/
 │   └── nlp_ro/                   # Romanian NLP toolkit (diacritics, codeswitch, grammar)
 ├── scripts/
 │   ├── evaluate_outputs.py       # Main evaluation script
-│   ├── check_grammar.py          # Standalone grammar checker
+│   ├── generate_gmtw_v0.py       # Generate base dataset
+│   ├── generate_gmtw_hard.py     # Generate hard dataset
 │   ├── run_openrouter_batch.py   # Run via OpenRouter API
 │   ├── run_groq_batch.py         # Run via Groq API
+│   ├── run_local_batch.py        # Run local HuggingFace models
+│   ├── run_vllm_batch.py         # Run with vLLM (fast, Linux)
 │   ├── debug_results.py          # Interactive result viewer
+│   ├── check_grammar.py          # Standalone grammar checker
 │   └── compare_models.py         # Side-by-side comparison
 └── docs/
     └── GMTW_Ro_Technical_Specification.md
