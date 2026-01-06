@@ -46,7 +46,7 @@ def load_model(model_path):
 
     return model, tokenizer
 
-def generate_response(model, tokenizer, prompt, max_tokens=512):
+def generate_response(model, tokenizer, prompt, max_tokens=4096):
     """
     Apply the chat template for RoLlama3.1-Instruct and generate response.
     """

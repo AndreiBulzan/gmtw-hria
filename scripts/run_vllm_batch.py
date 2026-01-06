@@ -20,7 +20,7 @@ def run_vllm_batch(
     model_path: str,
     language: str = "ro",
     max_instances: int = None,
-    max_tokens: int = 512,
+    max_tokens: int = 4096,
     batch_size: int = 32,
 ):
     """
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", default="vllm_outputs.jsonl")
     parser.add_argument("--language", choices=["ro", "en"], default="ro")
     parser.add_argument("--max", type=int, help="Max instances to process")
-    parser.add_argument("--max-tokens", type=int, default=512)
+    parser.add_argument("--max-tokens", type=int, default=4096)
     parser.add_argument("--batch-size", type=int, default=32)
 
     args = parser.parse_args()
