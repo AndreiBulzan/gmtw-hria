@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from rombench.gmtw_ro.worlds.base import Instance
 
@@ -39,6 +40,11 @@ def run_vllm_batch(
     print(f"Model: {model_path}")
     print(f"Batch size: {batch_size}")
 
+    # Load tokenizer for chat template (auto-detects correct format)
+    print("\nLoading tokenizer...")
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    print(f"Chat template detected: {tokenizer.chat_template[:80] if tokenizer.chat_template else 'None'}...")
+
     # Load model with vLLM
     print("\nLoading model (this takes a minute)...")
     llm = LLM(
@@ -53,12 +59,16 @@ def run_vllm_batch(
         max_tokens=max_tokens,
     )
 
-    # Prepare all prompts
+    # Prepare all prompts using the model's native chat template
     prompts = []
     for inst in instances:
         prompt = inst.prompt_ro if language == "ro" else inst.prompt_en
-        # Apply chat template
-        chat_prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+        # Apply chat template from tokenizer (auto-detects Llama/Gemma/Mistral/etc.)
+        chat_prompt = tokenizer.apply_chat_template(
+            [{"role": "user", "content": prompt}],
+            tokenize=False,
+            add_generation_prompt=True
+        )
         prompts.append(chat_prompt)
 
     # Process in batches
