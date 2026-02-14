@@ -56,5 +56,11 @@ detailed_metrics.jsonl
 !data/gmtw_ro_v0.jsonl
 !data/gmtw_ro_hard.jsonl
 
+# Documentation build artifacts and figures
+docs/
+!docs/GMTW_Ro_Technical_Specification.md
+*.tex
+scripts/generate_figure*.py
+
 # HuggingFace cache
 .cache/
