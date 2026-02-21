@@ -12,7 +12,7 @@ from .eval.scorer import GMTWEvaluator
 from .eval.ro_evaluator import RomanianEvaluator, evaluate_instance
 from .eval.metrics import compute_all_metrics
 
-_all_ = [
+__all__ = [
     "World",
     "Instance",
     "Entity",

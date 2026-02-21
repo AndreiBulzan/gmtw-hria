@@ -7,6 +7,7 @@ from .scorer import evaluate_instance, GMTWEvaluator, EvaluationResult
 from .metrics import compute_all_metrics, MetricScores
 from .canonical import extract_entity_mentions, EntityMention
 from .constraints import check_constraint, CONSTRAINT_FUNCTIONS
+from .ro_evaluator import RomanianEvaluator
 
 __all__ = [
     "parse_dual_channel_output",
@@ -20,4 +21,5 @@ __all__ = [
     "EntityMention",
     "check_constraint",
     "CONSTRAINT_FUNCTIONS",
+     "RomanianEvaluator",
 ]
