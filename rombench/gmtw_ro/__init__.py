@@ -8,10 +8,11 @@ from .worlds.schedule import ScheduleWorldGenerator
 from .worlds.fact import FactWorldGenerator
 from .worlds.recipe import RecipeWorldGenerator
 from .eval.parser import parse_dual_channel_output
-from .eval.scorer import evaluate_instance, GMTWEvaluator
+from .eval.scorer import GMTWEvaluator
+from .eval.ro_evaluator import RomanianEvaluator, evaluate_instance
 from .eval.metrics import compute_all_metrics
 
-__all__ = [
+_all_ = [
     "World",
     "Instance",
     "Entity",
@@ -22,7 +23,8 @@ __all__ = [
     "FactWorldGenerator",
     "RecipeWorldGenerator",
     "parse_dual_channel_output",
-    "evaluate_instance",
-    "GMTWEvaluator",
+    "evaluate_instance",  # New
+    "GMTWEvaluator",  # Old
+    "RomanianEvaluator",  # New
     "compute_all_metrics",
 ]

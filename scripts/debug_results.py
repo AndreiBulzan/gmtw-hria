@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Debug GMTW-Ro results - shows actual prompts used and detailed failure analysis
+Debug GMTW results - shows actual prompts used and detailed failure analysis
+Supports both Romanian and English evaluation with automatic language detection.
 """
 
 import json
@@ -9,7 +10,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from rombench.gmtw_ro import Instance, evaluate_instance
+from rombench.gmtw_ro import Instance
+from rombench.gmtw_ro.eval.ro_evaluator import RomanianEvaluator
+from rombench.gmtw_en.eval.en_evaluator import EnglishEvaluator
 
 
 def detect_language(outputs_file: str) -> str:
@@ -22,12 +25,28 @@ def detect_language(outputs_file: str) -> str:
     return 'ro'
 
 
+def create_evaluator(language: str, use_languagetool: bool, use_stanza: bool):
+    """Create appropriate evaluator based on language"""
+    if language == 'ro':
+        return RomanianEvaluator.create(
+            use_languagetool=use_languagetool,
+            use_stanza=use_stanza,
+        )
+    elif language == 'en':
+        return EnglishEvaluator.create(
+            use_languagetool=use_languagetool,
+        )
+    else:
+        raise ValueError(f"Unsupported language: {language}")
+
+
 def debug_results(
     instances_file: str,
     outputs_file: str,
     filter_type: str = None,
     use_languagetool: bool = False,
     use_stanza: bool = False,
+    force_language: str = None,
 ):
     """
     Show detailed debugging info for each result
@@ -38,14 +57,22 @@ def debug_results(
         filter_type: Show only 'failed', 'passed', or None for all
         use_languagetool: Use LanguageTool for grammar checking
         use_stanza: Use Stanza for Romanian lemmatization
+        force_language: Force language (ro/en), otherwise auto-detect
     """
     # Detect language
-    language = detect_language(outputs_file)
+    if force_language:
+        language = force_language
+    else:
+        language = detect_language(outputs_file)
+    
     lang_name = "ROMANIAN" if language == "ro" else "ENGLISH"
 
     print(f"\n{'='*80}")
     print(f"Detected prompt language: {lang_name}")
     print(f"{'='*80}\n")
+    
+    # Create evaluator
+    evaluator = create_evaluator(language, use_languagetool, use_stanza)
 
     # Load instances
     instances = {}
@@ -67,12 +94,7 @@ def debug_results(
         if inst_id not in outputs:
             continue
 
-        result = evaluate_instance(
-            instance,
-            outputs[inst_id],
-            use_languagetool=use_languagetool,
-            use_stanza=use_stanza,
-        )
+        result = evaluator.evaluate_output(instance, outputs[inst_id])
         results.append((instance, outputs[inst_id], result))
 
     # Filter if requested
@@ -140,7 +162,7 @@ def debug_results(
         # Detailed failure analysis
         if result.U < 1.0:
             print("\n" + "─"*80)
-            print("❌ CONSTRAINT VIOLATIONS:")
+            print("CONSTRAINT VIOLATIONS:")
             print("─"*80)
             for c in result.U_details.get('constraints', []):
                 if not c['satisfied']:
@@ -157,7 +179,7 @@ def debug_results(
 
         if result.R < 1.0:
             print("\n" + "─"*80)
-            print("❌ LOGIC/REASONING FAILURES:")
+            print("LOGIC/REASONING FAILURES:")
             print("─"*80)
             for g in result.R_details.get('goals', []):
                 if not g['satisfied']:
@@ -165,7 +187,7 @@ def debug_results(
 
         if result.F < 1.0:
             print("\n" + "─"*80)
-            print("❌ FAITHFULNESS ISSUES:")
+            print("FAITHFULNESS ISSUES:")
             print("─"*80)
             missing = result.F_details.get('missing', [])
             if missing:
@@ -186,7 +208,7 @@ def debug_results(
 
         if result.G < 0.95:  # Show G issues if notably imperfect
             print("\n" + "─"*80)
-            print("⚠️  GENERATION QUALITY NOTES:")
+            print("GENERATION QUALITY NOTES:")
             print("─"*80)
             g = result.G_details
 
@@ -243,9 +265,9 @@ def debug_results(
 
             # Flags
             if g.get('is_likely_english'):
-                print(f"  ⚠️  Text appears to be in English, not Romanian")
+                print(f"  Text appears to be in English, not Romanian")
             if g.get('is_too_short'):
-                print(f"  ⚠️  Text is too short ({g.get('n_words', 0)} words)")
+                print(f"  Text is too short ({g.get('n_words', 0)} words)")
 
         # Navigation
         if idx < len(results):
