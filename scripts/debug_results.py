@@ -189,7 +189,10 @@ def debug_results(
             print("\n" + "─"*80)
             print("FAITHFULNESS ISSUES:")
             print("─"*80)
+            # Support both 'missing' and 'missing_entities' keys
             missing = result.F_details.get('missing', [])
+            if not missing:
+                missing = result.F_details.get('missing_entities', [])
             if missing:
                 print(f"  Missing from explanation:")
                 # Look up entity names from the world
@@ -201,8 +204,9 @@ def debug_results(
                         print(f"    • {eid}: (unknown entity)")
                 print(f"  → These entities are in the JSON plan but not mentioned in the text")
 
-            total = result.F_details.get('total_count', 0)
-            mentioned = result.F_details.get('mentioned_count', 0)
+            # Support both 'total_count'/'mentioned_count' and 'entities_total'/'entities_mentioned'
+            total = result.F_details.get('total_count', result.F_details.get('entities_total', 0))
+            mentioned = result.F_details.get('mentioned_count', result.F_details.get('entities_mentioned', 0))
             if total > 0:
                 print(f"  Coverage: {mentioned}/{total} entities mentioned")
 

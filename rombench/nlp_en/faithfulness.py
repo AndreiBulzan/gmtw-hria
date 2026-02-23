@@ -21,11 +21,16 @@ def normalize_text(text: str) -> str:
     - remove punctuation
     - collapse whitespace
     """
+    import unicodedata
     text = text.lower()
-    
+    # Remove apostrophes (straight and curly)
+    for c in "'’‘`":
+        text = text.replace(c, "")
+    # Remove punctuation
     for c in '.,;:!?"()[]{}':
         text = text.replace(c, " ")
-    
+    # Normalize unicode (NFKC)
+    text = unicodedata.normalize('NFKC', text)
     text = " ".join(text.split())
     return text
 
@@ -89,6 +94,68 @@ def english_morphological_forms(token: str) -> Set[str]:
 
 
 class EnglishFaithfulness(BaseFaithfulness):
+
+    def compute_faithfulness(
+        self,
+        world: Any,
+        plan: dict,
+        explanation: str,
+        **kwargs
+    ) -> dict[str, Any]:
+        """
+        Compute faithfulness score with improved normalization and debug output.
+        """
+        if not plan or not explanation:
+            return {
+                "F": 0.0,
+                "entities_total": 0,
+                "entities_mentioned": 0,
+                "missing_entities": [],
+            }
+        entities = self.extract_entities(world, plan)
+        if not entities:
+            return {
+                "F": 1.0,
+                "entities_total": 0,
+                "entities_mentioned": 0,
+                "missing_entities": [],
+                "note": "No entities to check",
+            }
+        normalized_text = self.normalize_text(explanation)
+        mentioned = []
+        missing = []
+        for entity in entities:
+            if self.check_entity_mentioned(entity, normalized_text, debug=True):
+                mentioned.append(entity)
+            else:
+                missing.append(entity)
+        total = len(entities)
+        mentioned_count = len(mentioned)
+        F_raw = mentioned_count / total if total > 0 else 1.0
+        severity_exponent = kwargs.get('severity_exponent', 3.0)
+        F = F_raw ** severity_exponent
+        return {
+            "F": F,
+            "F_linear": F_raw,
+            "entities_total": total,
+            "entities_mentioned": mentioned_count,
+            "mentioned_entities": mentioned,
+            "missing_entities": missing,
+        }
+
+    def check_entity_mentioned(self, entity: str, normalized_text: str, debug: bool = False) -> bool:
+        """Check if entity is mentioned in text, with debug option."""
+        forms = self.generate_forms(entity.lower())
+        if ' ' in entity:
+            forms.update(self._generate_multiword_forms(entity))
+        # Normalize all forms for matching
+        norm_forms = {self.normalize_text(form) for form in forms}
+        for form in norm_forms:
+            if form in normalized_text:
+                return True
+        if debug:
+            print(f"[DEBUG] Entity not matched: '{entity}' | Forms: {norm_forms} | Text: {normalized_text}")
+        return False
     """English-specific faithfulness checking"""
     
     def normalize_text(self, text: str) -> str:
