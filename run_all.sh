@@ -1,57 +1,147 @@
-#!/bin/bash
-# GMTW-Ro Evaluation Script (v3 - with correct chat templates)
-# The run_vllm_batch.py script now auto-detects chat templates via tokenizer.apply_chat_template()
+#!/usr/bin/env bash
 
-cd /DATA/andrei/gmtw-hria/gmtw-hria
+echo "=== GMTW FULL PIPELINE (RO + EN) ==="
 
-echo "=== Re-running models with CORRECT chat templates (v3) ==="
+mkdir -p new_data/outputs_easy_ro
+mkdir -p new_data/outputs_easy_en
+mkdir -p new_data/outputs_hard_ro
+mkdir -p new_data/outputs_hard_en
 
-# Models that need re-running (were using wrong Llama-3 template before):
-# - Gemma models (need Gemma template)
-# - Mistral models (need Mistral template)
-# Note: RoLlama3.1 was already correct (Llama-3 template) but re-running for consistency
+mkdir -p new_data/metrics_easy_ro
+mkdir -p new_data/metrics_easy_en
+mkdir -p new_data/metrics_hard_ro
+mkdir -p new_data/metrics_hard_en
 
-# --- Gemma-2-9B (base) ---
-python scripts/run_vllm_batch.py data/gmtw_ro_v0.jsonl --model-path google/gemma-2-9b-it --output data/outputs_base_gemma2-9b_v3.jsonl --batch-size 64
-python scripts/run_vllm_batch.py data/gmtw_ro_hard.jsonl --model-path google/gemma-2-9b-it --output data/outputs_hard_gemma2-9b_v3.jsonl --batch-size 64
 
-# --- Gemma-7B (base) ---
-python scripts/run_vllm_batch.py data/gmtw_ro_v0.jsonl --model-path google/gemma-7b-it --output data/outputs_base_gemma-7b_v3.jsonl --batch-size 64
-python scripts/run_vllm_batch.py data/gmtw_ro_hard.jsonl --model-path google/gemma-7b-it --output data/outputs_hard_gemma-7b_v3.jsonl --batch-size 64
+models=(
+"google/gemma-2-9b-it"
+"google/gemma-7b-it"
+"mistralai/Mistral-7B-Instruct-v0.2"
+"OpenLLM-Ro/RoLlama2-7b-Instruct"
+"OpenLLM-Ro/RoMistral-7b-Instruct-DPO"
+"OpenLLM-Ro/RoLlama3-8b-Instruct-DPO"
+"OpenLLM-Ro/RoGemma2-9b-Instruct-DPO"
+"OpenLLM-Ro/RoGemma-7b-Instruct-DPO"
+"OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO"
+"meta-llama/Meta-Llama-3-8B-Instruct"
+"meta-llama/Llama-3.1-8B-Instruct"
+"meta-llama/Llama-2-7b-hf"
+)
 
-# --- RoGemma2-9B (Romanian-finetuned) ---
-python scripts/run_vllm_batch.py data/gmtw_ro_v0.jsonl --model-path OpenLLM-Ro/RoGemma2-9b-Instruct-DPO --output data/outputs_base_rogemma2-9b_v3.jsonl --batch-size 64
-python scripts/run_vllm_batch.py data/gmtw_ro_hard.jsonl --model-path OpenLLM-Ro/RoGemma2-9b-Instruct-DPO --output data/outputs_hard_rogemma2-9b_v3.jsonl --batch-size 64
+generate=false
 
-# --- RoGemma-7B (Romanian-finetuned) ---
-python scripts/run_vllm_batch.py data/gmtw_ro_v0.jsonl --model-path OpenLLM-Ro/RoGemma-7b-Instruct --output data/outputs_base_rogemma-7b_v3.jsonl --batch-size 64
-python scripts/run_vllm_batch.py data/gmtw_ro_hard.jsonl --model-path OpenLLM-Ro/RoGemma-7b-Instruct --output data/outputs_hard_rogemma-7b_v3.jsonl --batch-size 64
+model_name () {
+    basename "$1" | tr '[:upper:]' '[:lower:]'
+}
 
-# --- RoMistral-7B (Romanian-finetuned) ---
-python scripts/run_vllm_batch.py data/gmtw_ro_v0.jsonl --model-path OpenLLM-Ro/RoMistral-7b-Instruct-DPO --output data/outputs_base_romistral-7b_v3.jsonl --batch-size 64
-python scripts/run_vllm_batch.py data/gmtw_ro_hard.jsonl --model-path OpenLLM-Ro/RoMistral-7b-Instruct-DPO --output data/outputs_hard_romistral-7b_v3.jsonl --batch-size 64
-
-# --- Mistral-7B (base - for comparison with RoMistral) ---
-python scripts/run_vllm_batch.py data/gmtw_ro_v0.jsonl --model-path mistralai/Mistral-7B-Instruct-v0.2 --output data/outputs_base_mistral-7b_v3.jsonl --batch-size 64
-python scripts/run_vllm_batch.py data/gmtw_ro_hard.jsonl --model-path mistralai/Mistral-7B-Instruct-v0.2 --output data/outputs_hard_mistral-7b_v3.jsonl --batch-size 64
-
-echo ""
-echo "=== Running evaluations ==="
-
-# Evaluate all v3 outputs
-python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_gemma2-9b_v3.jsonl --save-metrics data/metrics_base_gemma2-9b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_gemma2-9b_v3.jsonl --save-metrics data/metrics_hard_gemma2-9b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_gemma-7b_v3.jsonl --save-metrics data/metrics_base_gemma-7b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_gemma-7b_v3.jsonl --save-metrics data/metrics_hard_gemma-7b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_rogemma2-9b_v3.jsonl --save-metrics data/metrics_base_rogemma2-9b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_rogemma2-9b_v3.jsonl --save-metrics data/metrics_hard_rogemma2-9b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_rogemma-7b_v3.jsonl --save-metrics data/metrics_base_rogemma-7b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_rogemma-7b_v3.jsonl --save-metrics data/metrics_hard_rogemma-7b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_romistral-7b_v3.jsonl --save-metrics data/metrics_base_romistral-7b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_romistral-7b_v3.jsonl --save-metrics data/metrics_hard_romistral-7b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_v0.jsonl data/outputs_base_mistral-7b_v3.jsonl --save-metrics data/metrics_base_mistral-7b_v3.jsonl
-python scripts/evaluate_outputs.py data/gmtw_ro_hard.jsonl data/outputs_hard_mistral-7b_v3.jsonl --save-metrics data/metrics_hard_mistral-7b_v3.jsonl
 
 echo ""
-echo "=== ALL DONE ==="
-echo "Results saved with _v3 suffix. Compare with _v2 to see template impact."
+echo "=== GENERATING OUTPUTS ==="
+
+if [ "$generate" = true ]; then
+    for model in "${models[@]}"; do
+
+        name=$(model_name "$model")
+
+        echo ""
+        echo "Running model: $model"
+
+        ################################
+        # EASY RO
+        ################################
+        python scripts/run_vllm_batch.py \
+            data/gmtw_ro_v0.jsonl \
+            --language ro \
+            --model-path "$model" \
+            --output new_data/outputs_easy_ro/ro_${name}.jsonl \
+            --batch-size 64
+
+        ################################
+        # EASY EN
+        ################################
+        python scripts/run_vllm_batch.py \
+            data/gmtw_ro_v0.jsonl \
+            --language en \
+            --model-path "$model" \
+            --output new_data/outputs_easy_en/en_${name}.jsonl \
+            --batch-size 64
+
+        ################################
+        # HARD RO
+        ################################
+        python scripts/run_vllm_batch.py \
+            data/gmtw_ro_hard.jsonl \
+            --language ro \
+            --model-path "$model" \
+            --output new_data/outputs_hard_ro/ro_${name}.jsonl \
+            --batch-size 64
+
+        ################################
+        # HARD EN
+        ################################
+        python scripts/run_vllm_batch.py \
+            data/gmtw_ro_hard.jsonl \
+            --language en \
+            --model-path "$model" \
+            --output new_data/outputs_hard_en/en_${name}.jsonl \
+            --batch-size 64
+
+    done
+fi
+
+################################
+# EVALUATION
+################################
+
+echo ""
+echo "=== RUNNING EVALUATIONS ==="
+
+for model in "${models[@]}"; do
+
+    name=$(model_name "$model")
+
+    echo ""
+    echo "Evaluating model: $model"
+
+    ################################
+    # EASY RO
+    ################################
+    python scripts/evaluate_outputs.py \
+        data/gmtw_ro_v0.jsonl \
+        new_data/outputs_easy_ro/ro_${name}.jsonl \
+        --language ro \
+        --save-metrics new_data/metrics_easy_ro/ro_${name}.jsonl
+
+    ################################
+    # EASY EN
+    ################################
+    python scripts/evaluate_outputs.py \
+        data/gmtw_ro_v0.jsonl \
+        new_data/outputs_easy_en/en_${name}.jsonl \
+        --language en \
+        --save-metrics new_data/metrics_easy_en/en_${name}.jsonl
+
+    ################################
+    # HARD RO
+    ################################
+    python scripts/evaluate_outputs.py \
+        data/gmtw_ro_hard.jsonl \
+        new_data/outputs_hard_ro/ro_${name}.jsonl \
+        --language ro \
+        --save-metrics new_data/metrics_hard_ro/ro_${name}.jsonl
+
+    ################################
+    # HARD EN
+    ################################
+    python scripts/evaluate_outputs.py \
+        data/gmtw_ro_hard.jsonl \
+        new_data/outputs_hard_en/en_${name}.jsonl \
+        --language en \
+        --save-metrics new_data/metrics_hard_en/en_${name}.jsonl
+
+done
+
+echo ""
+echo "======================================="
+echo "=== ALL RUNS COMPLETED SUCCESSFULLY ==="
+echo "======================================="
