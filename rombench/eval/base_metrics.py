@@ -236,11 +236,19 @@ class BaseMetrics(ABC):
         })
 
         # 3-5. World-type specific checks
+        # Make plan access robust: plan may be a dict (expected) or malformed (list/other).
+        is_mapping = isinstance(plan, dict)
+        if is_mapping:
+            actual_keys = set(plan.keys())
+            values_iter = list(plan.values())
+        else:
+            actual_keys = set()
+            values_iter = []
+
         if world_type == "travel":
             num_days = world.payload.get("num_days", 2)
             expected_keys = {f"day{i}" for i in range(1, num_days + 1)}
-            actual_keys = set(plan.keys())
-            
+
             checks.append({
                 "id": "F_KEYS_PRESENT",
                 "description": f"All {num_days} day keys present",
@@ -254,15 +262,14 @@ class BaseMetrics(ABC):
             checks.append({
                 "id": "F_VALUE_TYPES",
                 "description": "All values are lists",
-                "satisfied": all(isinstance(v, list) for v in plan.values()),
+                "satisfied": all(isinstance(v, list) for v in values_iter),
             })
 
         elif world_type == "recipe":
             num_days = world.payload.get("num_days", 2)
             meals = world.payload.get("meals_per_day", ["mic_dejun", "pranz", "cina"])
             expected_keys = {f"day{d}_{m}" for d in range(1, num_days + 1) for m in meals}
-            actual_keys = set(plan.keys())
-            
+            # actual_keys already computed above
             checks.append({
                 "id": "F_KEYS_PRESENT",
                 "description": f"All {len(expected_keys)} meal keys present",
@@ -276,14 +283,13 @@ class BaseMetrics(ABC):
             checks.append({
                 "id": "F_VALUE_TYPES",
                 "description": "All values are strings or null",
-                "satisfied": all(v is None or isinstance(v, str) for v in plan.values()),
+                "satisfied": all(v is None or isinstance(v, str) for v in values_iter),
             })
 
         elif world_type == "schedule":
             days, slots = self._get_schedule_keys(world)
             expected_keys = {f"{d}_{s}" for d in days for s in slots}
-            actual_keys = set(plan.keys())
-            
+            # actual_keys already computed above
             checks.append({
                 "id": "F_KEYS_PRESENT",
                 "description": f"All {len(expected_keys)} time slot keys present",
@@ -297,24 +303,24 @@ class BaseMetrics(ABC):
             checks.append({
                 "id": "F_VALUE_TYPES",
                 "description": "All values are strings or null",
-                "satisfied": all(v is None or isinstance(v, str) for v in plan.values()),
+                "satisfied": all(v is None or isinstance(v, str) for v in values_iter),
             })
 
         elif world_type == "fact":
             checks.append({
                 "id": "F_KEYS_PRESENT",
                 "description": "'answer' key present",
-                "satisfied": "answer" in plan,
+                "satisfied": is_mapping and ("answer" in plan),
             })
             checks.append({
                 "id": "F_NO_EXTRA_KEYS",
                 "description": "Only 'answer' key present",
-                "satisfied": set(plan.keys()) <= {"answer"},
+                "satisfied": is_mapping and (set(plan.keys()) <= {"answer"}),
             })
             checks.append({
                 "id": "F_VALUE_TYPES",
                 "description": "Answer is a string",
-                "satisfied": isinstance(plan.get("answer"), str),
+                "satisfied": is_mapping and isinstance(plan.get("answer"), str),
             })
 
         return checks

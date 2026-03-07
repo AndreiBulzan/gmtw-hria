@@ -42,15 +42,10 @@ class BaseFaithfulness(ABC):
         """
         entities = set()
         world_type = world.world_type
-
-        # plan may be a dict (expected) or a list/other (malformed). Create
-        # a safe iterator over its entries and a flag for mapping access.
-        is_mapping = isinstance(plan, dict)
-        entries_iter = plan.values() if is_mapping else (plan if isinstance(plan, (list, tuple)) else [])
-
+        
         if world_type == "travel":
             # Extract locations/activities from plan
-            for day_activities in entries_iter:
+            for day_activities in plan.values():
                 if isinstance(day_activities, list):
                     # day_activities may be a list of strings, dicts or nested lists.
                     for item in day_activities:
@@ -78,26 +73,19 @@ class BaseFaithfulness(ABC):
                                 entities.add(str(item))
                     
         elif world_type == "recipe":
-            # Extract recipes from plan (expecting mapping of keys->strings)
-            for recipe in entries_iter:
+            # Extract recipes from plan
+            for recipe in plan.values():
                 if isinstance(recipe, str) and recipe:
                     entities.add(recipe)
                     
         elif world_type == "schedule":
-            # Extract activities from plan (mapping of slot->string) or
-            # fallback to list of activities
-            for activity in entries_iter:
+            # Extract activities from plan
+            for activity in plan.values():
                 if isinstance(activity, str) and activity:
                     entities.add(activity)
                     
         elif world_type == "fact":
-            # Safe access to 'answer' when plan may not be a mapping
-            if is_mapping:
-                answer = plan.get("answer", "")
-            elif isinstance(plan, str):
-                answer = plan
-            else:
-                answer = ""
+            answer = plan.get("answer", "")
             if isinstance(answer, str) and answer.strip():
                 entities.add(answer.strip())
                 parts = [p.strip() for p in answer.split(",") if p.strip()]
