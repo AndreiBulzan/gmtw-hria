@@ -324,7 +324,7 @@ class RomanianFaithfulness(BaseFaithfulness):
             return super().compute_faithfulness(world, plan, explanation, **kwargs)
 
         # Handle plan=None
-        if not plan:
+        if not plan or not isinstance(plan, dict):
             plan = {}
 
         # Collect refs from plan values
