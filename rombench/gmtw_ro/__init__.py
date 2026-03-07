@@ -23,8 +23,8 @@ __all__ = [
     "FactWorldGenerator",
     "RecipeWorldGenerator",
     "parse_dual_channel_output",
-    "evaluate_instance",  # New
-    "GMTWEvaluator",  # Old
-    "RomanianEvaluator",  # New
+    "evaluate_instance", 
+    "GMTWEvaluator",
+    "RomanianEvaluator",
     "compute_all_metrics",
 ]

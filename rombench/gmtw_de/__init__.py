@@ -15,7 +15,7 @@ from ..gmtw_ro.worlds.recipe import RecipeWorldGenerator
 # German-specific evaluation
 from .eval.de_evaluator import GermanEvaluator, evaluate_instance
 
-_all_ = [
+__all__ = [
     "World",
     "Instance",
     "Entity",
