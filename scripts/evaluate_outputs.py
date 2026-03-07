@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(_file_).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from rombench.gmtw_ro import Instance
 from rombench.registry import (
