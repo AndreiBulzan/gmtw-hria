@@ -68,7 +68,7 @@ def evaluate_batch(
         use_stanza: If True, use Stanza for Romanian lemmatization in F score (Romanian only)
         force_language: Force language (ro/en), otherwise auto-detect
     """
-    
+    print('here')
     # Detect or use forced language
     if force_language:
         language = force_language
@@ -142,6 +142,7 @@ def evaluate_batch(
         status = "✓" if result.U > 0.7 and result.R > 0.7 else "✗"
         print(f"{status} {inst_id}: U={result.U:.2f} R={result.R:.2f} G={result.G:.2f} F={result.F:.2f}")
 
+    print('here')
     # Compute averages
     if results:
         avg_U = sum(r.U for r in results) / len(results)
@@ -190,7 +191,7 @@ def evaluate_batch(
             print(f"\nDetailed metrics saved to {output_metrics}")
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -240,7 +241,7 @@ if _name_ == "_main_":
     )
 
     args = parser.parse_args()
-
+    print('here')
     evaluate_batch(
         args.instances,
         args.outputs,
