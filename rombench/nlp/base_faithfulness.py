@@ -117,18 +117,22 @@ class BaseFaithfulness(ABC):
         
         Uses morphological forms to allow for inflections.
         """
-        # Generate all forms of the entity
-        forms = self.generate_forms(entity.lower())
-        
+        # Normalize the entity before generating forms, so that morphological
+        # variants are compared against the already-normalized text (diacritics
+        # stripped, punctuation removed, etc.)
+        normalized_entity = self.normalize_text(entity)
+        forms = self.generate_forms(normalized_entity)
+
         # Also handle multi-word entities
         if ' ' in entity:
-            forms.update(self._generate_multiword_forms(entity))
-        
+            for phrase_form in self._generate_multiword_forms(entity):
+                forms.add(self.normalize_text(phrase_form))
+
         # Check if any form appears in text
         for form in forms:
             if form in normalized_text:
                 return True
-        
+
         return False
     
     def _generate_multiword_forms(self, phrase: str) -> Set[str]:

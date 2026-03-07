@@ -106,38 +106,54 @@ for model in "${models[@]}"; do
     ################################
     # EASY RO
     ################################
-    python scripts/evaluate_outputs.py \
-        data/gmtw_ro_v0.jsonl \
-        new_data/outputs_easy_ro/ro_${name}.jsonl \
-        --language ro \
-        --save-metrics new_data/metrics_easy_ro/ro_${name}.jsonl
+    if [[ -f "new_data/outputs_easy_ro/ro_${name}.jsonl" ]]; then
+        python scripts/evaluate_outputs.py \
+            data/gmtw_ro_v0.jsonl \
+            new_data/outputs_easy_ro/ro_${name}.jsonl \
+            --language ro \
+            --save-metrics new_data/metrics_easy_ro/ro_${name}.jsonl
+    else
+        echo "  [SKIP] no outputs for easy_ro: ro_${name}.jsonl"
+    fi
 
     ################################
     # EASY EN
     ################################
-    python scripts/evaluate_outputs.py \
-        data/gmtw_ro_v0.jsonl \
-        new_data/outputs_easy_en/en_${name}.jsonl \
-        --language en \
-        --save-metrics new_data/metrics_easy_en/en_${name}.jsonl
+    if [[ -f "new_data/outputs_easy_en/en_${name}.jsonl" ]]; then
+        python scripts/evaluate_outputs.py \
+            data/gmtw_ro_v0.jsonl \
+            new_data/outputs_easy_en/en_${name}.jsonl \
+            --language en \
+            --save-metrics new_data/metrics_easy_en/en_${name}.jsonl
+    else
+        echo "  [SKIP] no outputs for easy_en: en_${name}.jsonl"
+    fi
 
     ################################
     # HARD RO
     ################################
-    python scripts/evaluate_outputs.py \
-        data/gmtw_ro_hard.jsonl \
-        new_data/outputs_hard_ro/ro_${name}.jsonl \
-        --language ro \
-        --save-metrics new_data/metrics_hard_ro/ro_${name}.jsonl
+    if [[ -f "new_data/outputs_hard_ro/ro_${name}.jsonl" ]]; then
+        python scripts/evaluate_outputs.py \
+            data/gmtw_ro_hard.jsonl \
+            new_data/outputs_hard_ro/ro_${name}.jsonl \
+            --language ro \
+            --save-metrics new_data/metrics_hard_ro/ro_${name}.jsonl
+    else
+        echo "  [SKIP] no outputs for hard_ro: ro_${name}.jsonl"
+    fi
 
     ################################
     # HARD EN
     ################################
-    python scripts/evaluate_outputs.py \
-        data/gmtw_ro_hard.jsonl \
-        new_data/outputs_hard_en/en_${name}.jsonl \
-        --language en \
-        --save-metrics new_data/metrics_hard_en/en_${name}.jsonl
+    if [[ -f "new_data/outputs_hard_en/en_${name}.jsonl" ]]; then
+        python scripts/evaluate_outputs.py \
+            data/gmtw_ro_hard.jsonl \
+            new_data/outputs_hard_en/en_${name}.jsonl \
+            --language en \
+            --save-metrics new_data/metrics_hard_en/en_${name}.jsonl
+    else
+        echo "  [SKIP] no outputs for hard_en: en_${name}.jsonl"
+    fi
 
 done
 
