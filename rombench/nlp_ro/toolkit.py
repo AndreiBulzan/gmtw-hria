@@ -116,8 +116,8 @@ class RomanianNLPToolkit:
         "length": 0.15,
     }
 
-    # Minimum words required for full length score (stricter)
-    MIN_WORDS_REQUIRED = 100
+    # Minimum words required for full length score (adjusted to be more reasonable)
+    MIN_WORDS_REQUIRED = 60
 
     # Weights WITH grammar enabled (sum = 1.0)
     WEIGHTS_WITH_GRAMMAR = {
@@ -214,16 +214,16 @@ class RomanianNLPToolkit:
         # Check for diacritics presence
         has_diacritics = has_romanian_diacritics(normalized)
 
-        # Length score - penalize short texts (require 100 words for full score)
-        min_required = self.MIN_WORDS_REQUIRED  # 100 words
+        # Length score - penalize short texts (require 60 words for full score)
+        min_required = self.MIN_WORDS_REQUIRED  # 60 words
         if total_words < 10:
             length_score = 0.2
             is_too_short = True
-        elif total_words < 50:
-            length_score = 0.4 + 0.2 * ((total_words - 10) / 40)
+        elif total_words < 30:
+            length_score = 0.5 + 0.2 * ((total_words - 10) / 20)
             is_too_short = True
         elif total_words < min_required:
-            length_score = 0.6 + 0.4 * ((total_words - 50) / (min_required - 50))
+            length_score = 0.7 + 0.3 * ((total_words - 30) / (min_required - 30))
             is_too_short = True
         else:
             length_score = 1.0

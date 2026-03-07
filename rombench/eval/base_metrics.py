@@ -3,6 +3,12 @@ Base metrics computation (language-agnostic)
 
 Defines the structure for U, G, F metrics that can be
 specialized per language.
+
+Architecture:
+    - U (Understanding) is language-agnostic (constraint/format checking)
+    - G (Generation Quality) is language-specific (subclasses implement)
+    - F (Faithfulness) is language-specific (subclasses implement)
+    - R (Reasoning) is deprecated, kept for backwards compatibility
 """
 
 from abc import ABC, abstractmethod
@@ -32,12 +38,17 @@ class MetricScores:
 class BaseMetrics(ABC):
     """
     Base class for language-specific metrics computation.
-    
-    Subclasses should implement language-specific logic for:
-    - G (generation quality): grammar, style, proper language use
-    - F (faithfulness): entity extraction and matching with morphology
-    
-    U (understanding) is mostly language-agnostic (constraint checking)
+
+    Subclasses must implement:
+    - compute_generation_quality(): G score with language-specific analysis
+    - compute_faithfulness(): F score with language-specific morphology
+
+    U (understanding) is language-agnostic and shared across all languages.
+
+    To add a new language:
+        1. Create a subclass of BaseMetrics
+        2. Implement compute_generation_quality() and compute_faithfulness()
+        3. Create a corresponding evaluator and register it via rombench.registry
     """
 
     def __init__(self, severity_exponent: float = SEVERITY_EXPONENT):
@@ -98,12 +109,10 @@ class BaseMetrics(ABC):
         - Constraint satisfaction (85% weight)
         - Format compliance (15% weight)
         
-        This implementation should work for all languages.
+        This implementation works for all languages.
         """
         from ..gmtw_ro.worlds.base import ConstraintType, GoalType
         from ..gmtw_ro.eval.constraints import check_constraint
-
-        # === Part 1: Constraint satisfaction (85%) ===
         instruction_constraints = [
             c for c in world.constraints if c.type == ConstraintType.INSTRUCTION
         ]
@@ -119,15 +128,17 @@ class BaseMetrics(ABC):
                 if is_satisfied:
                     constraints_satisfied += 1
 
+                description = constraint.description_en or constraint.description_ro
                 constraint_results.append({
                     "id": constraint.id,
-                    "description": constraint.description_ro,  # Could be parameterized
+                    "description": description,
                     "satisfied": is_satisfied,
                 })
             except Exception as e:
+                description = constraint.description_en or constraint.description_ro
                 constraint_results.append({
                     "id": constraint.id,
-                    "description": constraint.description_ro,
+                    "description": description,
                     "satisfied": False,
                     "error": str(e),
                 })
@@ -269,8 +280,7 @@ class BaseMetrics(ABC):
             })
 
         elif world_type == "schedule":
-            days = world.payload.get("days_ro", [])
-            slots = world.payload.get("slots_ro", [])
+            days, slots = self._get_schedule_keys(world)
             expected_keys = {f"{d}_{s}" for d in days for s in slots}
             actual_keys = set(plan.keys())
             
@@ -308,6 +318,29 @@ class BaseMetrics(ABC):
             })
 
         return checks
+
+    def _get_schedule_keys(self, world: Any) -> tuple[list[str], list[str]]:
+        """
+        Extract schedule day and slot keys from world payload.
+
+        Searches for language-specific keys (days_ro, days_en, days_de, etc.)
+        and falls back to the generic 'days' and 'slots' keys.
+        """
+        payload = world.payload
+        days = []
+        slots = []
+
+        for key in ["days_ro", "days_en", "days_de", "days"]:
+            if key in payload and payload[key]:
+                days = payload[key]
+                break
+
+        for key in ["slots_ro", "slots_en", "slots_de", "slots"]:
+            if key in payload and payload[key]:
+                slots = payload[key]
+                break
+
+        return days, slots
 
     def compute_all_metrics(
         self,

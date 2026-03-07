@@ -4,12 +4,6 @@ English evaluator for GMTW-En
 Extends BaseEvaluator with English-specific components.
 """
 
-from typing import Optional
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 from rombench.eval.base_evaluator import BaseEvaluator
 from rombench.eval.base_parser import BaseParser
 from .en_metrics import EnglishMetrics

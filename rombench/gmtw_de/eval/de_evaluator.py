@@ -1,72 +1,64 @@
 """
-Romanian evaluator for GMTW-Ro
+German evaluator for GMTW-De
 
-Extends BaseEvaluator with Romanian-specific components.
+Extends BaseEvaluator with German-specific components.
 """
-
-from typing import Optional
 
 from rombench.eval.base_evaluator import BaseEvaluator
 from rombench.eval.base_parser import BaseParser
-from .ro_metrics import RomanianMetrics
+from .de_metrics import GermanMetrics
 
 
-class RomanianEvaluator(BaseEvaluator):
+class GermanEvaluator(BaseEvaluator):
     """
-    Evaluator for Romanian language outputs.
-    
+    Evaluator for German language outputs.
+
     Uses:
-    - RomanianMetrics for language-specific scoring
+    - GermanMetrics for language-specific scoring
     - BaseParser for JSON extraction (language-agnostic)
     """
-    
+
     @classmethod
     def create(
         cls,
         use_languagetool: bool = False,
-        use_stanza: bool = False,
         severity_exponent: float = 3.0,
         **kwargs
-    ) -> 'RomanianEvaluator':
+    ) -> 'GermanEvaluator':
         """
-        Factory method to create Romanian evaluator.
-        
+        Factory method to create German evaluator.
+
         Args:
             use_languagetool: Enable LanguageTool grammar checking
-            use_stanza: Use Stanza for lemmatization in faithfulness
             severity_exponent: Penalty severity for violations
         """
-        metrics = RomanianMetrics(
+        metrics = GermanMetrics(
             use_languagetool=use_languagetool,
-            use_stanza=use_stanza,
             severity_exponent=severity_exponent,
         )
-        
+
         return cls(
             metrics=metrics,
             parser=BaseParser(),
-            language="ro",
+            language="de",
             **kwargs
         )
 
 
-# Convenience function for backwards compatibility
-def evaluate_instance(instance, output, use_languagetool=False, use_stanza=False, **kwargs):
+def evaluate_instance(instance, output, use_languagetool=False, **kwargs):
     """
-    Evaluate a single instance (backwards compatible interface).
-    
+    Evaluate a single instance (convenience function).
+
     Args:
         instance: Instance to evaluate
         output: Model output string
         use_languagetool: Enable LanguageTool
-        use_stanza: Enable Stanza
-        
+
     Returns:
         EvaluationResult
     """
-    evaluator = RomanianEvaluator.create(
+    evaluator = GermanEvaluator.create(
         use_languagetool=use_languagetool,
-        use_stanza=use_stanza,
         **kwargs
     )
     return evaluator.evaluate_output(instance, output)

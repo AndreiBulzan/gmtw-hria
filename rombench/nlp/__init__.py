@@ -64,6 +64,9 @@ class BaseNLPToolkit(ABC):
     
     Provides interface for text quality analysis specific to each language.
     """
+
+    # Override in subclasses to change the minimum word count for full length score
+    MIN_WORDS_REQUIRED = 60
     
     @abstractmethod
     def analyze(self, text: str) -> TextQualityReport:
@@ -96,6 +99,23 @@ class BaseNLPToolkit(ABC):
     def normalize(self, text: str) -> str:
         """Normalize text for matching"""
         pass
+
+    def _compute_length_score(self, word_count: int) -> float:
+        """
+        Compute length adequacy score.
+
+        Shared across all languages — penalizes short texts using a
+        piecewise linear ramp from 0.2 (< 10 words) to 1.0 (>= MIN_WORDS_REQUIRED).
+        """
+        min_required = self.MIN_WORDS_REQUIRED
+        if word_count < 10:
+            return 0.2
+        elif word_count < 30:
+            return 0.5 + 0.2 * ((word_count - 10) / 20)
+        elif word_count < min_required:
+            return 0.7 + 0.3 * ((word_count - 30) / (min_required - 30))
+        else:
+            return 1.0
 
 
 class BaseGrammarChecker(ABC):

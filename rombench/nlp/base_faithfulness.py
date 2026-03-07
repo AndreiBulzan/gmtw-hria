@@ -62,14 +62,13 @@ class BaseFaithfulness(ABC):
                     entities.add(activity)
                     
         elif world_type == "fact":
-            # Extract answer entities
             answer = plan.get("answer", "")
-            if isinstance(answer, str):
-                # Split answer into potential entities
-                words = answer.split()
-                for word in words:
-                    if len(word) > 3:  # Only meaningful words
-                        entities.add(word)
+            if isinstance(answer, str) and answer.strip():
+                entities.add(answer.strip())
+                parts = [p.strip() for p in answer.split(",") if p.strip()]
+                for part in parts:
+                    if part and len(part) > 3:
+                        entities.add(part)
         
         return entities
     

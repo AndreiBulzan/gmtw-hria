@@ -2,12 +2,15 @@
 Base evaluator for GMTW benchmarks (language-agnostic)
 """
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict
 from typing import Any, Optional
 
 from .base_parser import BaseParser, ParseResult
 from .base_metrics import BaseMetrics, MetricScores
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -119,7 +122,11 @@ class BaseEvaluator(ABC):
             )
 
         except Exception as e:
-            # If evaluation fails, return zero scores
+            logger.error(
+                "Evaluation failed for instance %s: %s",
+                instance.instance_id, e,
+                exc_info=True,
+            )
             return EvaluationResult(
                 instance_id=instance.instance_id,
                 U=0.0,

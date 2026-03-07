@@ -7,7 +7,7 @@ from typing import Literal, Any
 from enum import Enum
 
 
-WorldType = Literal["travel", "schedule", "fact"]
+WorldType = Literal["travel", "schedule", "fact", "recipe"]
 
 
 class ConstraintType(str, Enum):

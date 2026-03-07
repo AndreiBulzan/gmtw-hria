@@ -3,10 +3,6 @@ English grammar checker using LanguageTool
 """
 
 from typing import Any
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(_file_).parent.parent))
 
 from rombench.nlp import BaseGrammarChecker
 

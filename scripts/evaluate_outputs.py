@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
 """
-Evaluate model outputs for GMTW instances (language-agnostic)
+Evaluate model outputs for GMTW instances (multi-language)
 
-Supports both Romanian and English evaluation with automatic language detection.
+Supports Romanian, English, and German evaluation with automatic
+language detection. New languages can be added via the registry.
 
 Optional enhancements:
   --use-languagetool  Include LanguageTool grammar checking in G score
                       (requires: pip install language-tool-python)
   --use-stanza        Use Stanza for Romanian lemmatization in F score
                       (requires: pip install stanza)
-  --language          Force language (ro/en), otherwise auto-detect
+  --language          Force language (ro/en/de), otherwise auto-detect
 """
 
 import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(_file_).parent.parent))
 
 from rombench.gmtw_ro import Instance
-from rombench.gmtw_ro.eval.ro_evaluator import RomanianEvaluator
-from rombench.gmtw_en.eval.en_evaluator import EnglishEvaluator
+from rombench.registry import (
+    create_evaluator as registry_create_evaluator,
+    get_supported_languages,
+    get_language_name,
+)
 
 
 def detect_language(outputs_file: str) -> str:
     """
     Detect which language was used by checking first output.
-    
-    Returns 'ro' or 'en'
+
+    Returns language code (e.g., 'ro', 'en', 'de')
     """
     with open(outputs_file, 'r', encoding='utf-8') as f:
         first_line = f.readline()
@@ -38,18 +42,11 @@ def detect_language(outputs_file: str) -> str:
 
 
 def create_evaluator(language: str, use_languagetool: bool, use_stanza: bool):
-    """Create appropriate evaluator based on language"""
+    """Create appropriate evaluator based on language using registry."""
+    kwargs = {'use_languagetool': use_languagetool}
     if language == 'ro':
-        return RomanianEvaluator.create(
-            use_languagetool=use_languagetool,
-            use_stanza=use_stanza,
-        )
-    elif language == 'en':
-        return EnglishEvaluator.create(
-            use_languagetool=use_languagetool,
-        )
-    else:
-        raise ValueError(f"Unsupported language: {language}")
+        kwargs['use_stanza'] = use_stanza
+    return registry_create_evaluator(language, **kwargs)
 
 
 def evaluate_batch(
@@ -78,8 +75,9 @@ def evaluate_batch(
     else:
         language = detect_language(outputs_file)
     
-    lang_name = "Romanian" if language == "ro" else "English" if language == "en" else language
-    print(f"Detected language: {lang_name}")
+    lang_name = get_language_name(language)
+    print(f"Detected language: {lang_name} ({language})")
+    print(f"Supported languages: {', '.join(get_supported_languages())}")
 
     # Print mode info
     modes = []
@@ -192,7 +190,7 @@ def evaluate_batch(
             print(f"\nDetailed metrics saved to {output_metrics}")
 
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -237,8 +235,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--language",
-        choices=['ro', 'en'],
-        help="Force language (ro/en), otherwise auto-detect",
+        choices=get_supported_languages(),
+        help="Force language (ro/en/de), otherwise auto-detect",
     )
 
     args = parser.parse_args()

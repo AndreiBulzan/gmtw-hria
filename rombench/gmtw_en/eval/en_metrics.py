@@ -5,10 +5,6 @@ Extends base metrics with English language features.
 """
 
 from typing import Any
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from rombench.eval.base_metrics import BaseMetrics
 from rombench.nlp_en import EnglishNLPToolkit, EnglishFaithfulness

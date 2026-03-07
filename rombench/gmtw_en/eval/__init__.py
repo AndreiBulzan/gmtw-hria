@@ -4,7 +4,7 @@ GMTW-En evaluation package
 
 from .en_evaluator import EnglishEvaluator, evaluate_instance
 
-_all_ = [
+__all__ = [
     'EnglishEvaluator',
     'evaluate_instance',
 ]

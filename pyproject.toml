@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rombench"
-version = "0.1.0"
-description = "GMTW-Ro: Grounded Multilingual Task Worlds for Romanian LLM Evaluation"
+version = "0.2.0"
+description = "GMTW: Grounded Multilingual Task Worlds for LLM Evaluation"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
     {name = "GMTW-Ro Team"}
 ]
-keywords = ["llm", "evaluation", "romanian", "benchmark", "nlp"]
+keywords = ["llm", "evaluation", "romanian", "english", "german", "benchmark", "nlp", "multilingual"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",

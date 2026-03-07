@@ -9,7 +9,7 @@ from .base_evaluator import BaseEvaluator, EvaluationResult
 from .base_metrics import BaseMetrics, MetricScores
 from .base_parser import BaseParser, ParseResult
 
-_all_ = [
+__all__ = [
     'BaseEvaluator',
     'EvaluationResult',
     'BaseMetrics',

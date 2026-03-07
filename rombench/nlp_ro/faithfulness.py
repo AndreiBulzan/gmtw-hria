@@ -5,10 +5,6 @@ Uses Romanian morphology to match inflected forms.
 """
 
 from typing import Any, Set
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from rombench.nlp.base_faithfulness import BaseFaithfulness
 
@@ -155,7 +151,9 @@ def add_genitive_dative_for_phrase(term: str) -> Set[str]:
     # Build multi-word forms
     if len(tokens) > 1:
         prefix = " ".join(tokens[:-1])
-        for last_form in forms:
+        # Create a copy of forms to iterate over to avoid "Set changed size during iteration" error
+        base_forms = forms.copy()
+        for last_form in base_forms:
             forms.add(f"{prefix} {last_form}")
     
     return forms

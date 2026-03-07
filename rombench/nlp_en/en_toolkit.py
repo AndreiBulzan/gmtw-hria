@@ -8,10 +8,6 @@ from typing import Optional
 from dataclasses import dataclass
 import math
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from rombench.nlp import BaseNLPToolkit, TextQualityReport
 
 
@@ -25,7 +21,7 @@ class EnglishNLPToolkit(BaseNLPToolkit):
     - Basic style metrics
     """
     
-    MIN_WORDS_REQUIRED = 100  # Minimum for full length score
+    MIN_WORDS_REQUIRED = 60  # Minimum for full length score
     
     def __init__(self, use_grammar: bool = False):
         self.use_grammar = use_grammar
@@ -122,16 +118,6 @@ class EnglishNLPToolkit(BaseNLPToolkit):
         for c in '.,;:!?"()[]{}':
             text = text.replace(c, ' ')
         return ' '.join(text.split())
-    
-    def _compute_length_score(self, word_count: int) -> float:
-        """Compute length adequacy score"""
-        if word_count >= self.MIN_WORDS_REQUIRED:
-            return 1.0
-        elif word_count < 10:
-            return 0.0
-        else:
-            # Smooth interpolation
-            return word_count / self.MIN_WORDS_REQUIRED
     
     def _compute_style_score(self, text: str, word_count: int) -> float:
         """

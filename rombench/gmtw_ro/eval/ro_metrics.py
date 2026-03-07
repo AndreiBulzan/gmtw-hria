@@ -8,11 +8,6 @@ Extends base metrics with Romanian language features:
 """
 
 from typing import Any
-import sys
-from pathlib import Path
-
-# Add parent to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from rombench.eval.base_metrics import BaseMetrics
 from rombench.nlp_ro import RomanianNLPToolkit

@@ -1,21 +1,21 @@
 """
-GMTW-En: GMTW evaluation for English
+GMTW-De: GMTW evaluation for German
 
-English language evaluation using the same world definitions
-as GMTW-Ro, but with English-specific NLP analysis.
+German language evaluation using the same world definitions
+as GMTW-Ro, with German-specific NLP analysis.
 """
 
-# Re-use world definitions from gmtw_ro (they're language-agnostic)
+# Re-use world definitions (they're language-agnostic)
 from ..gmtw_ro.worlds.base import World, Instance, Entity, Constraint, Goal
 from ..gmtw_ro.worlds.travel import TravelWorldGenerator
 from ..gmtw_ro.worlds.schedule import ScheduleWorldGenerator
 from ..gmtw_ro.worlds.fact import FactWorldGenerator
 from ..gmtw_ro.worlds.recipe import RecipeWorldGenerator
 
-# English-specific evaluation
-from .eval.en_evaluator import EnglishEvaluator, evaluate_instance
+# German-specific evaluation
+from .eval.de_evaluator import GermanEvaluator, evaluate_instance
 
-__all__ = [
+_all_ = [
     "World",
     "Instance",
     "Entity",
@@ -25,6 +25,6 @@ __all__ = [
     "ScheduleWorldGenerator",
     "FactWorldGenerator",
     "RecipeWorldGenerator",
-    "EnglishEvaluator",
+    "GermanEvaluator",
     "evaluate_instance",
 ]
