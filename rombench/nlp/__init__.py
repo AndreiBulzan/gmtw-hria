@@ -66,7 +66,7 @@ class BaseNLPToolkit(ABC):
     """
 
     # Override in subclasses to change the minimum word count for full length score
-    MIN_WORDS_REQUIRED = 60
+    MIN_WORDS_REQUIRED = 100
     
     @abstractmethod
     def analyze(self, text: str) -> TextQualityReport:
@@ -110,10 +110,10 @@ class BaseNLPToolkit(ABC):
         min_required = self.MIN_WORDS_REQUIRED
         if word_count < 10:
             return 0.2
-        elif word_count < 30:
-            return 0.5 + 0.2 * ((word_count - 10) / 20)
+        elif word_count < 50:
+            return 0.2 + 0.4 * ((word_count - 10) / 40)
         elif word_count < min_required:
-            return 0.7 + 0.3 * ((word_count - 30) / (min_required - 30))
+            return 0.6 + 0.4 * ((word_count - 50) / (min_required - 50))
         else:
             return 1.0
 

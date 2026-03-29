@@ -21,7 +21,7 @@ class EnglishNLPToolkit(BaseNLPToolkit):
     - Basic style metrics
     """
     
-    MIN_WORDS_REQUIRED = 60  # Minimum for full length score
+    MIN_WORDS_REQUIRED = 100  # Minimum for full length score
     
     def __init__(self, use_grammar: bool = False):
         self.use_grammar = use_grammar

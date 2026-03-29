@@ -33,8 +33,10 @@ def normalize_text(text: str) -> str:
     for src, dst in umlaut_map.items():
         text = text.replace(src, dst)
 
-    # Also normalize ae/oe/ue to base
-    text = text.replace('ae', 'a').replace('oe', 'o').replace('ue', 'u')
+    # NOTE: Do NOT blanket-replace ae/oe/ue→a/o/u here.  That destroys
+    # legitimate German words such as "Mauer", "Feuer", "Abenteuer",
+    # "Museum", etc.  Umlaut normalisation (ä→a, ö→o, ü→u) above is
+    # sufficient for matching purposes.
 
     # Remove punctuation
     for c in '.,;:!?"()[]{}«»„"':
@@ -229,14 +231,47 @@ class GermanFaithfulness(BaseFaithfulness):
         total = len(entities)
         mentioned_count = len(mentioned)
         F_raw = mentioned_count / total if total > 0 else 1.0
+
+        # Hallucination penalty: check for canonical entities that appear
+        # in the explanation but were NOT part of the plan.
+        canonical = getattr(world, 'canonical_entities', {})
+        hallucinated = []
+        if canonical and isinstance(plan, dict):
+            planned_refs = set()
+            for val in plan.values():
+                if isinstance(val, list):
+                    planned_refs.update(v for v in val if isinstance(v, str) and v)
+                elif isinstance(val, str) and val and val.lower() != "null":
+                    planned_refs.add(val)
+
+            for eid, ent in canonical.items():
+                if eid in planned_refs:
+                    continue
+                ent_name = getattr(ent, 'name', '')
+                all_names = [ent_name] + getattr(ent, 'aliases', [])
+                # Skip if any name variant matches a planned reference
+                if any(n and (n == ref or n.lower() == ref.lower())
+                       for n in all_names for ref in planned_refs):
+                    continue
+                # Check if any name variant is mentioned in explanation
+                if any(n and self.check_entity_mentioned(n, normalized_text)
+                       for n in all_names):
+                    hallucinated.append(eid)
+
+        hallucination_penalty = 0.9 ** len(hallucinated) if hallucinated else 1.0
+        F_linear = F_raw * hallucination_penalty
+
         severity_exponent = kwargs.get('severity_exponent', 3.0)
-        F = F_raw ** severity_exponent
+        F = F_linear ** severity_exponent
 
         return {
             "F": F,
-            "F_linear": F_raw,
+            "F_linear": F_linear,
+            "F_mention": F_raw,
+            "F_hallucination_penalty": hallucination_penalty,
             "entities_total": total,
             "entities_mentioned": mentioned_count,
             "mentioned_entities": mentioned,
             "missing_entities": missing,
-        }
+            "hallucinated": hallucinated,
+        

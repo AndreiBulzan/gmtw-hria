@@ -29,6 +29,7 @@ class Constraint:
     type: ConstraintType
     description_ro: str
     description_en: str = ""
+    description_de: str = ""
     check_fn: str = ""  # Name of the function to call for verification
     params: dict[str, Any] = field(default_factory=dict)
 
@@ -85,6 +86,7 @@ class World:
                     "type": c.type.value,
                     "description_ro": c.description_ro,
                     "description_en": c.description_en,
+                    "description_de": c.description_de,
                     "check_fn": c.check_fn,
                     "params": c.params,
                 }
@@ -127,6 +129,7 @@ class World:
                     type=ConstraintType(c["type"]),
                     description_ro=c["description_ro"],
                     description_en=c.get("description_en", ""),
+                    description_de=c.get("description_de", ""),
                     check_fn=c.get("check_fn", ""),
                     params=c.get("params", {}),
                 )
@@ -162,17 +165,21 @@ class Instance:
     world: World
     prompt_ro: str
     prompt_en: str = ""
+    prompt_de: str = ""
     meta: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
-        return {
+        d = {
             "instance_id": self.instance_id,
             "world": self.world.to_dict(),
             "prompt_ro": self.prompt_ro,
             "prompt_en": self.prompt_en,
             "meta": self.meta,
         }
+        if self.prompt_de:
+            d["prompt_de"] = self.prompt_de
+        return d
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Instance":
@@ -182,5 +189,6 @@ class Instance:
             world=World.from_dict(data["world"]),
             prompt_ro=data["prompt_ro"],
             prompt_en=data.get("prompt_en", ""),
+            prompt_de=data.get("prompt_de", ""),
             meta=data.get("meta", {}),
         )

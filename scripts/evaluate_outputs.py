@@ -27,6 +27,14 @@ from rombench.registry import (
 )
 
 
+class ZeroResult:
+    """Result placeholder for missing outputs (all metrics zero)."""
+    def __init__(self, d):
+        self.__dict__.update(d)
+    def to_dict(self):
+        return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+
+
 def detect_language(outputs_file: str) -> str:
     """
     Detect which language was used by checking first output.
@@ -125,12 +133,6 @@ def evaluate_batch(
                 'missing': True,
                 'language': language,
             }
-            # Wrap in simple object for attribute access
-            class ZeroResult:
-                def __init__(self, d):
-                    self.__dict__.update(d)
-                def to_dict(self):
-                    return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
             results.append(ZeroResult(zero_result))
             continue
 
@@ -141,7 +143,6 @@ def evaluate_batch(
         status = "✓" if result.U > 0.7 and result.R > 0.7 else "✗"
         #print(f"{status} {inst_id}: U={result.U:.2f} R={result.R:.2f} G={result.G:.2f} F={result.F:.2f}")
 
-    print('here')
     # Compute averages
     if results:
         avg_U = sum(r.U for r in results) / len(results)
@@ -169,7 +170,7 @@ def evaluate_batch(
         print(f"  F (Faithfulness):       {avg_F:.3f}")
         print("="*60)
         print(f"  FINAL SCORE:            {final_score:.1%}")
-        print(f" 50% x U + 25% x G + 25% x F)")
+        print(f"  (50% x U + 25% x G + 25% x F)")
         print("="*60)
 
         # If there were missing outputs, also show score excluding them

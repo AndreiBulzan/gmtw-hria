@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 
-echo "=== GMTW FULL PIPELINE (RO + EN) ==="
+echo "=== GMTW FULL PIPELINE (RO + EN + DE) ==="
 
 mkdir -p new_data/outputs_easy_ro
 mkdir -p new_data/outputs_easy_en
+mkdir -p new_data/outputs_easy_de
 mkdir -p new_data/outputs_hard_ro
 mkdir -p new_data/outputs_hard_en
+mkdir -p new_data/outputs_hard_de
 
 mkdir -p new_data/metrics_easy_ro
 mkdir -p new_data/metrics_easy_en
+mkdir -p new_data/metrics_easy_de
 mkdir -p new_data/metrics_hard_ro
 mkdir -p new_data/metrics_hard_en
+mkdir -p new_data/metrics_hard_de
 
 
 models=(
@@ -86,6 +90,28 @@ if [ "$generate" = true ]; then
             --output new_data/outputs_hard_en/en_${name}.jsonl \
             --batch-size 64
 
+        ################################
+        # EASY DE
+        ################################
+        python scripts/run_vllm_batch.py \
+            data/gmtw_de_test.jsonl \
+            --language de \
+            --model-path "$model" \
+            --output new_data/outputs_easy_de/de_${name}.jsonl \
+            --batch-size 64
+
+        ################################
+        # HARD DE
+        ################################
+        if [[ -f "data/gmtw_de_hard.jsonl" ]]; then
+            python scripts/run_vllm_batch.py \
+                data/gmtw_de_hard.jsonl \
+                --language de \
+                --model-path "$model" \
+                --output new_data/outputs_hard_de/de_${name}.jsonl \
+                --batch-size 64
+        fi
+
     done
 fi
 
@@ -153,6 +179,32 @@ for model in "${models[@]}"; do
             --save-metrics new_data/metrics_hard_en/en_${name}.jsonl
     else
         echo "  [SKIP] no outputs for hard_en: en_${name}.jsonl"
+    fi
+
+    ################################
+    # EASY DE
+    ################################
+    if [[ -f "new_data/outputs_easy_de/de_${name}.jsonl" ]]; then
+        python scripts/evaluate_outputs.py \
+            data/gmtw_de_test.jsonl \
+            new_data/outputs_easy_de/de_${name}.jsonl \
+            --language de \
+            --save-metrics new_data/metrics_easy_de/de_${name}.jsonl
+    else
+        echo "  [SKIP] no outputs for easy_de: de_${name}.jsonl"
+    fi
+
+    ################################
+    # HARD DE
+    ################################
+    if [[ -f "new_data/outputs_hard_de/de_${name}.jsonl" ]]; then
+        python scripts/evaluate_outputs.py \
+            data/gmtw_de_hard.jsonl \
+            new_data/outputs_hard_de/de_${name}.jsonl \
+            --language de \
+            --save-metrics new_data/metrics_hard_de/de_${name}.jsonl
+    else
+        echo "  [SKIP] no outputs for hard_de: de_${name}.jsonl"
     fi
 
 done

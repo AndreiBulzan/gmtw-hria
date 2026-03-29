@@ -23,7 +23,7 @@ UMLAUT_WORDS = {
     "muenchen": "münchen", "nuernberg": "nürnberg", "koeln": "köln",
     "duesseldorf": "düsseldorf", "goettingen": "göttingen",
     "wuerzburg": "würzburg", "luebeck": "lübeck", "tuebingen": "tübingen",
-    "zuerick": "zürich", "oesterreich": "österreich",
+    "zuerich": "zürich", "oesterreich": "österreich",
     "ueber": "über", "fuer": "für", "wuerden": "würden",
     "muessen": "müssen", "koennen": "können", "moechte": "möchte",
     "waehrend": "während", "spaeter": "später", "frueh": "früh",
@@ -32,21 +32,21 @@ UMLAUT_WORDS = {
     "strasse": "straße", "grosse": "große", "heisse": "heiße",
     "schliessen": "schließen", "aussen": "außen", "draussen": "draußen",
     "genuegend": "genügend", "ermaessigung": "ermäßigung",
-    "fruehstueck": "frühstück", "mittagessen": "mittagessen",
-    "abendessen": "abendessen", "sehenswuerdigkeit": "sehenswürdigkeit",
-    "oeffentlich": "öffentlich", "verkehrsmittel": "verkehrsmittel",
+    "fruehstueck": "frühstück",
+    "sehenswuerdigkeit": "sehenswürdigkeit",
+    "oeffentlich": "öffentlich",
 }
 
 # Common English words that shouldn't appear in German text
 # (excluding legitimate loanwords like Computer, Manager, etc.)
 ENGLISH_ONLY_WORDS = {
-    "the", "is", "are", "was", "were", "have", "has", "had",
-    "will", "would", "should", "could", "can", "may", "might",
+    "the", "is", "are", "were", "have", "has", "had",
+    "would", "should", "could", "can", "may", "might",
     "this", "that", "these", "those", "which", "where", "when",
     "because", "although", "however", "therefore", "furthermore",
     "beautiful", "wonderful", "amazing", "excellent", "great",
     "important", "interesting", "different", "several",
-    "actually", "really", "very", "also", "just", "well",
+    "actually", "really", "very", "just", "well",
     "about", "after", "before", "between", "during", "through",
     "visit", "visited", "recommend", "recommended",
     "enjoy", "enjoyed", "experience", "experienced",
@@ -60,6 +60,35 @@ GERMAN_LOANWORDS = {
     "design", "style", "trend", "cool", "hip",
     "restaurant", "hotel", "bar", "café", "check-in",
     "ticket", "tour", "guide", "shuttle", "transfer",
+}
+
+# German words that look like English but are legitimate German.
+# Must be excluded from ENGLISH_ONLY_WORDS before flagging.
+GERMAN_EXCLUSION_WORDS = {
+    "also",    # German: so / therefore / well
+    "was",     # German: what
+    "will",    # German: wants (to)
+    "weil",    # German: because
+    "still",   # German: quiet
+    "art",     # German: kind / type / manner
+    "rat",     # German: council / advice
+    "tag",     # German: day
+    "hut",     # German: hat
+    "rein",    # German: pure / in
+    "lager",   # German: warehouse / camp
+    "stern",   # German: star
+    "hang",    # German: slope
+    "hat",     # German: has (3rd person of haben)
+    "an",      # German: at / on
+    "in",      # German: in
+    "so",      # German: so / this way
+    "here",    # German: army (Heer, but "here" can appear)
+    "her",     # German: towards (direction)
+    "die",     # German: the / those
+    "wand",    # German: wall
+    "bad",     # German: bath
+    "fall",    # German: case / fall
+    "must",    # German: must (identical meaning)
 }
 
 
@@ -76,7 +105,7 @@ class GermanNLPToolkit(BaseNLPToolkit):
     Optional grammar checking via LanguageTool (if available).
     """
 
-    MIN_WORDS_REQUIRED = 60
+    MIN_WORDS_REQUIRED = 100
 
     # Default weights (sum to 1.0)
     DEFAULT_WEIGHTS = {
@@ -309,7 +338,7 @@ class GermanNLPToolkit(BaseNLPToolkit):
         english_count = 0
         for word in words:
             w = word.lower().strip('.,;:!?"()[]{}')
-            if w in ENGLISH_ONLY_WORDS and w not in GERMAN_LOANWORDS:
+            if w in ENGLISH_ONLY_WORDS and w not in GERMAN_LOANWORDS and w not in GERMAN_EXCLUSION_WORDS:
                 english_count += 1
 
         if english_count == 0:

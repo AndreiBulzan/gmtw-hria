@@ -90,9 +90,22 @@ class BaseParser:
         Returns:
             (json_string, start_pos, end_pos) or (None, 0, 0) if not found
         """
-        # Try markdown code blocks first
+        # Pre-process: replace Romanian-style and other non-standard quotes
+        # with standard double quotes for JSON extraction.  We work on a
+        # normalised copy so that start/end positions still map to text.
+        normalised = text
+        for ch in '\u201e\u201d\u201c\u00ab\u00bb\u201a\u2018\u2019':
+            normalised = normalised.replace(ch, '"')
+
+        # Try markdown code blocks first (with optional language tag)
         markdown_pattern = r"```(?:json)?\s*(\{.*?\})\s*```"
-        match = re.search(markdown_pattern, text, re.DOTALL)
+        match = re.search(markdown_pattern, normalised, re.DOTALL)
+        if match:
+            return match.group(1), match.start(), match.end()
+
+        # Also try markdown blocks that might have extra whitespace
+        markdown_pattern2 = r"```\s*(?:json)?\s*\n?\s*(\{.*?\})\s*\n?\s*```"
+        match = re.search(markdown_pattern2, normalised, re.DOTALL)
         if match:
             return match.group(1), match.start(), match.end()
 
@@ -101,10 +114,10 @@ class BaseParser:
         last_open = -1
         matching_close = -1
 
-        for i in range(len(text) - 1, -1, -1):
-            if text[i] == '}':
+        for i in range(len(normalised) - 1, -1, -1):
+            if normalised[i] == '}':
                 brace_count += 1
-            elif text[i] == '{':
+            elif normalised[i] == '{':
                 brace_count -= 1
                 if brace_count == 0:
                     last_open = i
@@ -112,17 +125,17 @@ class BaseParser:
 
         if last_open != -1:
             brace_count = 0
-            for i in range(last_open, len(text)):
-                if text[i] == '{':
+            for i in range(last_open, len(normalised)):
+                if normalised[i] == '{':
                     brace_count += 1
-                elif text[i] == '}':
+                elif normalised[i] == '}':
                     brace_count -= 1
                     if brace_count == 0:
                         matching_close = i
                         break
 
             if matching_close != -1:
-                json_str = text[last_open:matching_close + 1]
+                json_str = normalised[last_open:matching_close + 1]
                 return json_str, last_open, matching_close + 1
 
         return None, 0, 0
@@ -152,7 +165,36 @@ class BaseParser:
         else:
             repair_error = "json-repair not available"
 
+        # Stage 3: Fallback extraction (strip comments, fix trailing commas)
+        plan = self._fallback_extraction(json_str)
+        if plan is not None:
+            return plan, True, ""
+
         return None, False, f"Parse failed: {strict_error}; Repair: {repair_error}"
+
+    def _fallback_extraction(self, json_str: str) -> Optional[dict]:
+        """
+        Fallback extraction for simple JSON patterns.
+
+        Handles:
+        - Inline/block comments
+        - Trailing commas
+        - Romanian-style quotation marks
+        """
+        try:
+            s = json_str
+            # Remove comments
+            s = re.sub(r'//.*?\n', '\n', s)
+            s = re.sub(r'/\*.*?\*/', '', s, flags=re.DOTALL)
+            # Fix trailing commas
+            s = re.sub(r',\s*}', '}', s)
+            s = re.sub(r',\s*]', ']', s)
+            # Replace remaining non-standard quotes
+            for ch in '\u201e\u201d\u201c\u00ab\u00bb\u201a\u2018\u2019':
+                s = s.replace(ch, '"')
+            return json.loads(s)
+        except Exception:
+            return None
 
 
 def parse_dual_channel_output(output: str) -> ParseResult:

@@ -364,8 +364,15 @@ class BaseMetrics(ABC):
         """
         plan_for_eval = plan if plan is not None else {}
 
+        # If plan is not a dict (e.g. a JSON array), constraint checking
+        # would crash.  Use an empty dict for U computation (all
+        # constraints will simply fail) while still passing the original
+        # plan to F so entity extraction can handle lists gracefully.
+        plan_for_U = plan_for_eval if isinstance(plan_for_eval, dict) else {}
+        is_non_dict_plan = not isinstance(plan_for_eval, dict) and plan_for_eval is not None
+
         # Compute metrics
-        U_details = self.compute_understanding(world, plan_for_eval, format_ok, repaired)
+        U_details = self.compute_understanding(world, plan_for_U, format_ok, repaired)
         G_details = self.compute_generation_quality(explanation, **kwargs)
         F_details = self.compute_faithfulness(world, plan_for_eval, explanation, **kwargs)
 
