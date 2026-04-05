@@ -94,7 +94,7 @@ if [ "$generate" = true ]; then
         # EASY DE
         ################################
         python scripts/run_vllm_batch.py \
-            data/gmtw_de_test.jsonl \
+            data/gmtw_ro_v0_DE_test.jsonl \
             --language de \
             --model-path "$model" \
             --output new_data/outputs_easy_de/de_${name}.jsonl \
@@ -186,7 +186,7 @@ for model in "${models[@]}"; do
     ################################
     if [[ -f "new_data/outputs_easy_de/de_${name}.jsonl" ]]; then
         python scripts/evaluate_outputs.py \
-            data/gmtw_de_test.jsonl \
+            data/gmtw_ro_v0_DE_test.jsonl \
             new_data/outputs_easy_de/de_${name}.jsonl \
             --language de \
             --save-metrics new_data/metrics_easy_de/de_${name}.jsonl

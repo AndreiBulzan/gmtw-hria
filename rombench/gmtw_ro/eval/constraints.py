@@ -1311,30 +1311,71 @@ def _extract_plan_entity_ids(plan: dict) -> list[str]:
     return entity_ids
 
 
+def _normalize_entity_ref(ref: str) -> str:
+    """
+    Normalize an entity reference for fuzzy matching.
+
+    Steps:
+    1. Lowercase and strip surrounding whitespace.
+    2. Map umlauts/ß to base ASCII (ä→a, ö→o, ü→u, ß→ss).
+    3. Strip common German case/declension endings from each word that is
+       long enough (≥7 chars) to avoid mangling short words like "Park" or
+       "Garten".
+
+    This lets "Ethnographischen Museums Siebenbürgens" match the canonical
+    alias "Ethnographisches Museum Siebenbürgens" even after inflection.
+    """
+    s = ref.lower().strip()
+    for uml, base in [('ä', 'a'), ('ö', 'o'), ('ü', 'u'), ('ß', 'ss')]:
+        s = s.replace(uml, base)
+    stemmed = []
+    for w in s.split():
+        stem = w
+        if len(w) > 6:
+            for suffix in ("ens", "en", "em", "es", "er", "e", "s", "n"):
+                if w.endswith(suffix) and len(w) - len(suffix) >= 4:
+                    stem = w[:-len(suffix)]
+                    break
+        stemmed.append(stem)
+    return " ".join(stemmed)
+
+
 def _resolve_entity_id(world: World, entity_ref: str) -> str:
     """
-    Resolve entity reference to canonical ID
+    Resolve entity reference to canonical ID.
 
     entity_ref can be:
     - An entity ID (e.g., "A1")
-    - An entity name (e.g., "Biserica Neagră")
+    - An entity name or alias (e.g., "Botanischer Garten")
+    - An inflected/umlaut-substituted form (e.g., "Botanischen Gartens",
+      "Botanischer Garten" with ö→oe, etc.)
 
-    Returns the canonical ID or the original ref if not found
+    Resolution order:
+    1. Direct ID match.
+    2. Exact case-insensitive name/alias match.
+    3. Normalized fuzzy match (umlaut-stripped + case-ending-stripped).
     """
-    # Check if it's already an ID
+    # 1. Direct ID
     if entity_ref in world.canonical_entities:
         return entity_ref
 
-    # Try to find by name
     entity_ref_lower = entity_ref.lower().strip()
 
+    # 2. Exact name/alias match (case-insensitive)
     for entity_id, entity in world.canonical_entities.items():
         if entity.name.lower().strip() == entity_ref_lower:
             return entity_id
         if entity_ref_lower in [alias.lower() for alias in entity.aliases]:
             return entity_id
 
-    # Not found, return original
+    # 3. Normalized fuzzy match
+    ref_norm = _normalize_entity_ref(entity_ref)
+    for entity_id, entity in world.canonical_entities.items():
+        all_names = [entity.name] + entity.aliases
+        for name in all_names:
+            if _normalize_entity_ref(name) == ref_norm:
+                return entity_id
+
     return entity_ref
 
 

@@ -231,49 +231,36 @@ class GermanNLPToolkit(BaseNLPToolkit):
         """
         Check proper use of German umlauts (ä, ö, ü, ß).
 
-        Detects:
-        - ae/oe/ue used instead of ä/ö/ü
-        - ss used instead of ß (context-dependent)
-        - Missing umlauts in known words
+        A word is only counted as a substitution if it appears verbatim in the
+        UMLAUT_WORDS dictionary (e.g. "muenchen" instead of "münchen").  Raw
+        digraph counts (ae/oe/ue) are intentionally NOT used here because many
+        legitimate German words contain these sequences ("Mauer", "Feuer",
+        "Abenteuer", "Museum", …) and would be falsely penalised.
         """
         if not words:
             return 1.0
 
-        text_lower = text.lower()
-
-        # Check for umlaut presence
-        has_umlauts = any(c in text for c in 'äöüÄÖÜß')
-
-        # Check for substitutions (ae, oe, ue used instead of umlauts)
         substitution_count = 0
         total_checkable = 0
 
         for word in words:
             w = word.lower()
-            # Check known words that should have umlauts
             if w in UMLAUT_WORDS:
+                # Known umlaut substitution (e.g. "muenchen" should be "münchen")
                 substitution_count += 1
                 total_checkable += 1
             elif any(c in w for c in 'äöüß'):
+                # Word uses a proper umlaut — counts as correctly checkable
                 total_checkable += 1
 
-        # Check for ae/oe/ue patterns
-        ae_count = text_lower.count('ae') + text_lower.count('oe') + text_lower.count('ue')
-        umlaut_count = sum(text_lower.count(c) for c in 'äöüß')
-
-        if ae_count + umlaut_count == 0:
-            # No umlaut-relevant content - neutral score
+        if total_checkable == 0:
+            # No umlaut-relevant words found — neutral score
             return 0.9
 
-        if umlaut_count == 0 and ae_count > 0:
-            # Substitutions used instead of umlauts
-            return max(0.3, 1.0 - 0.1 * ae_count)
-
         if substitution_count > 0:
-            # Known wrong words found
             return max(0.4, 1.0 - 0.15 * substitution_count)
 
-        # Umlauts present and no obvious substitutions
+        # Umlauts are present and no known substitutions found
         return 1.0
 
     def _compute_style_score(

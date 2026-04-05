@@ -8,6 +8,7 @@ Handles German morphology for entity matching:
 - Plural forms
 """
 
+import itertools
 from typing import Any, Set
 import unicodedata
 
@@ -120,6 +121,41 @@ def german_morphological_forms(token: str) -> Set[str]:
     return forms
 
 
+def _german_adj_forms(token: str) -> Set[str]:
+    """
+    Generate declined forms of a German adjective (or attributive adjective).
+
+    Strips any existing adjective ending to recover the stem, then adds all
+    four-case declension endings (weak, mixed, strong declension all covered
+    by -e / -en / -em / -er / -es).
+    """
+    w = token.lower()
+    stem = w
+    # Strip the longest matching adjective ending first (order: longer → shorter)
+    for ending in ("em", "en", "er", "es", "e"):
+        if w.endswith(ending) and len(w) > len(ending) + 3:
+            stem = w[:-len(ending)]
+            break
+    forms = {w}
+    for ending in ("e", "en", "em", "er", "es"):
+        forms.add(stem + ending)
+    return forms
+
+
+def _german_word_forms(token: str) -> Set[str]:
+    """
+    Combined noun + adjective forms for a German word used in a non-final
+    position of a multi-word entity name.
+
+    A non-final token can be either an adjective ("Ethnographisches") or a
+    noun in a compound ("Museum" in "Ethnographisches Museum Siebenbürgens").
+    Both need to be covered:
+    - Adjective endings via _german_adj_forms  ("-e/-en/-em/-er/-es")
+    - Noun case endings via german_morphological_forms ("-s", "-en", …)
+    """
+    return german_morphological_forms(token) | _german_adj_forms(token)
+
+
 class GermanFaithfulness(BaseFaithfulness):
     """German-specific faithfulness checking."""
 
@@ -136,9 +172,10 @@ class GermanFaithfulness(BaseFaithfulness):
         Generate forms for multi-word German phrases.
 
         Handles:
-        - Genitive constructions (der Schwarzwald → des Schwarzwaldes)
-        - Compound word formation (Schwarzer Wald → Schwarzwald)
-        - Case inflection on last word
+        - Adjective declension across all four cases for every non-last token
+          (e.g. "Ethnographisches Museum" → "Ethnographischen Museums" in gen.)
+        - Compound word formation (all tokens joined)
+        - Genitive "des" prefix forms on the last word
         """
         forms = {phrase.lower()}
         tokens = phrase.split()
@@ -146,12 +183,16 @@ class GermanFaithfulness(BaseFaithfulness):
         if not tokens:
             return forms
 
-        # Apply morphology to last word
+        # Apply full cross-product of adjective × noun inflections
         if len(tokens) > 1:
-            prefix = " ".join(tokens[:-1]).lower()
-            last_forms = german_morphological_forms(tokens[-1])
-            for last_form in last_forms:
-                forms.add(f"{prefix} {last_form}")
+            # Combined noun+adjective forms for every non-last token so both
+            # "Ethnographischen" (adjective) and "Museums" (noun genitive) are
+            # covered regardless of whether the token is an adj or a noun.
+            adj_form_sets = [_german_word_forms(t) for t in tokens[:-1]]
+            noun_forms = german_morphological_forms(tokens[-1])
+            for adj_combo in itertools.product(*adj_form_sets):
+                for noun_form in noun_forms:
+                    forms.add(" ".join(list(adj_combo) + [noun_form]))
 
         # Try compound word (join all words)
         compound = "".join(t.lower() for t in tokens)

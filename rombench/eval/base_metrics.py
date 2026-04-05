@@ -207,6 +207,33 @@ class BaseMetrics(ABC):
             "format_checks": format_checks,
         }
 
+    # Canonical-to-alias mapping for recipe meal name keys.
+    # Models prompted in EN or DE may use these instead of the Romanian keys.
+    _MEAL_ALIASES: dict[str, list[str]] = {
+        "mic_dejun": ["breakfast", "frühstück", "fruehstueck", "morgen"],
+        "pranz":     ["lunch", "mittagessen"],
+        "cina":      ["dinner", "abendessen"],
+    }
+
+    @classmethod
+    def _normalize_recipe_key(cls, key: str) -> str:
+        """
+        Map a recipe plan key to its canonical Romanian form.
+
+        e.g. "day1_breakfast"     → "day1_mic_dejun"
+             "day2_Mittagessen"   → "day2_pranz"
+             "day3_mic_dejun"     → "day3_mic_dejun"  (unchanged)
+        """
+        for d in range(1, 20):
+            prefix = f"day{d}_"
+            if key.startswith(prefix):
+                suffix = key[len(prefix):].lower()
+                for canonical, aliases in cls._MEAL_ALIASES.items():
+                    if suffix in aliases:
+                        return f"{prefix}{canonical}"
+                return key
+        return key
+
     def _check_format_compliance(self, world: Any, plan: dict, format_ok: bool, repaired: bool) -> list[dict]:
         """Check format compliance (language-agnostic)"""
         checks = []
@@ -269,16 +296,17 @@ class BaseMetrics(ABC):
             num_days = world.payload.get("num_days", 2)
             meals = world.payload.get("meals_per_day", ["mic_dejun", "pranz", "cina"])
             expected_keys = {f"day{d}_{m}" for d in range(1, num_days + 1) for m in meals}
-            # actual_keys already computed above
+            # Normalize actual keys so English/German meal names are accepted
+            normalized_actual_keys = {self._normalize_recipe_key(k) for k in actual_keys}
             checks.append({
                 "id": "F_KEYS_PRESENT",
                 "description": f"All {len(expected_keys)} meal keys present",
-                "satisfied": expected_keys <= actual_keys,
+                "satisfied": expected_keys <= normalized_actual_keys,
             })
             checks.append({
                 "id": "F_NO_EXTRA_KEYS",
                 "description": "No unexpected keys",
-                "satisfied": actual_keys <= expected_keys,
+                "satisfied": normalized_actual_keys <= expected_keys,
             })
             checks.append({
                 "id": "F_VALUE_TYPES",

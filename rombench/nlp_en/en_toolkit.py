@@ -29,11 +29,9 @@ class EnglishNLPToolkit(BaseNLPToolkit):
         
         if use_grammar:
             try:
-                from ..nlp_ro.grammar import is_available
-                if is_available():
-                    from .en_grammar import EnglishGrammarChecker
-                    self.grammar_checker = EnglishGrammarChecker()
-            except ImportError:
+                from .en_grammar import EnglishGrammarChecker
+                self.grammar_checker = EnglishGrammarChecker()
+            except (ImportError, Exception):
                 pass
     
     def analyze(self, text: str) -> TextQualityReport:
