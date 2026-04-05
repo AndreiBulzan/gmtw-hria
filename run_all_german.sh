@@ -29,7 +29,7 @@ models=(
 "meta-llama/Llama-2-7b-hf"
 )
 
-generate=false
+generate=true
 
 model_name () {
     basename "$1" | tr '[:upper:]' '[:lower:]'
