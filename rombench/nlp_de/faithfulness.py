@@ -274,4 +274,4 @@ class GermanFaithfulness(BaseFaithfulness):
             "mentioned_entities": mentioned,
             "missing_entities": missing,
             "hallucinated": hallucinated,
-        
+        }

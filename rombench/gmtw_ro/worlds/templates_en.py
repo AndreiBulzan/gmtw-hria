@@ -267,10 +267,10 @@ IMPORTANT - RESPONSE ORDER:
 
 JSON format (at the end):
 {{
-  "day1_breakfast": "dish name",
-  "day1_lunch": "dish name",
-  "day1_dinner": "dish name",
-  "day2_breakfast": "dish name",
+  "day1_mic_dejun": "dish name",
+  "day1_pranz": "dish name",
+  "day1_cina": "dish name",
+  "day2_mic_dejun": "dish name",
   ...
 }}
 

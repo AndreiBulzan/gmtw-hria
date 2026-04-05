@@ -259,10 +259,10 @@ WICHTIG - REIHENFOLGE DER ANTWORT:
 
 JSON-Format (am Ende):
 {{
-  "day1_breakfast": "Gerichtname",
-  "day1_lunch": "Gerichtname",
-  "day1_dinner": "Gerichtname",
-  "day2_breakfast": "Gerichtname",
+  "day1_mic_dejun": "Gerichtname",
+  "day1_pranz": "Gerichtname",
+  "day1_cina": "Gerichtname",
+  "day2_mic_dejun": "Gerichtname",
   ...
 }}
 

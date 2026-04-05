@@ -62,7 +62,7 @@ def run_vllm_batch(
     # Prepare all prompts using the model's native chat template
     prompts = []
     for inst in instances:
-        prompt = inst.prompt_ro if language == "ro" else inst.prompt_en
+        prompt = inst.prompt_ro if language == "ro" else (inst.prompt_de if language == "de" else inst.prompt_en)
         # Apply chat template from tokenizer (auto-detects Llama/Gemma/Mistral/etc.)
         chat_prompt = tokenizer.apply_chat_template(
             [{"role": "user", "content": prompt}],
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument("instances", help="JSONL file with GMTW instances")
     parser.add_argument("--model-path", required=True, help="HuggingFace model ID")
     parser.add_argument("--output", default="vllm_outputs.jsonl")
-    parser.add_argument("--language", choices=["ro", "en"], default="ro")
+    parser.add_argument("--language", choices=["ro", "de", "en"], default="ro")
     parser.add_argument("--max", type=int, help="Max instances to process")
     parser.add_argument("--max-tokens", type=int, default=4096)
     parser.add_argument("--batch-size", type=int, default=32)
