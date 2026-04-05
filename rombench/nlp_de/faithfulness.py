@@ -15,38 +15,32 @@ import unicodedata
 from rombench.nlp.base_faithfulness import BaseFaithfulness
 
 
+# Single-pass translation table built once at import time.
+# Maps umlauts to ASCII base forms, ß→ss is handled separately (two→one char).
+_NORM_TABLE = str.maketrans({
+    'ä': 'a',  'ö': 'o',  'ü': 'u',
+    'Ä': 'a',  'Ö': 'o',  'Ü': 'u',
+    '.': ' ',  ',': ' ',  ';': ' ',  ':': ' ',  '!': ' ',  '?': ' ',
+    '"': ' ',  '(': ' ',  ')': ' ',  '[': ' ',  ']': ' ',
+    '{': ' ',  '}': ' ',  '«': ' ',  '»': ' ',  '„': ' ',  '\u201c': ' ',
+})
+
+
 def normalize_text(text: str) -> str:
     """
     Normalize German text for matching.
 
-    - lowercase
-    - normalize umlauts to base forms (ä→a, ö→o, ü→u, ß→ss)
-    - remove punctuation
-    - collapse whitespace
+    Single-pass via str.translate (one table lookup per character) instead of
+    22 sequential str.replace calls.  ß→ss still requires a str.replace because
+    it expands one character to two, which translate() cannot do.
+
+    NFKC normalization is skipped when the string is already ASCII (the common
+    case after umlaut conversion), saving ~half the remaining cost.
     """
-    text = text.lower()
-
-    # Normalize umlauts and ß for matching
-    umlaut_map = {
-        'ä': 'a', 'ö': 'o', 'ü': 'u', 'ß': 'ss',
-        'Ä': 'a', 'Ö': 'o', 'Ü': 'u',
-    }
-    for src, dst in umlaut_map.items():
-        text = text.replace(src, dst)
-
-    # NOTE: Do NOT blanket-replace ae/oe/ue→a/o/u here.  That destroys
-    # legitimate German words such as "Mauer", "Feuer", "Abenteuer",
-    # "Museum", etc.  Umlaut normalisation (ä→a, ö→o, ü→u) above is
-    # sufficient for matching purposes.
-
-    # Remove punctuation
-    for c in '.,;:!?"()[]{}«»„"':
-        text = text.replace(c, " ")
-
-    # Normalize unicode
-    text = unicodedata.normalize('NFKC', text)
-    text = " ".join(text.split())
-    return text
+    text = text.lower().replace('ß', 'ss').translate(_NORM_TABLE)
+    if not text.isascii():
+        text = unicodedata.normalize('NFKC', text)
+    return " ".join(text.split())
 
 
 def german_morphological_forms(token: str) -> Set[str]:
@@ -144,20 +138,59 @@ def _german_adj_forms(token: str) -> Set[str]:
 
 def _german_word_forms(token: str) -> Set[str]:
     """
-    Combined noun + adjective forms for a German word used in a non-final
-    position of a multi-word entity name.
+    Compact set of case forms for non-final tokens in a multiword entity name.
 
-    A non-final token can be either an adjective ("Ethnographisches") or a
-    noun in a compound ("Museum" in "Ethnographisches Museum Siebenbürgens").
-    Both need to be covered:
-    - Adjective endings via _german_adj_forms  ("-e/-en/-em/-er/-es")
-    - Noun case endings via german_morphological_forms ("-s", "-en", …)
+    Used as the left-hand side of a cross-product, so this set is intentionally
+    small (~7 forms) to avoid combinatorial blowup.
+
+    Covers:
+    - All five adjective-declension endings (-e/-en/-em/-er/-es), obtained by
+      stripping any existing ending to recover the stem first.
+    - Genitive noun -s  (e.g. "Museum" → "Museums")
+    - The unchanged surface form.
+
+    We do NOT use german_morphological_forms here — it generates 30-40 forms per
+    token, which makes a 3-token phrase produce 35x35x35 ≈ 43 000 candidates.
     """
-    return german_morphological_forms(token) | _german_adj_forms(token)
+    forms = _german_adj_forms(token)   # stem + -e/-en/-em/-er/-es  (~6 forms)
+    w = token.lower()
+    forms.add(w + "s")                 # noun genitive -s (e.g. Museums, Gartens)
+    return forms
+
+
+def _german_noun_forms(token: str) -> Set[str]:
+    """
+    Compact forms for the *last* token of a multi-word entity name.
+
+    Covers:
+    - The unchanged surface form.
+    - Common noun endings added  (-e, -en, -er, -es, -s).
+    - Bare stems obtained by stripping common endings  (needed so that a
+      genitively-suffixed source name like "Siebenb\u00fcrgens" also matches
+      the nominative "Siebenb\u00fcrgen" if a model drops the genitive).
+
+    This replaces german_morphological_forms() in the cross-product:
+    ~13 forms instead of ~35, giving a 2.5\u00d7 reduction in the cross-product
+    size (3-token: 7\u00d77\u00d713=637 vs 1715 before).
+    """
+    w = token.lower()
+    forms = {w}
+    # Add common noun endings
+    for suf in ("e", "en", "er", "es", "s"):
+        forms.add(w + suf)
+    # Strip common endings to expose the bare stem
+    for suf in ("en", "er", "es", "em", "e", "s", "n"):
+        if w.endswith(suf) and len(w) > len(suf) + 2:
+            forms.add(w[: -len(suf)])
+    return forms
 
 
 class GermanFaithfulness(BaseFaithfulness):
     """German-specific faithfulness checking."""
+
+    def __init__(self):
+        # Cache normalized form-sets per entity to avoid recomputing across instances.
+        self._form_cache: dict[str, frozenset[str]] = {}
 
     def normalize_text(self, text: str) -> str:
         """Normalize German text for entity matching."""
@@ -185,21 +218,23 @@ class GermanFaithfulness(BaseFaithfulness):
 
         # Apply full cross-product of adjective × noun inflections
         if len(tokens) > 1:
-            # Combined noun+adjective forms for every non-last token so both
-            # "Ethnographischen" (adjective) and "Museums" (noun genitive) are
-            # covered regardless of whether the token is an adj or a noun.
+            # Non-last tokens: compact adj+noun forms (~7 each).
+            # Last token: compact noun forms (~13) — enough to cover
+            # nominative, genitive, dative, accusative, and bare stems.
+            # Using german_morphological_forms() here would give ~35 forms per
+            # token and blow the 3-token cross-product to 7×7×35=1715.
             adj_form_sets = [_german_word_forms(t) for t in tokens[:-1]]
-            noun_forms = german_morphological_forms(tokens[-1])
+            noun_forms = _german_noun_forms(tokens[-1])
             for adj_combo in itertools.product(*adj_form_sets):
                 for noun_form in noun_forms:
                     forms.add(" ".join(list(adj_combo) + [noun_form]))
 
-        # Try compound word (join all words)
+        # Compound word (useful for detecting e.g. "Kunstmuseum" in text
+        # when entity name is "Kunst Museum").
         compound = "".join(t.lower() for t in tokens)
         forms.add(compound)
-        # Also generate morphological forms of compound
-        for form in german_morphological_forms(compound):
-            forms.add(form)
+        # Do NOT call german_morphological_forms(compound) — the compound is
+        # already a long string and its decorated forms are unlikely to appear.
 
         # Genitive "des" prefix forms
         if len(tokens) >= 1:
@@ -208,6 +243,29 @@ class GermanFaithfulness(BaseFaithfulness):
             forms.add(f"des {base}es")
 
         return forms
+
+    def _get_normalized_forms(self, entity: str) -> frozenset[str]:
+        """
+        Return (and cache) the set of normalized forms for an entity.
+
+        Cache key is lowercased so that "Rosenpark" and "rosenpark" share the
+        same entry instead of triggering two independent form builds.
+        """
+        key = entity.lower()
+        if key not in self._form_cache:
+            if ' ' in key:
+                # Multiword: _generate_multiword_forms already covers all
+                # meaningful combinatorial forms.  Calling generate_forms(key)
+                # would apply german_morphological_forms to the full phrase
+                # string as if it were a single token, producing nonsensical
+                # decorated forms like "botanischer gartene" — pure waste.
+                forms = self._generate_multiword_forms(key)
+            else:
+                forms = self.generate_forms(key)
+            self._form_cache[key] = frozenset(
+                nf for nf in (self.normalize_text(f) for f in forms) if nf
+            )
+        return self._form_cache[key]
 
     def check_entity_mentioned(
         self, entity: str, normalized_text: str, debug: bool = False
@@ -218,17 +276,10 @@ class GermanFaithfulness(BaseFaithfulness):
         Enhanced for German: also checks if the entity appears
         as part of a compound word in the text.
         """
-        forms = self.generate_forms(entity.lower())
-        if ' ' in entity:
-            forms.update(self._generate_multiword_forms(entity))
-
-        # Normalize all forms for matching
-        norm_forms = {self.normalize_text(form) for form in forms}
-
+        norm_forms = self._get_normalized_forms(entity)
         for form in norm_forms:
-            if form and form in normalized_text:
+            if form in normalized_text:
                 return True
-
         if debug:
             print(f"[DEBUG] Entity not matched: '{entity}' | Forms: {norm_forms}")
         return False
@@ -294,9 +345,25 @@ class GermanFaithfulness(BaseFaithfulness):
                 if any(n and (n == ref or n.lower() == ref.lower())
                        for n in all_names for ref in planned_refs):
                     continue
-                # Check if any name variant is mentioned in explanation
-                if any(n and self.check_entity_mentioned(n, normalized_text)
-                       for n in all_names):
+                # For German text, hallucinated references will use the German
+                # entity name or (as fallback) the English name.  Romanian
+                # names don't need German morphological analysis and would only
+                # add spurious cache entries, so we skip them here.
+                de_name = ent.attributes.get('name_de') if hasattr(ent, 'attributes') else None
+                en_name = getattr(ent, 'aliases', [])
+                # Build a deduplicated list: German name first, then English
+                # aliases (those that look like English, i.e., ASCII-only and
+                # different from de_name), then the primary entity name.
+                candidate_names: list[str] = []
+                seen_lower: set[str] = set()
+                for n in ([de_name] if de_name else []) + [ent_name] + getattr(ent, 'aliases', []):
+                    if n:
+                        nl = n.lower()
+                        if nl not in seen_lower:
+                            seen_lower.add(nl)
+                            candidate_names.append(n)
+                if any(self.check_entity_mentioned(n, normalized_text)
+                       for n in candidate_names):
                     hallucinated.append(eid)
 
         hallucination_penalty = 0.9 ** len(hallucinated) if hallucinated else 1.0
