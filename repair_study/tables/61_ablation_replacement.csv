@@ -1,0 +1,51 @@
+arm,file,track,language,full_weight,arm_weight,implied,train,delta_records
+abl_no_a,track_a.jsonl,A,ro,0.3000,0.0000,0.0000,0,-1200
+abl_no_a,track_b_invoice.jsonl,B,ro (by construction),0.0625,0.1000,0.1042,400,150
+abl_no_a,track_b_contract.jsonl,B,ro (by construction),0.0625,0.1000,0.1042,400,150
+abl_no_a,track_b_anunt.jsonl,B,ro (by construction),0.0625,0.1000,0.1042,400,150
+abl_no_a,track_c.jsonl,C,ro (by construction),0.2625,0.4500,0.4375,1800,750
+abl_no_a,english_structured.jsonl,A,en,0.2500,0.2500,0.2500,1000,0
+abl_no_a,TOTAL,,,1.0000,1.0000,max dev 0.0125,4000,0
+abl_no_b,track_a.jsonl,A,ro,0.3000,0.4000,0.4000,1600,400
+abl_no_b,track_b_invoice.jsonl,B,ro (by construction),0.0625,0.0000,0.0000,0,-250
+abl_no_b,track_b_contract.jsonl,B,ro (by construction),0.0625,0.0000,0.0000,0,-250
+abl_no_b,track_b_anunt.jsonl,B,ro (by construction),0.0625,0.0000,0.0000,0,-250
+abl_no_b,track_c.jsonl,C,ro (by construction),0.2625,0.3500,0.3500,1400,350
+abl_no_b,english_structured.jsonl,A,en,0.2500,0.2500,0.2500,1000,0
+abl_no_b,TOTAL,,,1.0000,1.0000,max dev 0.0000,4000,0
+abl_no_c,track_a.jsonl,A,ro,0.3000,0.4200,0.4615,1680,480
+abl_no_c,track_b_invoice.jsonl,B,ro (by construction),0.0625,0.1100,0.0962,440,190
+abl_no_c,track_b_contract.jsonl,B,ro (by construction),0.0625,0.1100,0.0962,440,190
+abl_no_c,track_b_anunt.jsonl,B,ro (by construction),0.0625,0.1100,0.0962,440,190
+abl_no_c,track_c.jsonl,C,ro (by construction),0.2625,0.0000,0.0000,0,-1050
+abl_no_c,english_structured.jsonl,A,en,0.2500,0.2500,0.2500,1000,0
+abl_no_c,TOTAL,,,1.0000,1.0000,max dev 0.0415,4000,0
+abl_ro_only,track_a.jsonl,A,ro,0.3000,0.4000,0.4000,1600,400
+abl_ro_only,track_b_invoice.jsonl,B,ro (by construction),0.0625,0.0833,0.0833,334,84
+abl_ro_only,track_b_contract.jsonl,B,ro (by construction),0.0625,0.0833,0.0833,333,83
+abl_ro_only,track_b_anunt.jsonl,B,ro (by construction),0.0625,0.0833,0.0833,333,83
+abl_ro_only,track_c.jsonl,C,ro (by construction),0.2625,0.3500,0.3500,1400,350
+abl_ro_only,english_structured.jsonl,A,en,0.2500,0.0000,0.0000,0,-1000
+abl_ro_only,TOTAL,,,1.0000,1.0000,max dev 0.0000,4000,0
+c40e30,track_a.jsonl,A,ro,0.3000,0.1846,,738,-462
+c40e30,track_b_invoice.jsonl,B,ro (by construction),0.0625,0.0385,,154,-96
+c40e30,track_b_contract.jsonl,B,ro (by construction),0.0625,0.0385,,154,-96
+c40e30,track_b_anunt.jsonl,B,ro (by construction),0.0625,0.0385,,154,-96
+c40e30,track_c.jsonl,C,ro (by construction),0.2625,0.4000,,1600,550
+c40e30,english_structured.jsonl,A,en,0.2500,0.3000,,1200,200
+c40e30,TOTAL,,,1.0000,1.0001,,4000,0
+replay25,track_a.jsonl,A,ro,0.3000,0.1462,,585,-615
+replay25,track_b_invoice.jsonl,B,ro (by construction),0.0625,0.0304,,122,-128
+replay25,track_b_contract.jsonl,B,ro (by construction),0.0625,0.0304,,122,-128
+replay25,track_b_anunt.jsonl,B,ro (by construction),0.0625,0.0304,,121,-129
+replay25,track_c.jsonl,C,ro (by construction),0.2625,0.2625,,1050,0
+replay25,english_structured.jsonl,A,en,0.2500,0.2500,,1000,0
+replay25,replay_rollama31_dpo.jsonl,replay,ro,0.0000,0.2500,,1000,1000
+replay25,TOTAL,,,1.0000,0.9999,,4000,0
+trackc45,track_a.jsonl,A,ro,0.3000,0.1846,,738,-462
+trackc45,track_b_invoice.jsonl,B,ro (by construction),0.0625,0.0385,,154,-96
+trackc45,track_b_contract.jsonl,B,ro (by construction),0.0625,0.0385,,154,-96
+trackc45,track_b_anunt.jsonl,B,ro (by construction),0.0625,0.0385,,154,-96
+trackc45,track_c.jsonl,C,ro (by construction),0.2625,0.4500,,1800,750
+trackc45,english_structured.jsonl,A,en,0.2500,0.2500,,1000,0
+trackc45,TOTAL,,,1.0000,1.0001,,4000,0

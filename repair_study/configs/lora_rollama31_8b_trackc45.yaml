@@ -1,0 +1,83 @@
+# Corpus reweighting — Track C raised to 0.45, RoLlama3.1-8b-DPO.
+#
+# Why this run exists. The four leave-one-out ablations were finally scored on
+# the academic suite, and the result inverts the question 3.3 has been asking.
+# Every removal made the collateral damage WORSE, ranked cleanly, and the whole
+# effect was one task:
+#
+#   full mix    -8.35     GSM8k 14.96
+#   no Track B  -8.55     GSM8k 14.10
+#   no Track A  -8.87     GSM8k 12.31
+#   ro-only     -9.23     GSM8k  9.88
+#   no Track C  -9.57     GSM8k  9.12
+#
+# Across the five corpus configurations (the full mix and the four ablations),
+# ARC moved 0.49, MMLU 0.60, HellaSwag 0.86, Winogrande 1.24 -- and GSM8k moved
+# 5.84, against a seed range of 1.7. Maths is the only thing in
+# the suite that responds to what is in the corpus, and removing TRACK C costs
+# the most of it.
+#
+# That is the first evidence in this study that the DATA changes the damage.
+# Every lever that failed -- lr 2e-5, attention-only, adapter scaling -- changed
+# how the update was computed and landed on the free trade-off curve. This axis
+# moves, so it is worth pushing in the other direction: if taking Track C out
+# costs 5.8 points of GSM8k, putting more in should buy some back.
+#
+# Track C is the procedural constraint-satisfaction family. It is the closest
+# thing in the corpus to multi-step reasoning, which is a mechanism for why it
+# is what protects multi-step reasoning.
+#
+# THE SINGLE VARIABLE is the Romanian split: Track C 0.2625 -> 0.45. English is
+# held at 0.25, the same convention the ablation configs follow, so the
+# retained-capability slice is not a second moving part. Track A and Track B
+# absorb the difference in proportion, 0.4875 -> 0.30.
+#
+# CEILING, because it is why 0.45 and not more. build_mix.py samples without
+# replacement and exits if a source is short, so a weight w needs 4200*w records
+# at --total 4000 --val-total 200. Track C has 2000, so w <= 0.476. 0.45 takes
+# 1800 training + 90 validation and leaves 110 spare.
+#
+# Read against rollama31-dpo_4kv2_s0 (GMTW-Ro) and rollama31-dpo_4kv2_s0_lim
+# (academic, -8.35). Both arms, always: a mix that protects GSM8k and loses the
+# repair has told us nothing.
+base_model: OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.1846
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0385
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0385
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0385
+    # THE SINGLE VARIABLE. 0.2625 in the baseline.
+    - path: data/sft/track_c.jsonl
+      weight: 0.45
+    - path: data/sft/english_structured.jsonl   # retained-capability slice, held
+      weight: 0.25
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # Load-bearing since 3.10: train_lora.py derives its anchored regex from this
+  # list. Unchanged here, because this run moves the corpus.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 2
+  gradient_accumulation: 8
+  bf16: true
+  seed: 0
+  train_on_inputs: false
+
+eval:
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

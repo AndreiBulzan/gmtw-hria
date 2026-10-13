@@ -1,0 +1,32 @@
+[
+  {
+    "split": "standard",
+    "model": "llama-3.1-8b-instruct",
+    "n_retained": 438,
+    "records_compared": 500,
+    "per_instance_scores_equal": true,
+    "all_means_and_95pct_intervals_equal": true,
+    "T": 0.9094368340943684,
+    "J": 0.6461187214611872
+  },
+  {
+    "split": "standard",
+    "model": "rogemma-7b-instruct-dpo",
+    "n_retained": 438,
+    "records_compared": 500,
+    "per_instance_scores_equal": true,
+    "all_means_and_95pct_intervals_equal": true,
+    "T": 0.3717139595564254,
+    "J": 0.0273972602739726
+  },
+  {
+    "split": "adversarial",
+    "model": "llama-3.1-8b-instruct",
+    "n_retained": 240,
+    "records_compared": 300,
+    "per_instance_scores_equal": true,
+    "all_means_and_95pct_intervals_equal": true,
+    "T": 0.8236937830687832,
+    "J": 0.2708333333333333
+  }
+]

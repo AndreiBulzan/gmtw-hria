@@ -1,0 +1,48 @@
+# Track C constraint-satisfaction templates (Romanian). Blocks separated by "---".
+# Placeholders: {schema} (verbatim, English keys/enums), {constraints} (bullet list)
+#
+# These templates ASK FOR THE REASONING, then the JSON. They used to do the
+# opposite ("Răspunde doar cu JSON-ul", "fără text suplimentar", "Doar JSON,
+# fără explicații") -- which trained the model to skip straight to an answer on
+# the one task class whose difficulty is entirely in the working out. The
+# completion now carries a matching verification prefix (track_c.render_plan_ro),
+# and GMTW-Ro asks for explanation-then-JSON ordering anyway.
+Generează un obiect JSON valid conform schemei de mai jos, care respectă TOATE condițiile enumerate. Verifică întâi pe scurt fiecare condiție, apoi scrie obiectul JSON la finalul răspunsului.
+
+Condiții:
+{constraints}
+
+Schema:
+{schema}
+---
+Primești o schemă JSON și o listă de cerințe. Explică întâi, pe scurt, cum ai ales valorile astfel încât fiecare cerință să fie îndeplinită, apoi produ obiectul JSON.
+
+Cerințe:
+{constraints}
+
+Schema:
+{schema}
+---
+Construiește un document JSON care validează împotriva schemei date și îndeplinește exact restricțiile de mai jos. Arată mai întâi verificarea pentru fiecare restricție, apoi dă JSON-ul.
+
+Restricții:
+{constraints}
+
+Schema:
+{schema}
+---
+Sarcina ta: completează un JSON conform schemei, respectând strict toate condițiile. Orice condiție încălcată invalidează răspunsul, așa că verifică fiecare condiție înainte de a răspunde și scrie JSON-ul la final.
+
+Schema:
+{schema}
+
+Condiții obligatorii:
+{constraints}
+---
+Pe baza schemei JSON de mai jos, întoarce un singur obiect JSON care respectă simultan toate cerințele enumerate. Nu adăuga câmpuri nepermise. Înainte de JSON, notează pe scurt calculele care arată că fiecare cerință este respectată.
+
+Schema:
+{schema}
+
+Cerințe:
+{constraints}

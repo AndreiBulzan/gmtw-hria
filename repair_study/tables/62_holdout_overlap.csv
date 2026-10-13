@@ -1,0 +1,11 @@
+scope,source,n,exact_mix,exact_mix_pct,twin_mix,twin_mix_pct,exact_pool,exact_pool_pct,twin_pool,twin_pool_pct
+all 1804,Github_easy,577,1,0.17,65,11.27,1,0.17,69,11.96
+all 1804,Github_medium,586,0,0.00,36,6.14,0,0.00,39,6.66
+all 1804,Github_trivial,128,0,0.00,20,15.62,0,0.00,21,16.41
+all 1804,Glaiveai2K,513,0,0.00,425,82.85,0,0.00,440,85.77
+all 1804,TOTAL,1804,1,0.06,546,30.27,1,0.06,569,31.54
+scored 1210,Github_easy,329,1,0.30,35,10.64,1,0.30,37,11.25
+scored 1210,Github_medium,330,0,0.00,21,6.36,0,0.00,24,7.27
+scored 1210,Github_trivial,44,0,0.00,4,9.09,0,0.00,5,11.36
+scored 1210,Glaiveai2K,507,0,0.00,424,83.63,0,0.00,437,86.19
+scored 1210,TOTAL,1210,1,0.08,484,40.00,1,0.08,503,41.57

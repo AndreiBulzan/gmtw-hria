@@ -1,0 +1,27 @@
+# the scoring environment the README tells you to build here
+env/
+.venv/
+.cenv/
+
+# python caches
+__pycache__/
+*.pyc
+
+# NOTE: nothing else is ignored. The manifest pins every
+# file copied here, so an ignore rule that hides one would
+# make the manifest describe a repository that does not
+# exist. The rescoring run logs are kept for that reason.
+
+# --- re-include what an enclosing repository might exclude ---
+# This archive is designed to be committed inside another
+# repository, whose own .gitignore applies to it. gmtw-hria,
+# for one, ignores `results/` and `test*.jsonl` at its root,
+# which silently drops the academic-ladder raw output and
+# test_split.jsonl -- the evaluation set the English result is
+# scored on. A deeper .gitignore takes precedence, so these
+# negations restore them. A directory has to be re-included
+# before anything inside it can be.
+!results/
+!results/**
+!test_split.jsonl
+

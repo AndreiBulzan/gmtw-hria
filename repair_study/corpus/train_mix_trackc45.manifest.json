@@ -1,0 +1,58 @@
+{
+  "total": 4000,
+  "seed": 0,
+  "config": "datagen/training/lora_rollama31_8b_trackc45.yaml",
+  "sources": [
+    {
+      "path": "data/sft/track_a.jsonl",
+      "weight": 0.1846,
+      "available": 1825,
+      "sampled": 738,
+      "sha256": "2c949bf35f19f38fbd60438478dbe4f4c0d42c967fffeb7e1bfe7cc5505c7f7e",
+      "val_sampled": 37
+    },
+    {
+      "path": "data/sft/track_b_invoice.jsonl",
+      "weight": 0.0385,
+      "available": 499,
+      "sampled": 154,
+      "sha256": "2477c86f76d0e9633698db54bc32e4e73c35c2d28db64d643fb546f5689d1eea",
+      "val_sampled": 8
+    },
+    {
+      "path": "data/sft/track_b_contract.jsonl",
+      "weight": 0.0385,
+      "available": 500,
+      "sampled": 154,
+      "sha256": "ba51bddec2c0f3b23f5a38d8001d6bb8a932753a420419c44c5f67754795d166",
+      "val_sampled": 8
+    },
+    {
+      "path": "data/sft/track_b_anunt.jsonl",
+      "weight": 0.0385,
+      "available": 476,
+      "sampled": 154,
+      "sha256": "db21a5417142f73f5ca877ec88fc9c0d976a4f2eb4b60a7aae32fc2a0196aab4",
+      "val_sampled": 7
+    },
+    {
+      "path": "data/sft/track_c.jsonl",
+      "weight": 0.45,
+      "available": 2000,
+      "sampled": 1800,
+      "sha256": "e7c72a764b16e279c61105ab04f02760a6ca0c8446a0260da3beea8690427cf0",
+      "val_sampled": 90
+    },
+    {
+      "path": "data/sft/english_structured.jsonl",
+      "weight": 0.25,
+      "available": 1276,
+      "sampled": 1000,
+      "sha256": "c0aa31b8b5ae94ab9c110cf0b19882f54d6017fbd382913c3eb90ca059db2d9f",
+      "val_sampled": 50
+    }
+  ],
+  "val_total": 200,
+  "val_path": "train_mix_trackc45.val.jsonl",
+  "val_sha256": "0f4418d51d22800faa63cec0885cb0c50317d676263b470cc282ec966b8c67dd"
+}

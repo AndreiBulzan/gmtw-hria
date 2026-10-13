@@ -1,0 +1,9 @@
+checkpoint,split,metric,n,delta,ci_lo,ci_hi,raw_p,holm_p,significant
+RoMistral-7B-SFT,adversarial,J,240,25.8333,20.6944,31.1111,0.0002,0.0016,1
+RoGemma-7B-DPO,adversarial,J,240,23.1944,18.8889,27.6389,0.0002,0.0016,1
+RoGemma2-9B-SFT,adversarial,J,240,18.75,13.75,23.8889,0.0002,0.0016,1
+RoLlama3.1-8B-DPO,adversarial,J,240,11.6667,7.7778,15.5556,0.0002,0.0016,1
+RoGemma2-9B-DPO,adversarial,J,240,10.0,5.6944,14.3056,0.0002,0.0016,1
+RoMistral-7B-DPO,adversarial,J,240,9.0278,5.1389,13.1944,0.0002,0.0016,1
+RoLlama3-8B-DPO,adversarial,J,240,6.5278,3.4722,9.7222,0.0002,0.0016,1
+RoLlama2-7B,adversarial,J,240,5.4167,1.3889,9.4444,0.0088,0.0088,1

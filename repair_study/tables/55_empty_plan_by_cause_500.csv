@@ -1,0 +1,17 @@
+model,arm,split,empty,fact,fact_parses,fact_correct,miss,void
+RoLlama3.1-8B-DPO,base,500,471,100,83,68,366,5
+RoLlama3.1-8B-DPO,ours,500,102,100,100,90,0,2
+RoGemma2-9B-DPO,base,500,252,100,75,50,149,3
+RoGemma2-9B-DPO,ours,500,100,100,100,97,0,0
+RoGemma2-9B-SFT,base,500,218,100,79,68,109,9
+RoGemma2-9B-SFT,ours,500,100,100,100,100,0,0
+RoLlama3-8B-DPO,base,500,440,100,74,51,334,6
+RoLlama3-8B-DPO,ours,500,103,100,100,82,1,2
+RoMistral-7B-DPO,base,500,128,100,89,66,7,21
+RoMistral-7B-DPO,ours,500,105,100,100,75,0,5
+RoMistral-7B-SFT,base,500,164,100,100,0,54,10
+RoMistral-7B-SFT,ours,500,102,100,100,86,2,0
+RoLlama2-7B,base,500,215,100,100,63,63,52
+RoLlama2-7B,ours,500,102,100,92,50,0,2
+RoGemma-7B-DPO,base,500,135,100,99,3,20,15
+RoGemma-7B-DPO,ours,500,104,100,100,60,0,4

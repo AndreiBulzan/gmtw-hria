@@ -1,0 +1,17 @@
+model,arm,split,n_seeds,e2e_v2,e2e_v3
+RoLlama3.1-8B-DPO,base,500,1,0.0,13.6
+RoLlama3.1-8B-DPO,ours,500,3,30.53,48.47
+RoGemma2-9B-DPO,base,500,1,9.6,19.6
+RoGemma2-9B-DPO,ours,500,3,26.13,45.53
+RoGemma2-9B-SFT,base,500,1,11.0,24.6
+RoGemma2-9B-SFT,ours,500,3,34.07,54.07
+RoLlama3-8B-DPO,base,500,1,2.0,12.2
+RoLlama3-8B-DPO,ours,500,3,25.47,43.13
+RoMistral-7B-DPO,base,500,1,11.6,24.8
+RoMistral-7B-DPO,ours,500,3,29.53,44.53
+RoMistral-7B-SFT,base,500,1,8.8,8.8
+RoMistral-7B-SFT,ours,500,3,20.93,38.27
+RoLlama2-7B,base,500,1,9.4,22.0
+RoLlama2-7B,ours,500,3,31.07,41.4
+RoGemma-7B-DPO,base,500,1,0.2,0.8
+RoGemma-7B-DPO,ours,500,3,22.33,35.13

@@ -1,0 +1,17 @@
+Validation of the rescoring handoff
+
+The original code/rescore.py and code/test_rescore.py are byte-for-byte identical to the proposal versions. The vendored constraint and world modules, both task files and the exclusion CSV are also unchanged. Small package initialization files isolate the bundled rombench modules from other installed versions.
+
+The saved manifest and regenerated task audit agree on all 800 task IDs, world hashes, duplicate references and exclusion reasons. The ID lists give 438 retained and 62 excluded standard tasks, and 240 retained and 60 excluded adversarial tasks.
+
+All 29 tests pass: the original 19 scorer tests and 10 checks of the new file runner. The latter check fixed cohorts, complete retained-ID coverage, duplicates, unknown IDs, blank response preservation, mixed run metadata, invalid output values and custom field names.
+
+Three complete CLI runs were compared against the October 3 diagnostic evidence:
+
+Romanian standard, Llama-3.1-8B: 500 input records, 438 retained.
+Romanian standard, RoGemma-7B-DPO: 500 input records, 438 retained.
+Romanian adversarial, Llama-3.1-8B: 300 input records, 240 retained.
+
+All 1,300 per-instance records reproduce the archived corrected scorer's outputs exactly, including the constraint decisions and parser metadata. All seven metric means and 95% interval bounds match, as do factual denominators and task-family summaries. The reference comparisons are recorded in reference/handoff_validation.json.
+
+Tests were also run after extracting the final ZIP into a separate temporary folder, without depending on this workspace's analysis folders. No repair model outputs were scored, and no model generation or training was run.

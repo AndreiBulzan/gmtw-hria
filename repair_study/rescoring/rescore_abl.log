@@ -1,0 +1,48 @@
+Scored 438 retained standard tasks; T=0.873347, J=0.577626
+Results: runs/abl_abl-ro-only_s0_standard
+Scored 240 retained adversarial tasks; T=0.792999, J=0.254167
+Results: runs/abl_abl-ro-only_s0_adversarial
+Scored 438 retained standard tasks; T=0.851201, J=0.547945
+Results: runs/abl_abl-ro-only_s1_standard
+Scored 240 retained adversarial tasks; T=0.760522, J=0.287500
+Results: runs/abl_abl-ro-only_s1_adversarial
+Scored 438 retained standard tasks; T=0.835826, J=0.577626
+Results: runs/abl_abl-ro-only_s2_standard
+Scored 240 retained adversarial tasks; T=0.752870, J=0.258333
+Results: runs/abl_abl-ro-only_s2_adversarial
+Scored 438 retained standard tasks; T=0.883023, J=0.566210
+Results: runs/abl_abl-no-a_s0_standard
+Scored 240 retained adversarial tasks; T=0.850098, J=0.258333
+Results: runs/abl_abl-no-a_s0_adversarial
+Scored 438 retained standard tasks; T=0.883399, J=0.602740
+Results: runs/abl_abl-no-a_s1_standard
+Scored 240 retained adversarial tasks; T=0.809550, J=0.233333
+Results: runs/abl_abl-no-a_s1_adversarial
+Scored 438 retained standard tasks; T=0.873578, J=0.586758
+Results: runs/abl_abl-no-a_s2_standard
+Scored 240 retained adversarial tasks; T=0.828467, J=0.266667
+Results: runs/abl_abl-no-a_s2_adversarial
+Scored 438 retained standard tasks; T=0.859355, J=0.582192
+Results: runs/abl_abl-no-b_s0_standard
+Scored 240 retained adversarial tasks; T=0.743742, J=0.254167
+Results: runs/abl_abl-no-b_s0_adversarial
+Scored 438 retained standard tasks; T=0.865658, J=0.559361
+Results: runs/abl_abl-no-b_s1_standard
+Scored 240 retained adversarial tasks; T=0.762196, J=0.233333
+Results: runs/abl_abl-no-b_s1_adversarial
+Scored 438 retained standard tasks; T=0.848782, J=0.573059
+Results: runs/abl_abl-no-b_s2_standard
+Scored 240 retained adversarial tasks; T=0.769418, J=0.283333
+Results: runs/abl_abl-no-b_s2_adversarial
+Scored 438 retained standard tasks; T=0.879101, J=0.582192
+Results: runs/abl_abl-no-c_s0_standard
+Scored 240 retained adversarial tasks; T=0.814519, J=0.254167
+Results: runs/abl_abl-no-c_s0_adversarial
+Scored 438 retained standard tasks; T=0.874543, J=0.563927
+Results: runs/abl_abl-no-c_s1_standard
+Scored 240 retained adversarial tasks; T=0.822545, J=0.270833
+Results: runs/abl_abl-no-c_s1_adversarial
+Scored 438 retained standard tasks; T=0.844703, J=0.522831
+Results: runs/abl_abl-no-c_s2_standard
+Scored 240 retained adversarial tasks; T=0.803267, J=0.254167
+Results: runs/abl_abl-no-c_s2_adversarial

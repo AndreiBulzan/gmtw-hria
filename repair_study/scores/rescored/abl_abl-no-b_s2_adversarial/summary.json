@@ -1,0 +1,92 @@
+{
+  "n": 240,
+  "T": {
+    "mean": 0.7694179894179894,
+    "low": 0.7322232142857144,
+    "high": 0.8053273809523811
+  },
+  "raw_ok": {
+    "mean": 0.9833333333333333,
+    "low": 0.9666666666666667,
+    "high": 0.9958333333333333
+  },
+  "normalized_ok": {
+    "mean": 0.9833333333333333,
+    "low": 0.9666666666666667,
+    "high": 0.9958333333333333
+  },
+  "recovered": {
+    "mean": 1.0,
+    "low": 1.0,
+    "high": 1.0
+  },
+  "schema": {
+    "mean": 0.6666666666666666,
+    "low": 0.6041666666666666,
+    "high": 0.725
+  },
+  "joint": {
+    "mean": 0.2833333333333333,
+    "low": 0.22916666666666666,
+    "high": 0.3416666666666667
+  },
+  "QA_n": 50,
+  "QA": {
+    "mean": 0.94,
+    "low": 0.86,
+    "high": 1.0
+  },
+  "families": {
+    "travel": {
+      "n": 99,
+      "T": 0.6492624659291326,
+      "joint": 0.10101010101010101
+    },
+    "schedule": {
+      "n": 75,
+      "T": 0.7957777777777777,
+      "joint": 0.05333333333333334
+    },
+    "fact": {
+      "n": 50,
+      "T": 0.94,
+      "joint": 0.94
+    },
+    "recipe": {
+      "n": 16,
+      "T": 0.85625,
+      "joint": 0.4375
+    }
+  },
+  "parse_stage_counts": {
+    "raw": 236,
+    "repaired": 4
+  },
+  "split": "adversarial",
+  "label": "abl-no-b seed2 adversarial",
+  "input_file": "/home/stearsail/Projects/HRIA/experiments/kd-hria/datagen/results/rollama31-dpo_abl-no-b_s2/rollama31-dpo_abl-no-b_s2_300_outputs.jsonl",
+  "input_sha256": "3027c4e4ebffb62264d29f03a33ec4b9c3f842edaedabaeeb3db4161d7f43c14",
+  "input_id_field": "instance_id",
+  "input_output_field": "output",
+  "input_records": 300,
+  "excluded_records_present": 60,
+  "input_run_metadata": {
+    "model": "/home/stephena/merged_models/rollama31-dpo_abl-no-b_s2",
+    "language": "ro"
+  },
+  "scorer_sha256": "245d704aefb1a1d672644a32c13e8672f9e7d54917aea222fa4902285f084a25",
+  "cohort_manifest_sha256": "fb5778c6471c7797614fc4a7b563a2b92a9342e4061350a851e0eb12d2ade61e",
+  "world_file_sha256": "985205d4f89a68b13994f73a5454042fd4a10e6b3a527226aa4d8b12b3613dd6",
+  "versions": {
+    "numpy": "2.4.6",
+    "json-repair": "0.54.2"
+  },
+  "python": "3.13.16 | packaged by Anaconda, Inc. | (main, Oct  1 2026, 20:24:22) [GCC 14.3.0]",
+  "bootstrap": {
+    "resamples": 5000,
+    "seed": 20240617,
+    "interval": "pointwise percentile 95%",
+    "scope": "tasks within this single saved run; no between-training-seed uncertainty"
+  },
+  "scale": "All summary means and bounds use 0-1, not percentages."
+}

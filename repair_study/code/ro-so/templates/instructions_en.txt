@@ -1,0 +1,39 @@
+# Track A instruction templates (English) — for the retained-capability slice
+# (20-30% English structured output protects existing format adherence).
+# One template per block, blocks separated by "---". Placeholder: {schema}
+Generate a valid JSON object that conforms to the following JSON schema. Respond with the JSON only, no explanations.
+
+Schema:
+{schema}
+---
+You are given a JSON schema. Produce an example JSON object that satisfies it exactly. Do not add any text outside the JSON.
+
+{schema}
+---
+Create a JSON instance that conforms to the schema below. Use exactly the keys and values the schema permits, with no extra fields.
+
+{schema}
+---
+Here is a JSON schema:
+
+{schema}
+
+Write a JSON object that validates against this schema. Your answer must contain nothing but JSON.
+---
+Strictly following the JSON schema below, generate a valid JSON object filled with plausible values. Do not use code fences and do not add comments.
+
+{schema}
+---
+Your task is to produce a JSON document that passes validation against the given schema. Any field the schema does not allow is forbidden.
+
+Schema:
+{schema}
+---
+Based on the JSON schema below, return a single valid JSON object using only the required keys and types.
+
+{schema}
+---
+Analyze the JSON schema and respond with a conforming JSON object. No explanations, no extra text, JSON only.
+
+Schema:
+{schema}

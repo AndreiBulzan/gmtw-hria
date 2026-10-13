@@ -1,0 +1,72 @@
+# Recipe variant — RoLlama3.1-8b-Instruct-DPO, adapting attention only.
+#
+# EXACTLY ONE THING DIFFERS from lora_rollama31_8b_v2.yaml: target_modules drops
+# gate_proj/up_proj/down_proj and keeps q/k/v/o_proj. Learning rate stays at
+# 1.0e-4 -- this is a contrast against the ORIGINAL recipe, not against lr2e5.
+#
+# Why this lever, after lr2e5. Cutting the learning rate fivefold left the
+# repair untouched (dU +0.003 / +0.029) and the damage nearly untouched
+# (academic average +0.93 of an ~8 point loss). So the size of the update is not
+# what drives either. That also retires rank reduction, which scales the same
+# quantity. What is left is WHERE the update lands, and WHAT the model rehearses.
+#
+# This tests the first. Factual knowledge in transformers is substantially
+# MLP-resident -- the premise the knowledge-editing literature works from, which
+# locates and rewrites facts in the feed-forward blocks. If the capability being
+# destroyed is stored there, sparing those weights should spare it, and MMLU,
+# ARC and TruthfulQA are where that would show.
+#
+# Testable only since §3.10. This field was dead until then: the trainer used a
+# hardcoded regex and ignored the yaml, so this exact run would have silently
+# duplicated the baseline and been reported as "module choice does not matter".
+#
+# Every outcome is informative, which is the reason to run it rather than keep
+# searching:
+#   repair holds, damage shrinks   a real mitigation; the paper's claim changes
+#   repair holds, damage holds     the trade-off resists two independent levers
+#   repair collapses               the MLP carries the repair, which speaks to
+#                                  the answer-shape hypothesis in §3.2b
+#
+# Reported whichever way it lands. Trying recipes until one flatters the result
+# is the multiplicity failure §3.4 exists to prevent, wearing different clothes.
+base_model: OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.30
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0625
+    - path: data/sft/track_c.jsonl
+      weight: 0.2625
+    - path: data/sft/english_structured.jsonl   # retained-capability slice
+      weight: 0.25
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # THE SINGLE VARIABLE. The baseline adapts all seven; this adapts the four
+  # attention projections and leaves the MLP alone.
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+train:
+  epochs: 2
+  # Unchanged from the baseline. This run moves target_modules.
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 2
+  gradient_accumulation: 8
+  bf16: true
+  seed: 0
+  train_on_inputs: false
+
+eval:
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

@@ -1,0 +1,41 @@
+# Track B extraction instruction templates (Romanian). Blocks separated by "---".
+# Placeholders: {schema} (verbatim, English keys), {document}
+Extrage informațiile din documentul de mai jos și întoarce-le ca obiect JSON conform schemei date. Răspunde doar cu JSON-ul.
+
+Schema:
+{schema}
+
+Document:
+{document}
+---
+Primești un document în limba română și o schemă JSON. Completează schema cu valorile din document și răspunde exclusiv cu obiectul JSON rezultat.
+
+Schema:
+{schema}
+
+Document:
+{document}
+---
+Citește documentul următor și extrage câmpurile cerute de schema JSON. Datele se scriu în format ISO (YYYY-MM-DD), iar sumele cu punct ca separator zecimal. Fără text în afara JSON-ului.
+
+Schema:
+{schema}
+
+Document:
+{document}
+---
+Transformă documentul de mai jos într-un obiect JSON care respectă schema dată. Folosește exact cheile din schemă și nu adăuga câmpuri suplimentare.
+
+Document:
+{document}
+
+Schema:
+{schema}
+---
+Sarcina ta: extragere structurată de informații. Din documentul românesc de mai jos, produ un JSON valid conform schemei. Doar JSON, fără explicații.
+
+Schema:
+{schema}
+
+Document:
+{document}

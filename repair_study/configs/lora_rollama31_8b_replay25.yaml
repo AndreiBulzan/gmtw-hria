@@ -1,0 +1,96 @@
+# General-instruction replay at 25%, RoLlama3.1-8b-DPO.
+#
+# The last lever. Everything else tried against the 8.35-point cost measured in
+# 3.3 has been run to full seed count and failed, and the failures rule out
+# categories rather than settings:
+#
+#   lr 2e-5, attention-only, adapter scaling  all land ON the free trade-off
+#       curve. Changing how the update is computed -- its size, its location --
+#       does not separate the repair from the damage.
+#   four leave-one-out ablations   every removal is WORSE. No ingredient is to
+#       blame; the full mix was already the best composition tested.
+#   Track C 0.45, and Track C 0.40 + English 0.30 (the corpus ceiling)
+#       both indistinguishable from the full mix at three seeds. Track C's
+#       protection SATURATES -- removing it costs 5.8 points of GSM8k, adding
+#       71% more buys back nothing.
+#
+# Reweighting is therefore exhausted: no ratio over these six files beats -8.35.
+# What is left is data that is not in them, which is what this adds.
+#
+# WHAT REPLAY IS HERE. Prompts from the instruction corpora OpenLLM-Ro published
+# as training data, answered by the untouched checkpoint ITSELF, greedily. Their
+# gold answers are discarded. See datagen/build_replay.py for why that matters:
+# the model's own output carries no information it does not already have, so the
+# only gradient signal is "keep doing this" and the academic suite keeps
+# measuring retention rather than learning. It also makes the procedure
+# identical across the eight checkpoints while the data stays per-model, which
+# is the same arrangement the repair already has.
+#
+# WHY 25%. It matches the English slice, whose effect is the one quantity we
+# have measured on this axis: removing it (ro-only) cost 0.88 points of academic
+# average and 5.1 points of GSM8k. Replay is the same KIND of thing -- non-target
+# data carried along to be rehearsed -- so starting at the same share makes the
+# two comparable. Track C and English are both held at baseline so replay is the
+# single new variable; Track A and Track B absorb the 0.25, 0.4875 -> 0.2375.
+#
+# Reachable: replay needs 4200*0.25 = 1050 records and build_replay.py emits
+# 1200. English at 0.25 needs 1050 of its 1276. Nothing is at a ceiling.
+#
+# WHAT EACH OUTCOME MEANS, written before the run:
+#   damage shrinks, repair holds   a mitigation, and the first one. The paper
+#                                  reports a cost and how to avoid it.
+#   damage shrinks, repair drops   a trade to be characterised, not a fix.
+#   neither moves                  rehearsal at this dose does not reach it, and
+#                                  the honest paper says the cost is intrinsic to
+#                                  the intervention at every lever tried.
+#
+# THREE SEEDS FROM THE START, not a seed-0 screen. Two results in this study
+# looked like wins at seed 0 and evaporated at three -- lr 2e-5's +1.07 above the
+# curve became +0.21, and trackc45's end-to-end 37.6 became a 29.0-37.6 spread.
+# A third would be a pattern rather than bad luck.
+#
+# Read against rollama31-dpo_4kv2 (GMTW-Ro, three seeds) and
+# rollama31-dpo_4kv2_s0_lim (academic, -8.35). Both arms, always.
+base_model: OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.1462
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0304
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0304
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0304
+    - path: data/sft/track_c.jsonl          # held at baseline
+      weight: 0.2625
+    - path: data/sft/english_structured.jsonl   # held at baseline
+      weight: 0.25
+    # THE SINGLE NEW VARIABLE. Not present in any previous mix.
+    - path: data/sft/replay_rollama31_dpo.jsonl
+      weight: 0.25
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # Load-bearing since 3.10: train_lora.py derives its anchored regex from this
+  # list. Unchanged here, because this run moves the corpus.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 2
+  gradient_accumulation: 8
+  bf16: true
+  seed: 0
+  train_on_inputs: false
+
+eval:
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

@@ -1,0 +1,76 @@
+# Corpus reweighting — both protective ingredients raised, RoLlama3.1-8b-DPO.
+#
+# The companion to lora_rollama31_8b_trackc45.yaml, and it answers a different
+# question. That run moves ONE thing and is therefore attributable. This one
+# moves two and is not -- it exists to put an UPPER BOUND on what corpus
+# composition can do at all.
+#
+# The ablations ranked the two protective ingredients: removing Track C cost the
+# most academic average (-9.57 against the full mix's -8.35, GSM8k 9.12 against
+# 14.96), and removing English cost the second most (-9.23, GSM8k 9.88). This
+# run raises both as far as the corpus allows, at the expense of Track A and
+# Track B:
+#
+#   Track C   0.2625 -> 0.40
+#   English   0.25   -> 0.30
+#   A and B   0.4875 -> 0.30
+#
+# Two variables, deliberately, and it must not be read as attribution. The point
+# is the bound. If the maximum-protection mix does not beat -8.35, then no
+# reweighting of this corpus will, composition is exhausted as a lever, and
+# replay -- new data rather than a new ratio -- is the only thing left. That is
+# a decision worth one run.
+#
+# If it DOES beat it, trackc45 says how much of the gain was Track C alone, so
+# the pair separates what one run could not.
+#
+# CEILING. English is the binding constraint and the reason this is 0.30 rather
+# than the 0.50 first proposed. build_mix.py samples without replacement and
+# exits if a source is short, so weight w needs 4200*w records at --total 4000
+# --val-total 200. english_structured.jsonl has 1276, so w <= 0.304: 0.30 takes
+# 1200 training + 60 validation and leaves 16 spare. Anything more needs new
+# English data generated, not a new ratio.
+#
+# Read against rollama31-dpo_4kv2_s0 and rollama31-dpo_4kv2_s0_lim, both arms.
+base_model: OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.1846
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0385
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0385
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0385
+    # VARIABLE ONE. 0.2625 in the baseline.
+    - path: data/sft/track_c.jsonl
+      weight: 0.40
+    # VARIABLE TWO, and at its ceiling. 0.25 in the baseline.
+    - path: data/sft/english_structured.jsonl
+      weight: 0.30
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # Load-bearing since 3.10: train_lora.py derives its anchored regex from this
+  # list. Unchanged here, because this run moves the corpus.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 2
+  gradient_accumulation: 8
+  bf16: true
+  seed: 0
+  train_on_inputs: false
+
+eval:
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

@@ -1,0 +1,12 @@
+model         OpenLLM-Ro/RoGemma2-9b-Instruct-DPO
+device        NVIDIA H200
+gpu_mem_util  0.9
+enforce_eager 0
+fi_sampler    0
+date          2026-09-20T13:36:22+00:00
+--- versions ---
+torch         2.11.0+cu130
+transformers  5.13.0
+vllm          0.24.0
+--- bench commit ---
+(not a git checkout)

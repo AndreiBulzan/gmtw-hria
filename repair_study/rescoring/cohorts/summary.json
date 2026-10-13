@@ -1,0 +1,33 @@
+{
+  "standard": {
+    "total": 500,
+    "retained": 438,
+    "excluded": 62,
+    "retained_by_family": {
+      "fact": 100,
+      "recipe": 68,
+      "schedule": 150,
+      "travel": 120
+    },
+    "exclusion_reason_counts_including_overlaps": {
+      "duplicate_content": 23,
+      "proven_infeasible_type_constraints": 5,
+      "required_timing_information_not_shown": 50
+    }
+  },
+  "adversarial": {
+    "total": 300,
+    "retained": 240,
+    "excluded": 60,
+    "retained_by_family": {
+      "fact": 50,
+      "recipe": 16,
+      "schedule": 75,
+      "travel": 99
+    },
+    "exclusion_reason_counts_including_overlaps": {
+      "duplicate_content": 19,
+      "required_timing_information_not_shown": 52
+    }
+  }
+}

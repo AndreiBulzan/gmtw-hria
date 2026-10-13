@@ -1,0 +1,81 @@
+{
+  "package_date": "2026-10-05",
+  "scorer_origin": "proposal_2026_10_03_updated/code/rescore.py, used for the October 3 full article proposal",
+  "original_scorer_and_tests_unchanged": true,
+  "upstream_repository": "https://github.com/AndreiBulzan/gmtw-hria",
+  "upstream_snapshot": "8c4e46ff4a926cb516f8dabb33fc2b5873f29e67",
+  "tested_python": "3.13.5",
+  "dependencies": {
+    "numpy": "2.4.6",
+    "json-repair": "0.54.2"
+  },
+  "source_files": {
+    "code/rescore.py": {
+      "source": "proposal_2026_10_03_updated/code/rescore.py",
+      "sha256": "245d704aefb1a1d672644a32c13e8672f9e7d54917aea222fa4902285f084a25"
+    },
+    "code/test_rescore.py": {
+      "source": "proposal_2026_10_03_updated/code/test_rescore.py",
+      "sha256": "dabf3401b9d6fab4ca36e98d383b5f305489d214d1ae6a1cac681b4fa8386915"
+    },
+    "code/vendor/rombench/gmtw_ro/worlds/base.py": {
+      "source": "proposal_2026_10_03_updated/code/vendor/rombench/gmtw_ro/worlds/base.py",
+      "sha256": "f26dfc78df9fa911ff4128b96500912540cbcb6e5ab9f81427b4694712515cc4"
+    },
+    "code/vendor/rombench/gmtw_ro/eval/constraints.py": {
+      "source": "proposal_2026_10_03_updated/code/vendor/rombench/gmtw_ro/eval/constraints.py",
+      "sha256": "50029805a15173dc2dd6b8de32c552701c83e593cc321de83ce1f8a1e4e3b825"
+    },
+    "code/vendor/UPSTREAM_LICENSE": {
+      "source": "proposal_2026_10_03_updated/code/vendor/UPSTREAM_LICENSE",
+      "sha256": "616ea1b60442fccb55fdee21e1da40a9bb3b4932b80ac146e7681229f060eba6"
+    },
+    "inputs/v0_DE_test.jsonl": {
+      "source": "proposal_2026_10_03_updated/inputs/v0_DE_test.jsonl",
+      "sha256": "39c25d910f26422e5f8e87c1d2ae683e2f8a852aab19b5d1968cdf85dc3c70b8"
+    },
+    "inputs/hard.jsonl": {
+      "source": "proposal_2026_10_03_updated/inputs/hard.jsonl",
+      "sha256": "985205d4f89a68b13994f73a5454042fd4a10e6b3a527226aa4d8b12b3613dd6"
+    },
+    "cohorts/cohort_exclusions.csv": {
+      "source": "proposal_2026_10_03_updated/evidence/cohort_exclusions.csv",
+      "sha256": "fb5778c6471c7797614fc4a7b563a2b92a9342e4061350a851e0eb12d2ade61e"
+    }
+  },
+  "cohorts": {
+    "standard": {
+      "total": 500,
+      "retained": 438,
+      "excluded": 62,
+      "retained_by_family": {
+        "fact": 100,
+        "recipe": 68,
+        "schedule": 150,
+        "travel": 120
+      },
+      "exclusion_reason_counts_including_overlaps": {
+        "duplicate_content": 23,
+        "proven_infeasible_type_constraints": 5,
+        "required_timing_information_not_shown": 50
+      }
+    },
+    "adversarial": {
+      "total": 300,
+      "retained": 240,
+      "excluded": 60,
+      "retained_by_family": {
+        "fact": 50,
+        "recipe": 16,
+        "schedule": 75,
+        "travel": 99
+      },
+      "exclusion_reason_counts_including_overlaps": {
+        "duplicate_content": 19,
+        "required_timing_information_not_shown": 52
+      }
+    }
+  },
+  "repair_outputs_included": false,
+  "repair_results_recomputed": false
+}

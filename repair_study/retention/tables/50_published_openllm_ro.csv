@@ -1,0 +1,9 @@
+model,requested,card,Academic avg,ARC,MMLU,Winogrande,HellaSwag,GSM8k,TruthfulQA,RoMT-Bench,RoCulturaBench
+RoLlama3.1-8B-DPO,OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23,OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23,53.76,51.09,56.22,66.77,59.38,31.54,57.56,7.0,4.73
+RoGemma2-9B-DPO,OpenLLM-Ro/RoGemma2-9b-Instruct-DPO-2025-04-23,OpenLLM-Ro/RoGemma2-9b-Instruct-DPO-2025-04-23,59.79,55.66,64.0,73.16,64.26,37.8,63.86,7.26,5.36
+RoGemma2-9B-SFT,OpenLLM-Ro/RoGemma2-9b-Instruct-2025-04-23,OpenLLM-Ro/RoGemma2-9b-Instruct-2025-04-23,54.39,50.24,62.0,70.38,52.25,40.51,50.97,6.78,4.89
+RoLlama3-8B-DPO,OpenLLM-Ro/RoLlama3-8b-Instruct-DPO-2025-04-23,OpenLLM-Ro/RoLlama3-8b-Instruct-DPO-2025-04-23,55.86,52.26,55.35,66.62,59.93,43.95,57.06,6.67,4.83
+RoMistral-7B-DPO,OpenLLM-Ro/RoMistral-7b-Instruct-DPO-2025-04-23,OpenLLM-Ro/RoMistral-7b-Instruct-DPO-2025-04-23,56.62,55.51,52.61,68.04,64.97,41.07,57.55,6.61,4.93
+RoMistral-7B-SFT,OpenLLM-Ro/RoMistral-7b-Instruct-2025-04-23,OpenLLM-Ro/RoMistral-7b-Instruct-2025-04-23,54.4,52.86,52.33,68.57,63.5,38.15,51.01,6.24,4.36
+RoLlama2-7B,OpenLLM-Ro/RoLlama2-7b-Instruct,OpenLLM-Ro/RoLlama2-7b-Instruct-2025-04-23,45.51,45.7,40.36,63.26,60.25,18.02,45.48,4.97,4.56
+RoGemma-7B-DPO,OpenLLM-Ro/RoGemma-7b-Instruct-DPO,OpenLLM-Ro/RoGemma-7b-Instruct-DPO-2024-10-09,48.27,46.66,54.45,63.73,49.33,34.98,40.45,5.47,3.94

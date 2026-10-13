@@ -1,0 +1,128 @@
+Scored 438 retained standard tasks; T=0.552267, J=0.257991
+Results: runs/rollama31-dpo_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.880580, J=0.563927
+Results: runs/rollama31-dpo_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.870649, J=0.547945
+Results: runs/rollama31-dpo_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.886894, J=0.575342
+Results: runs/rollama31-dpo_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.544924, J=0.141667
+Results: runs/rollama31-dpo_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.773745, J=0.241667
+Results: runs/rollama31-dpo_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.816739, J=0.275000
+Results: runs/rollama31-dpo_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.805787, J=0.258333
+Results: runs/rollama31-dpo_4kv2_s2_adversarial
+Scored 438 retained standard tasks; T=0.643268, J=0.280822
+Results: runs/rogemma2-dpo_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.934029, J=0.646119
+Results: runs/rogemma2-dpo_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.937954, J=0.664384
+Results: runs/rogemma2-dpo_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.936628, J=0.632420
+Results: runs/rogemma2-dpo_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.669562, J=0.183333
+Results: runs/rogemma2-dpo_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.877956, J=0.291667
+Results: runs/rogemma2-dpo_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.842323, J=0.266667
+Results: runs/rogemma2-dpo_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.873565, J=0.291667
+Results: runs/rogemma2-dpo_4kv2_s2_adversarial
+Scored 438 retained standard tasks; T=0.687285, J=0.317352
+Results: runs/rogemma2-sft_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.941830, J=0.643836
+Results: runs/rogemma2-sft_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.950891, J=0.664384
+Results: runs/rogemma2-sft_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.943471, J=0.664384
+Results: runs/rogemma2-sft_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.661807, J=0.145833
+Results: runs/rogemma2-sft_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.876136, J=0.325000
+Results: runs/rogemma2-sft_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.879357, J=0.320833
+Results: runs/rogemma2-sft_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.894544, J=0.354167
+Results: runs/rogemma2-sft_4kv2_s2_adversarial
+Scored 438 retained standard tasks; T=0.562821, J=0.223744
+Results: runs/rollama3-dpo_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.751867, J=0.468037
+Results: runs/rollama3-dpo_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.833804, J=0.536530
+Results: runs/rollama3-dpo_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.787359, J=0.509132
+Results: runs/rollama3-dpo_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.644272, J=0.200000
+Results: runs/rollama3-dpo_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.660129, J=0.241667
+Results: runs/rollama3-dpo_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.744441, J=0.270833
+Results: runs/rollama3-dpo_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.710817, J=0.283333
+Results: runs/rollama3-dpo_4kv2_s2_adversarial
+Scored 438 retained standard tasks; T=0.721961, J=0.351598
+Results: runs/romistral-dpo_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.844143, J=0.506849
+Results: runs/romistral-dpo_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.848209, J=0.541096
+Results: runs/romistral-dpo_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.878596, J=0.589041
+Results: runs/romistral-dpo_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.741792, J=0.187500
+Results: runs/romistral-dpo_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.829767, J=0.287500
+Results: runs/romistral-dpo_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.852774, J=0.308333
+Results: runs/romistral-dpo_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.808173, J=0.237500
+Results: runs/romistral-dpo_4kv2_s2_adversarial
+Scored 438 retained standard tasks; T=0.494950, J=0.184932
+Results: runs/romistral-sft_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.885823, J=0.566210
+Results: runs/romistral-sft_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.856042, J=0.570776
+Results: runs/romistral-sft_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.906493, J=0.579909
+Results: runs/romistral-sft_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.570114, J=0.033333
+Results: runs/romistral-sft_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.816589, J=0.287500
+Results: runs/romistral-sft_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.826513, J=0.279167
+Results: runs/romistral-sft_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.880850, J=0.308333
+Results: runs/romistral-sft_4kv2_s2_adversarial
+Scored 438 retained standard tasks; T=0.629254, J=0.319635
+Results: runs/rollama2-sft_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.803574, J=0.397260
+Results: runs/rollama2-sft_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.760002, J=0.401826
+Results: runs/rollama2-sft_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.812959, J=0.413242
+Results: runs/rollama2-sft_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.595299, J=0.166667
+Results: runs/rollama2-sft_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.725177, J=0.200000
+Results: runs/rollama2-sft_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.719354, J=0.200000
+Results: runs/rollama2-sft_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.772381, J=0.262500
+Results: runs/rollama2-sft_4kv2_s2_adversarial
+Scored 438 retained standard tasks; T=0.352210, J=0.015982
+Results: runs/rogemma-dpo_4kv2_base_standard
+Scored 438 retained standard tasks; T=0.776277, J=0.436073
+Results: runs/rogemma-dpo_4kv2_s0_standard
+Scored 438 retained standard tasks; T=0.821211, J=0.497717
+Results: runs/rogemma-dpo_4kv2_s1_standard
+Scored 438 retained standard tasks; T=0.788370, J=0.440639
+Results: runs/rogemma-dpo_4kv2_s2_standard
+Scored 240 retained adversarial tasks; T=0.416457, J=0.008333
+Results: runs/rogemma-dpo_4kv2_base_adversarial
+Scored 240 retained adversarial tasks; T=0.779096, J=0.245833
+Results: runs/rogemma-dpo_4kv2_s0_adversarial
+Scored 240 retained adversarial tasks; T=0.801225, J=0.262500
+Results: runs/rogemma-dpo_4kv2_s1_adversarial
+Scored 240 retained adversarial tasks; T=0.747687, J=0.212500
+Results: runs/rogemma-dpo_4kv2_s2_adversarial

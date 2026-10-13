@@ -1,0 +1,9 @@
+checkpoint,split,metric,n,delta,ci_lo,ci_hi,raw_p,holm_p,significant
+RoGemma-7B-DPO,standard,J,438,44.2161,40.3349,48.0213,0.0002,0.0016,1
+RoMistral-7B-SFT,standard,J,438,38.7367,33.6377,43.5312,0.0002,0.0016,1
+RoGemma2-9B-DPO,standard,J,438,36.6819,32.1918,41.172,0.0002,0.0016,1
+RoGemma2-9B-SFT,standard,J,438,34.0183,29.5282,38.5845,0.0002,0.0016,1
+RoLlama3.1-8B-DPO,standard,J,438,30.4414,26.1796,34.7032,0.0002,0.0016,1
+RoLlama3-8B-DPO,standard,J,438,28.0822,23.6682,32.4962,0.0002,0.0016,1
+RoMistral-7B-DPO,standard,J,438,19.4064,14.7641,23.9726,0.0002,0.0016,1
+RoLlama2-7B,standard,J,438,8.4475,3.7291,13.1659,0.0012,0.0016,1

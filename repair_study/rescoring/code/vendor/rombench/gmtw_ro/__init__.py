@@ -1,0 +1,1 @@
+"""Bundled GMTW scorer dependency."""

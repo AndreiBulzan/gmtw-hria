@@ -1,0 +1,58 @@
+{
+  "total": 4000,
+  "seed": 0,
+  "config": "ro-so/training/lora_rollama31_8b_v2.yaml",
+  "sources": [
+    {
+      "path": "data/sft/track_a.jsonl",
+      "weight": 0.3,
+      "available": 1825,
+      "sampled": 1200,
+      "sha256": "6e90ebe9d4ba00f7188214b9d7c13276225ea3ee8b4e1f81dcd6f97921f1f66c",
+      "val_sampled": 60
+    },
+    {
+      "path": "data/sft/track_b_invoice.jsonl",
+      "weight": 0.0625,
+      "available": 499,
+      "sampled": 250,
+      "sha256": "4d683dc08b9834f51a40f1d8086539c07215c1f0aa7ba1a4a54abfc1480aba66",
+      "val_sampled": 13
+    },
+    {
+      "path": "data/sft/track_b_contract.jsonl",
+      "weight": 0.0625,
+      "available": 500,
+      "sampled": 250,
+      "sha256": "405ca31e1b4273a663b7478b8437d976e4375c32f4616725077f1cb5dfd71e32",
+      "val_sampled": 13
+    },
+    {
+      "path": "data/sft/track_b_anunt.jsonl",
+      "weight": 0.0625,
+      "available": 476,
+      "sampled": 250,
+      "sha256": "85cb8e710e1a577ea92a391905977d02edd8b09e1e4d4add367a8c5415b420e4",
+      "val_sampled": 12
+    },
+    {
+      "path": "data/sft/track_c.jsonl",
+      "weight": 0.2625,
+      "available": 2000,
+      "sampled": 1050,
+      "sha256": "efab324283bd0b5076d3e65738f8acb030975af0bd1b9a3c77783c71f2011a2c",
+      "val_sampled": 52
+    },
+    {
+      "path": "data/sft/english_structured.jsonl",
+      "weight": 0.25,
+      "available": 1276,
+      "sampled": 1000,
+      "sha256": "3b04d8e2cf8a31c3ab30b85a77c94abce911fe3a4ad28df357670925ed67e995",
+      "val_sampled": 50
+    }
+  ],
+  "val_total": 200,
+  "val_path": "train_mix_4k.val.jsonl",
+  "val_sha256": "bc529ab7157e48a00d72ed0abe5abe4ae249917deddb0c858a7d9d8f7a4c289b"
+}

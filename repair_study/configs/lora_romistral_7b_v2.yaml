@@ -1,0 +1,91 @@
+# RoMistral-7b-Instruct-DPO on the datagen/ corpus — THE CONTROL.
+#
+# This model is not broken: 96.8% valid JSON, the healthiest adapted checkpoint
+# in the study, and the counterexample to "DPO breaks JSON" since DPO IMPROVED
+# this family (10.8% -> 0.2% unreadable).
+#
+# So there is nothing here to repair, and that is the point. The question this
+# run answers is whether the recipe HARMS a model that does not need it —
+# the check a reviewer asks for when every other result is positive.
+#
+# Success is "nothing got worse", not "something improved". Expect format flat
+# near ceiling; watch G and F for damage.
+#
+# Pre-flight checked: MistralForCausalLM, 32 layers, standard module naming so
+# the hardcoded LoRA regex applies, stop token already correct (</s> = 2).
+#
+# Separate from lora_rollama31_8b.yaml, which stays untouched so it1-it5 remain
+# reproducible against the corpus they were trained on. That corpus no longer
+# exists on disk and is a different answer shape anyway, so the two are not
+# comparable and must not share a config.
+#
+# What changed, and it is the whole reason for the rebuild: every completion is
+# now an explanation followed by the JSON block, and every prompt asks for that
+# ordering. The previous corpus emitted bare JSON and its Track A prompts said
+# "Răspunde doar cu JSON-ul, fără explicații" — we trained one answer shape and
+# measured another. See datagen/README.md.
+#
+# Weights are UNCHANGED from it4/it6. That is deliberate: the answer shape is
+# the single variable in this run. Do not bundle a ratio or volume change with
+# it — it2 changed three things at once and was uninterpretable, which is why
+# every run since has moved one.
+#
+# Worst formatter in the study: 27.6% valid JSON in the published table, below
+# even RoLlama3.1-DPO. Same architecture family as RoLlama3.1 (Llama, 32
+# layers, 128k vocab) so the hyperparameters carry over unchanged, and its stop
+# token is correct out of the box (<|eot_id|>, 128009) — no Gemma-style
+# mismatch to work around.
+#
+# Revision pinned to -2025-04-23 to match the other two models in this study.
+# The paper does not state which RoLlama3-8B revision it evaluated, so this is
+# our choice and needs confirming before the numbers sit in the same table.
+base_model: OpenLLM-Ro/RoMistral-7b-Instruct-DPO-2025-04-23
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.30
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0625
+    # datagen/track_c.py — the selection family. Named track_c.jsonl here,
+    # where the old config said track_c_select.jsonl; there is only one Track C
+    # now, so the qualifier no longer distinguishes anything.
+    - path: data/sft/track_c.jsonl
+      weight: 0.2625
+    - path: data/sft/english_structured.jsonl   # retained-capability slice
+      weight: 0.25
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # NOTE: train_lora.py ignores this list and uses its hardcoded
+  # TARGET_MODULE_PATTERN. Kept here for documentation only — editing it has no
+  # effect. Verify print_trainable_parameters() is non-zero before trusting any
+  # run, and especially before porting to a non-Llama family.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 2
+  gradient_accumulation: 8
+  bf16: true
+  seed: 0
+  # Mask the prompt: loss on the completion only. The completion is now
+  # explanation + JSON, so the explanation is trained too — that is the point.
+  train_on_inputs: false
+
+eval:
+  # Held-out external, via the pinned rombench harness. The comparison that
+  # matters is against the 32.0% valid-JSON baseline on the SAME dual-channel
+  # protocol; never against a JSON-only number.
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

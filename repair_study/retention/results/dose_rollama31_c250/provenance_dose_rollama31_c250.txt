@@ -1,0 +1,18 @@
+date          2026-09-10T17:23:34+00:00
+model         /DATA/stephen/kd-hria/merged_models/dose_rollama31_c250
+name          dose_rollama31_c250
+harness_head  77e8ac48c750b661e2cf1f48085e4a4181406ed1
+harness_dirty 0 modified files
+rungs         5
+limit         none
+batch_size    64
+seed          1234
+tokenizer      OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23
+chat_template  off
+gpu           NVIDIA H200 NVL
+--- versions ---
+torch          2.13.0+cu129
+transformers   4.53.2
+datasets       5.0.1
+accelerate     1.14.0
+lm_eval        unavailable (AttributeError)

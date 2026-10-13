@@ -1,0 +1,35 @@
+# The training stack, pinned. This is not a suggestion: an unpinned stack once
+# moved unreadable replies from 1.0% to 47.8% on an otherwise identical run, and
+# the cause took a full retrain to find.
+#
+# NEVER install unsloth alongside these. It patches transformers and peft at
+# import time and the patched behaviour does not match what produced the
+# released adapters.
+#
+#   pip install -r datagen/requirements.txt
+
+# --- corpus generation and scoring (this is all analysis/ needs) -------------
+jsonschema==4.26.0
+
+# --- training -----------------------------------------------------------
+torch==2.11.0
+transformers==5.13.0
+trl==1.7.1
+peft==0.19.1
+datasets==5.0.0
+PyYAML==6.0.3
+
+# --- experiment tracking (OPTIONAL) -------------------------------------
+# Not required. train_lora.py logs to mlflow when it is importable and to
+# nothing when it is not; either way the weights are identical, because
+# report_to is logging and nothing else. It is listed rather than pinned
+# because it was a silent hard dependency until 2026-09-20 -- transformers
+# instantiates the callback and raises when the package is absent, so a clean
+# environment failed at Trainer construction. That is now guarded.
+#   pip install mlflow    # only if you want the run tracked
+
+# --- generation, for the teacher and for evaluation ---------------------
+# Tracks A and B call a served teacher; the benchmark harness generates with
+# the same engine. Recorded because the empty-plan and end-to-end columns are
+# sensitive to the serving path, not only to the weights.
+vllm==0.24.0

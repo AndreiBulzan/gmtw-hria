@@ -1,0 +1,76 @@
+# RoGemma-7b-Instruct-DPO on the datagen/ corpus.
+#
+# Gemma-1, not Gemma-2 -- a separate family, and the last model in the
+# benchmark's Romanian set that we had never run. The published table has it as
+# the worst performer of the six (avg 0.574, 38.4% of answers with no usable
+# JSON), so leaving it out would have meant repairing every model except the
+# one most visibly broken.
+#
+# Its failure is the dissociation case: format is largely intact while
+# constraint-following collapses. This recipe targets format, so the honest
+# expectation recorded BEFORE the run is format flat-to-slightly-up and the
+# composite moving mainly through faithfulness -- not a dramatic repair.
+#
+# Pre-flight against the Hub config: GemmaForCausalLM, 28 layers, 256k vocab,
+# standard module naming so the hardcoded LoRA regex applies.
+#
+# NO `attn_implementation: eager` here, deliberately. That workaround exists for
+# Gemma-2's logit softcapping, which HF only computes on the eager path.
+# Gemma-1 has no softcapping (attn_logit_softcapping and
+# final_logit_softcapping are both null in its config), so forcing eager would
+# only cost speed.
+#
+# Batch 1 with accumulation 16 is kept from the Gemma-2 config: the 256k vocab
+# makes the logits tensor large enough that the usual batch will not fit.
+
+base_model: OpenLLM-Ro/RoGemma-7b-Instruct-DPO
+
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.30
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0625
+    - path: data/sft/track_c.jsonl
+      weight: 0.2625
+    - path: data/sft/english_structured.jsonl
+      weight: 0.25
+  # Gemma-2's sliding window is 4096 against an 8192 context, so this sits
+  # exactly on the boundary. Usable, but every sequence is at the edge of the
+  # local-attention span rather than comfortably inside it.
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # Documentation only — train_lora.py uses its hardcoded TARGET_MODULE_PATTERN
+  # and ignores this list. The pattern is anchored on Llama-family naming;
+  # Gemma-2 uses the same HF module names so it should match, but that is
+  # unverified. CHECK print_trainable_parameters() is non-zero and near the
+  # Llama run's 0.52% before trusting any Gemma result.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  # Halved from the Llama config, with accumulation doubled to keep the
+  # effective batch at 16 — 9B parameters and a 256k vocabulary make the
+  # LM-head logits tensor roughly eight times Llama's per token, which is
+  # where this would OOM.
+  per_device_batch_size: 1
+  gradient_accumulation: 16
+  bf16: true
+  seed: 0
+  train_on_inputs: false
+
+eval:
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

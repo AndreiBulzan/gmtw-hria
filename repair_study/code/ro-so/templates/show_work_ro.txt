@@ -1,0 +1,20 @@
+# Addenda for the show-your-working arms (E2 / E3 in
+# paper/constraint_following/EXPERIMENTS.md). One block per --show-work mode,
+# addressed by the [label] line, appended after the schema block of whichever
+# select_ro.txt template was drawn.
+#
+# The wording is deliberately parallel across modes: every block uses the same
+# "intai ... apoi" shape and names the same arithmetic, so the only thing that
+# differs between arms is whether the answer FORMAT requires the number or the
+# instruction merely ASKS for it. A reworded control would confound the two.
+#
+# Native-speaker review: pending (add to the next review batch).
+
+[ask]
+Calculează întâi totalul selecției tale și verifică dacă se încadrează în limită, apoi scrie lista aleasă.
+
+[budget]
+Completează întâi „total" (suma selecției tale) și „within_budget", apoi scrie lista aleasă.
+
+[budget+groups]
+Completează întâi „total" (suma selecției tale), „within_budget", „group_totals" (totalul fiecărei grupe) și „comparison_ok", apoi scrie lista aleasă.

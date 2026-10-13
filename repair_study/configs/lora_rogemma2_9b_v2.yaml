@@ -1,0 +1,70 @@
+# RoGemma2-9b-Instruct-DPO on the datagen/ corpus — the second family.
+#
+# Same corpus, same mix weights, same hyperparameters as
+# lora_rollama31_8b_v2.yaml. The only intended differences are the base model
+# and the three Gemma-2 accommodations below, so "does the repair transfer
+# across families" is a question about the model rather than about the recipe.
+#
+# The disease differs though, and the success criterion should follow it.
+# RoLlama3.1-DPO fails by writing prose until it runs out of budget and
+# truncating its JSON (68% unreadable). RoGemma2-DPO is milder on format
+# (34.6% unreadable, 65.4% valid JSON) and its headline problem is
+# code-switching at 24.4% plus trailing prose after a complete object. Judge
+# this run on format and empty plans; the mix carries no anti-code-switching
+# signal, so G may not move and that is expected rather than a failure.
+base_model: OpenLLM-Ro/RoGemma2-9b-Instruct-DPO-2025-04-23
+
+model:
+  # Gemma-2 applies logit softcapping, which HF computes correctly only on the
+  # eager attention path. SDPA silently skips it — the loss comes out subtly
+  # wrong rather than loudly broken, which is the worst kind of wrong.
+  attn_implementation: eager
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.30
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0625
+    - path: data/sft/track_c.jsonl
+      weight: 0.2625
+    - path: data/sft/english_structured.jsonl
+      weight: 0.25
+  # Gemma-2's sliding window is 4096 against an 8192 context, so this sits
+  # exactly on the boundary. Usable, but every sequence is at the edge of the
+  # local-attention span rather than comfortably inside it.
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # Documentation only — train_lora.py uses its hardcoded TARGET_MODULE_PATTERN
+  # and ignores this list. The pattern is anchored on Llama-family naming;
+  # Gemma-2 uses the same HF module names so it should match, but that is
+  # unverified. CHECK print_trainable_parameters() is non-zero and near the
+  # Llama run's 0.52% before trusting any Gemma result.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  # Halved from the Llama config, with accumulation doubled to keep the
+  # effective batch at 16 — 9B parameters and a 256k vocabulary make the
+  # LM-head logits tensor roughly eight times Llama's per token, which is
+  # where this would OOM.
+  per_device_batch_size: 1
+  gradient_accumulation: 16
+  bf16: true
+  seed: 0
+  train_on_inputs: false
+
+eval:
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

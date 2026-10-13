@@ -1,0 +1,62 @@
+# Track C selection templates (Romanian). Blocks separated by "---".
+# Placeholders: {task} (one-line framing, per domain), {catalogue} (the items to
+# choose from, with their fixed attributes), {groups_block} (the containers to
+# fill, or empty for a flat list), {constraints} (the rules), {schema}.
+#
+# The task is to CHOOSE from the catalogue, not to invent values. Limits are set
+# from the whole catalogue, so taking everything always breaks them. Every
+# template asks for the working out first and the JSON last.
+Ai mai jos un catalog. {task} Nu poți lua tot — verifică regulile pe măsură ce alegi, apoi scrie JSON-ul la finalul răspunsului.
+
+Catalog:
+{catalogue}
+{groups_block}
+Reguli:
+{constraints}
+
+Schema răspunsului:
+{schema}
+---
+{task} Folosește doar ce se află în catalogul de mai jos; valorile din catalog sunt fixe și nu pot fi schimbate. Arată întâi calculele care dovedesc că respecți fiecare regulă, apoi dă obiectul JSON.
+
+Catalog:
+{catalogue}
+{groups_block}
+Reguli de respectat:
+{constraints}
+
+Schema:
+{schema}
+---
+Din catalogul următor, fă o selecție. {task} Explică pe scurt de ce selecția ta respectă fiecare regulă, apoi scrie JSON-ul.
+
+Catalog:
+{catalogue}
+{groups_block}
+Reguli:
+{constraints}
+
+Schema:
+{schema}
+---
+Sarcina ta: {task} Orice regulă încălcată invalidează răspunsul, așa că verifică fiecare regulă înainte de a răspunde și pune JSON-ul la final.
+
+Catalog:
+{catalogue}
+{groups_block}
+Reguli:
+{constraints}
+
+Schema răspunsului:
+{schema}
+---
+{task} Poți folosi doar codurile din catalog, iar valorile lor sunt fixe. Notează pe scurt calculele care arată că fiecare regulă e respectată, apoi întoarce JSON-ul.
+
+Catalog:
+{catalogue}
+{groups_block}
+Reguli:
+{constraints}
+
+Schema:
+{schema}

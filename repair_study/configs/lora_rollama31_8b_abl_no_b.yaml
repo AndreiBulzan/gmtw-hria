@@ -1,0 +1,68 @@
+# Corpus ablation — Track B removed (gold-first extraction), RoLlama3.1-8b-DPO.
+#
+# The fourth ingredient, and the one §3.2 b never tested. Three tracks were
+# ablated and Track B was not, so the composition answer had a hole in exactly
+# the place a reader checks: "you removed three of four, what about the fourth?"
+#
+# Same convention as the other three: the English slice stays at 0.25 and the
+# removed track's share is redistributed across the remaining Romanian tracks
+# in proportion. Track B is 0.1875 of the baseline; A and C absorb it, giving
+# A 0.40 and C 0.35. Same 4,000-record budget, same model, same hyperparameters,
+# three seeds. Only the mix differs.
+#
+# What it can and cannot show. Leave-one-out tests NECESSITY, not contribution:
+# at a fixed budget, removing Track B also means more A and C, so a null result
+# reads as "B's slot is as well spent elsewhere" rather than "B does nothing".
+# Redundancy is invisible to this design by construction -- if B and C teach the
+# same thing, dropping either shows nothing while dropping both would break it.
+# The sufficiency axis (only-one-in runs) is what reveals that, and is queued.
+#
+# Read on the adversarial 300 split and end-to-end, not on valid JSON. Valid
+# JSON sits at 99.7-100% in every configuration already tested; a saturated
+# metric cannot show an ingredient's contribution, because every mix maxes it.
+base_model: OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.40
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0
+    - path: data/sft/track_c.jsonl
+      weight: 0.35
+    - path: data/sft/english_structured.jsonl
+      weight: 0.25
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # TARGET_MODULE_PATTERN. Kept here for documentation only — editing it has no
+  # effect. Verify print_trainable_parameters() is non-zero before trusting any
+  # run, and especially before porting to a non-Llama family.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  lr: 1.0e-4
+  scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 2
+  gradient_accumulation: 8
+  bf16: true
+  seed: 0
+  # Mask the prompt: loss on the completion only. The completion is now
+  # explanation + JSON, so the explanation is trained too — that is the point.
+  train_on_inputs: false
+
+eval:
+  # Held-out external, via the pinned rombench harness. The comparison that
+  # matters is against the 32.0% valid-JSON baseline on the SAME dual-channel
+  # protocol; never against a JSON-only number.
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

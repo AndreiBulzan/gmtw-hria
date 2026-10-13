@@ -1,0 +1,43 @@
+# Native extraction EVAL instruction templates (Romanian). EVAL-ONLY:
+# deliberately worded differently from templates/extraction_ro.txt (the
+# TRAINING extraction templates) so the benchmark doesn't just re-test
+# phrasings the model has already seen in training. Never copy phrasings
+# between this file and the training templates.
+# Blocks separated by "---". Placeholders: {schema} (verbatim), {document}
+Ai la dispoziție un document și o schemă JSON. Extrage din document toate informațiile cerute de schemă și construiește obiectul JSON corespunzător. Nu scrie nimic altceva în afara JSON-ului.
+
+Document:
+{document}
+
+Schema:
+{schema}
+---
+Completează schema JSON de mai jos pe baza informațiilor din documentul atașat. Fiecare câmp trebuie să reflecte exact ce este scris în document. Răspunsul tău trebuie să fie strict JSON.
+
+Schema de completat:
+{schema}
+
+Documentul sursă:
+{document}
+---
+Din textul următor, extrage datele relevante și formatează-le conform schemei JSON date. Nu adăuga informații care nu apar în text. Fără comentarii, doar JSON.
+
+Text:
+{document}
+
+Schemă:
+{schema}
+---
+Rolul tău este de a extrage informații structurate. Analizează documentul de mai jos și populează schema JSON cu valorile identificate în text. Livrează exclusiv obiectul JSON.
+
+{document}
+
+{schema}
+---
+Pe baza documentului românesc de mai jos, generează un obiect JSON valid care respectă schema dată, folosind exclusiv informațiile prezente în text.
+
+Document:
+{document}
+
+Schemă JSON:
+{schema}

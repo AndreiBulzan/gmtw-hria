@@ -1,0 +1,94 @@
+# Recipe variant — RoLlama3.1-8b-Instruct-DPO at a fifth of the learning rate.
+#
+# Why this run exists. §3.3 measured what the repair costs: 8.28 points of
+# academic average on OpenLLM-Ro's own suite, every task down, three seeds
+# agreeing. The dose curve then showed repair and damage are ONE event at this
+# recipe -- both complete by step 50, neither moving over the remaining 450 --
+# so a shorter schedule cannot separate them. Only a different recipe can.
+#
+# That leaves the paper unable to say which claim it is making:
+#
+#   a gentler recipe keeps most of the repair for less damage
+#       -> the paper reports a mitigation with a known cost
+#   it does not
+#       -> the paper reports an approach that does not work
+#
+# Both are publishable. They are not the same paper, and nothing else in the
+# queue decides between them.
+#
+# EXACTLY ONE THING DIFFERS from lora_rollama31_8b_v2.yaml: lr, 1.0e-4 -> 2.0e-5.
+# Same corpus file, same weights, same rank, same schedule, same batch, same
+# seed. it2 changed three things at once and was uninterpretable; every run
+# since has moved one, and so does this.
+#
+# Learning rate first, ahead of the other levers, because it is the only one
+# that changes no artefact but a single number -- no new corpus, no trainer
+# change, no manifest. The alternatives, in the order I would try them:
+#
+#   attention-only adaptation  drop gate/up/down_proj and keep q/k/v/o. Most
+#                              factual knowledge sits in the MLP, so sparing it
+#                              targets the mechanism rather than slowing the
+#                              whole update. Only became possible once §3.10
+#                              made target_modules load-bearing -- before that
+#                              fix the field was dead and this run would have
+#                              silently been a duplicate of the baseline.
+#   smaller adapter            r 16 -> 8, less capacity to overwrite with.
+#   general-instruction replay attacks forgetting directly, and is what the
+#                              literature reaches for first. Deferred because it
+#                              needs a new corpus and a trainer that can carry
+#                              non-JSON records -- a much larger change than a
+#                              first probe warrants.
+#
+# Read against: results/rollama31-dpo_4kv2_s0 (GMTW-Ro) and
+# retention/results/rollama31-dpo_4kv2_s0 (academic suite). Both arms must be
+# compared, always: a variant that keeps the repair and keeps the damage has
+# told us nothing, and so has one that loses both.
+base_model: OpenLLM-Ro/RoLlama3.1-8b-Instruct-DPO-2025-04-23
+
+data:
+  mix:
+    - path: data/sft/track_a.jsonl
+      weight: 0.30
+    - path: data/sft/track_b_invoice.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_contract.jsonl
+      weight: 0.0625
+    - path: data/sft/track_b_anunt.jsonl
+      weight: 0.0625
+    - path: data/sft/track_c.jsonl
+      weight: 0.2625
+    - path: data/sft/english_structured.jsonl   # retained-capability slice
+      weight: 0.25
+  max_seq_len: 4096
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # This list is now load-bearing: train_lora.py derives its anchored regex from
+  # it (§3.10). It previously documented a hardcoded constant and editing it did
+  # nothing -- the note saying so in lora_rollama31_8b_v2.yaml is stale and
+  # should come out. Unchanged here, because this run moves the learning rate.
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  epochs: 2
+  # THE SINGLE VARIABLE. 1.0e-4 in the baseline.
+  #
+  # A fifth, not a half: at 1e-4 the damage was complete within 50 steps, so a
+  # small reduction would likely reach the same place a little later rather than
+  # somewhere else. Cosine over the full 500 steps is kept, so the run still
+  # anneals properly instead of being a truncated version of the baseline --
+  # which is the thing the dose curve already ruled out.
+  lr: 2.0e-5
+  scheduler: cosine
+  warmup_ratio: 0.03
+  per_device_batch_size: 2
+  gradient_accumulation: 8
+  bf16: true
+  seed: 0
+  train_on_inputs: false
+
+eval:
+  gmtw_ro: true
+  native_extraction: eval/native_extraction

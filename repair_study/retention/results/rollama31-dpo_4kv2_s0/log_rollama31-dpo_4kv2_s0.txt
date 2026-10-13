@@ -1,0 +1,155 @@
+2026-09-08:11:30:06,906 INFO     [__main__.py:277] Verbosity set to INFO
+2026-09-08:11:30:06,922 INFO     [__init__.py:491] `group` and `group_alias` keys in tasks' configs will no longer be used in the next release of lm-eval. `tag` will be used to allow to call a collection of tasks just like `group`. `group` will be removed in order to not cause confusion with the new ConfigurableGroup which will be the offical way to create groups with addition of group-wide configuations.
+2026-09-08:11:30:08,445 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,446 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,448 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,450 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,451 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,453 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,454 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,456 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,457 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,459 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,461 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,462 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,464 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,465 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,467 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,468 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,470 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,472 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,473 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,475 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,477 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,478 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,480 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,482 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,483 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,485 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,486 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,488 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,490 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,491 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,493 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,495 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,496 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,498 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,500 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:08,501 INFO     [__init__.py:512] The tag mmlu is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,250 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,251 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,253 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,254 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,256 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,257 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,258 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,260 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,261 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,262 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,264 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,265 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,266 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,268 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,269 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,270 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,272 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,273 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,275 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,276 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,278 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,279 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,281 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,282 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,284 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,285 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,287 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,288 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,290 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,291 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,293 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,294 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,295 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,297 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,298 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,300 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,301 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,303 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,304 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,306 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,307 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,308 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,310 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,311 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,313 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,314 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,316 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,317 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,318 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,320 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,321 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,323 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,324 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,325 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,327 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,328 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,330 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,331 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,333 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,334 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,335 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,337 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,338 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,340 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,341 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,342 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,344 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,345 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,347 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,348 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,349 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,351 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,352 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,354 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,355 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,357 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,358 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,360 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,361 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,363 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,364 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,366 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,367 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,369 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,370 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,372 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,373 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,374 INFO     [__init__.py:512] The tag xnli is already registered as a group, this tag will not be registered. This may affect tasks you want to call.
+2026-09-08:11:30:10,538 INFO     [__main__.py:381] Selected Tasks: ['_ro_arc_challenge', '_ro_hellaswag', '_ro_mmlu', '_ro_truthfulqa', '_ro_winogrande']
+2026-09-08:11:30:10,541 INFO     [evaluator.py:158] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234
+2026-09-08:11:30:10,541 INFO     [evaluator.py:195] Initializing hf model, with arguments: {'pretrained': '/DATA/stephen/kd-hria/merged_models/rollama31-dpo_4kv2_s0', 'dtype': 'bfloat16'}
+2026-09-08:11:30:10,606 INFO     [huggingface.py:170] Using device 'cuda:0'
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/DATA/stephen/eval_rollm/lm-evaluation-harness/lm_eval/__main__.py", line 466, in <module>
+    cli_evaluate()
+  File "/DATA/stephen/eval_rollm/lm-evaluation-harness/lm_eval/__main__.py", line 387, in cli_evaluate
+    results = evaluator.simple_evaluate(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/DATA/stephen/eval_rollm/lm-evaluation-harness/lm_eval/utils.py", line 402, in _wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/DATA/stephen/eval_rollm/lm-evaluation-harness/lm_eval/evaluator.py", line 198, in simple_evaluate
+    lm = lm_eval.api.registry.get_model(model).create_from_arg_string(
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/DATA/stephen/eval_rollm/lm-evaluation-harness/lm_eval/api/model.py", line 147, in create_from_arg_string
+    return cls(**args, **args2)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/DATA/stephen/eval_rollm/lm-evaluation-harness/lm_eval/models/huggingface.py", line 208, in __init__
+    self._create_tokenizer(
+  File "/DATA/stephen/eval_rollm/lm-evaluation-harness/lm_eval/models/huggingface.py", line 659, in _create_tokenizer
+    self.tokenizer = transformers.AutoTokenizer.from_pretrained(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/DATA/stephen/envs/rollm/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 1047, in from_pretrained
+    raise ValueError(
+ValueError: Tokenizer class TokenizersBackend does not exist or is not currently imported.

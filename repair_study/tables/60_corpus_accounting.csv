@@ -1,0 +1,13 @@
+file,track,language,available,mix_weight,train,val
+english_structured.jsonl,A,en,1276,0.2500,1000,50
+track_a.jsonl,A,ro,1825,0.3000,1200,60
+track_b_anunt.jsonl,B,ro (by construction),476,0.0625,250,12
+track_b_contract.jsonl,B,ro (by construction),500,0.0625,250,13
+track_b_invoice.jsonl,B,ro (by construction),499,0.0625,250,13
+track_c.jsonl,C,ro (by construction),2000,0.2625,1050,52
+TOTAL,,,6576,1.0000,4000,200
+track A (all languages),A,,,,2200,
+track B (all languages),B,,,,750,
+track C (all languages),C,,,,1050,
+language en,,en,,0.2500,1000,
+language ro,,ro,,0.7500,3000,

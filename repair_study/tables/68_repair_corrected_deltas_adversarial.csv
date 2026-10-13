@@ -1,0 +1,9 @@
+checkpoint,split,n,d_T,d_raw_ok,d_normalized_ok,d_recovered,d_schema,d_joint,d_QA
+RoLlama3.1-8B-DPO,adversarial,240,0.2538,0.7875,0.7875,0.2736,0.1361,0.1167,0.2667
+RoGemma2-9B-DPO,adversarial,240,0.1951,0.4514,0.4514,0.0667,0.2486,0.1,0.3
+RoGemma2-9B-SFT,adversarial,240,0.2215,0.3403,0.3403,0.0375,0.1153,0.1875,0.5533
+RoLlama3-8B-DPO,adversarial,240,0.0609,0.7181,0.7181,0.1236,-0.1236,0.0653,0.0467
+RoMistral-7B-DPO,adversarial,240,0.0884,0.0542,0.0083,0.0,0.1097,0.0903,0.0933
+RoMistral-7B-SFT,adversarial,240,0.2712,0.2153,0.0403,0.0389,0.175,0.2583,0.8933
+RoLlama2-7B,adversarial,240,0.1437,0.2125,0.1083,0.1361,0.0458,0.0542,-0.1467
+RoGemma-7B-DPO,adversarial,240,0.3595,0.9958,0.2042,0.025,0.6986,0.2319,0.7133

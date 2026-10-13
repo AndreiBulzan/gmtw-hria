@@ -1,0 +1,39 @@
+# Track A instruction templates (Romanian). One template per block, blocks
+# separated by a line containing only "---". Placeholder: {schema}
+# Schemas are inserted VERBATIM (English keys/enums) — never translated.
+Generează un obiect JSON valid care respectă următoarea schemă JSON. Răspunde doar cu JSON-ul, fără explicații.
+
+Schema:
+{schema}
+---
+Primești o schemă JSON. Produ un exemplu de obiect JSON care o satisface întocmai. Nu adăuga niciun text în afara JSON-ului.
+
+{schema}
+---
+Creează o instanță JSON conformă cu schema de mai jos. Păstrează exact cheile și valorile permise de schemă, fără câmpuri suplimentare.
+
+{schema}
+---
+Îți dau o schemă JSON:
+
+{schema}
+
+Scrie un obiect JSON care validează împotriva acestei scheme. Răspunsul trebuie să conțină exclusiv JSON.
+---
+Respectând strict schema JSON de mai jos, generează un obiect JSON valid, completat cu valori plauzibile. Nu folosi delimitatori de cod și nu adăuga comentarii.
+
+{schema}
+---
+Sarcina ta este să produci un document JSON care trece validarea față de schema dată. Orice câmp nepermis de schemă este interzis.
+
+Schema:
+{schema}
+---
+Pe baza schemei JSON următoare, întoarce un singur obiect JSON valid. Folosește doar cheile și tipurile cerute de schemă.
+
+{schema}
+---
+Analizează schema JSON de mai jos și răspunde cu un obiect JSON conform. Fără explicații, fără text suplimentar, doar JSON.
+
+Schema:
+{schema}

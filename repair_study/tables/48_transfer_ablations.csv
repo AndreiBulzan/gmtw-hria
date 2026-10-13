@@ -1,0 +1,5 @@
+mix,n_non_gameable,pass,pct,delta_vs_full
+full mix,1210,1083,89.5,0.0
+ro-only,1210,1082,89.42,-0.08
+no Track C,1210,1087,89.83,0.33
+no Track A,1210,1088,89.92,0.41
